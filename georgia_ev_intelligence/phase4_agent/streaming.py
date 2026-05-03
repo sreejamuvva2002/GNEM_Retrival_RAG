@@ -58,19 +58,25 @@ CRITICAL INSTRUCTIONS:
 1. The data above has ALREADY been filtered. Treat EVERY row as a valid result. Do NOT re-filter.
 2. This table contains exactly {row_count} {row_noun}. You MUST list all {row_count}.
 3. List them one by one in order. Do not skip, omit, or combine any rows.
-4. For each company include: name, tier, role, county, and employment number.
-5. If the table shows employment by county, identify the highest-total county.
-6. Do NOT say "not found" or "database does not contain" — the data IS the database.
-7. Only say "No companies found" if the context literally says "No matching companies found."
-8. Be factual and concise. Use exact numbers from the table.
+4. Copy company names EXACTLY character-by-character from the table — do NOT paraphrase or shorten.
+5. For each entry include: exact name, tier, role, county, and employment number.
+6. {format_instruction}
+7. If the table shows employment by county, identify the highest-total county.
+8. Do NOT say "not found" or "database does not contain" — the data IS the database.
+9. Only say "No companies found" if the context literally says "No matching companies found."
 
 Answer:"""
+
+_FORMAT_COMPACT  = "Use ONLY a numbered list: '1. Name | Tier | Role | County | N employees'. No extra sentences."
+_FORMAT_DETAILED = "Include tier, role, county, and employment for each entry."
 
 
 def build_answer_prompt(question: str, context: str) -> str:
     """
-    Build the synthesis prompt with an explicit row count injected into instruction #2.
-    This prevents the LLM from stopping at row 1 when there are multiple rows.
+    Build the synthesis prompt with:
+    - Explicit row count in instruction #2 (prevents LLM stopping at row 1)
+    - Company name faithfulness instruction (prevents Racemark → Mark hallucination)
+    - Compact format for >10 rows (reduces T5-style 56s → ~22s by cutting prose tokens)
 
     The row count is computed from the context (pipe-separated rows, excluding header).
     For county aggregate data (no pipe rows) the count is computed from newlines.
@@ -89,29 +95,33 @@ def build_answer_prompt(question: str, context: str) -> str:
         )
 
     row_noun = "company" if row_count == 1 else "companies"
+    # For large lists: force compact numbered format to reduce token generation time
+    format_instruction = _FORMAT_COMPACT if row_count > 10 else _FORMAT_DETAILED
+
     return _ANSWER_PROMPT_TEMPLATE.format(
         question=question,
         context=context[:3500],
         row_count=row_count if row_count > 0 else "unknown number of",
         row_noun=row_noun,
+        format_instruction=format_instruction,
     )
 
 
 def _budget_tokens(context: str) -> int:
     """
     Dynamic token budget for synthesis output.
-    WHY: A fixed 400-token cap works for 3-4 companies but cuts off at 10+.
-    Each company row needs ~50 output tokens to describe clearly.
-    We count pipe-separated rows (company table) + a base overhead.
 
-    Budget = max(300, min(700, rows * 50 + 200))
+    Budget = max(300, min(900, rows * 40 + 200))
     - 300 minimum: enough for a 2-sentence answer or empty result
-    - 700 maximum: ~25s synthesis time cap (qwen2.5:7b generates ~28 tok/s)
+    - 900 maximum: covers 15+ companies in compact list format (~35 tok/company)
+    - Rows >10 use compact format (40 tok/company instead of 50)
     """
     rows = sum(1 for line in context.splitlines()
                if " | " in line and not line.strip().startswith("Company"))
-    budget = max(300, min(700, rows * 50 + 200))
-    logger.debug("Token budget: %d (rows=%d)", budget, rows)
+    # Compact format for large lists uses fewer tokens per row
+    tok_per_row = 35 if rows > 10 else 50
+    budget = max(300, min(900, rows * tok_per_row + 200))
+    logger.debug("Token budget: %d (rows=%d, tok/row=%d)", budget, rows, tok_per_row)
     return budget
 
 

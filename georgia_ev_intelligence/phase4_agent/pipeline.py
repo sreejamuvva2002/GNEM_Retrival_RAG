@@ -261,8 +261,12 @@ class EVAgent:
                 return ctx, False
 
         if e.oem and not _is_oem_reference(e.oem) and not e.is_aggregate:
-            # Compound filter: OEM + optional employment range + optional tier
-            oem_filters: dict = {"primary_oems": e.oem}
+            # Build OEM filter — use ALL extracted OEMs (oem_list) for OR queries.
+            # e.g. "Kia or Rivian" → oem_list=['rivian','kia'] → "rivian OR kia"
+            oem_filter_val = (
+                " OR ".join(e.oem_list) if len(e.oem_list) > 1 else e.oem
+            )
+            oem_filters: dict = {"primary_oems": oem_filter_val}
             if e.tier and not _is_oem_reference(e.tier):
                 oem_filters["tier"] = e.tier
             if e.min_employment:
@@ -271,8 +275,10 @@ class EVAgent:
                 oem_filters["max_employment"] = e.max_employment
             pg_rows = query_companies(filters=oem_filters, limit=_MAX_LLM_COMPANIES)
             if pg_rows:
-                ctx = f"[SQL — Suppliers to {e.oem} ({len(pg_rows)} found)]:\n" + self._format_companies(pg_rows)
+                oem_label = " / ".join(e.oem_list) if e.oem_list else e.oem
+                ctx = f"[SQL — Suppliers to {oem_label} ({len(pg_rows)} found)]:\n" + self._format_companies(pg_rows)
                 return ctx, False
+
 
         if e.is_aggregate and e.tier and not _is_oem_reference(e.tier):
             data = aggregate_employment_by_county(tier=e.tier)

@@ -76,7 +76,13 @@ def query_companies(filters: dict[str, Any] | None = None, limit: int = 200) -> 
             if industry := filters.get("industry_group"):
                 q = q.filter(Company.industry_group.ilike(f"%{industry}%"))
             if oem := filters.get("primary_oems"):
-                q = q.filter(Company.primary_oems.ilike(f"%{oem}%"))
+                # Support multi-OEM: "rivian OR kia" → OR across all
+                if " OR " in str(oem):
+                    from sqlalchemy import or_
+                    parts = [p.strip() for p in oem.split(" OR ")]
+                    q = q.filter(or_(*[Company.primary_oems.ilike(f"%{p}%") for p in parts]))
+                else:
+                    q = q.filter(Company.primary_oems.ilike(f"%{oem}%"))
             if product := filters.get("products_services"):
                 q = q.filter(Company.products_services.ilike(f"%{product}%"))
             if facility := filters.get("facility_type"):

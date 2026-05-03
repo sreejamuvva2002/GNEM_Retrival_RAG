@@ -212,7 +212,8 @@ class Entities:
     """Structured entities extracted from a question."""
     tier:              str | None  = None   # e.g. "Tier 1/2"
     county:            str | None  = None   # e.g. "Gwinnett"
-    oem:               str | None  = None   # e.g. "rivian"
+    oem:               str | None  = None   # PRIMARY oem (first matched) — backward-compat
+    oem_list:          list[str]   = field(default_factory=list)  # ALL oems in question
     company_name:      str | None  = None   # e.g. "SungEel Recycling Park Georgia"
     ev_role:           str | None  = None   # e.g. "Thermal Management"
     ev_role_list:      list[str]   = field(default_factory=list)
@@ -428,15 +429,18 @@ def extract(question: str) -> Entities:
                     and part_clean not in role_words):
                 oem_word_map[part_clean] = part_clean
 
+    # Collect ALL OEMs mentioned in the question (multi-OEM support).
+    # WHY: Questions like "Kia or Rivian suppliers" previously only extracted
+    # the first OEM (break-on-first) and missed the second.
+    # Now extracts all, sets e.oem = first for backward-compat with single-OEM code paths.
+    matched_oems: list[str] = []
     for word in oem_word_map:
-        # CRITICAL: only match if the word appears CAPITALIZED in the original question.
-        # Brand names / proper nouns are always capitalized. Common words like
-        # 'battery', 'current', 'material' that leak from compound OEM node names
-        # (e.g. 'SK Battery') will appear lowercase in a product-context question
-        # (e.g. 'EV battery collectors') and will NOT match here.
         if re.search(r'\b' + re.escape(word[0].upper() + word[1:]) + r'\b', question):
-            e.oem = word
-            break
+            matched_oems.append(word)
+
+    if matched_oems:
+        e.oem      = matched_oems[0]        # primary OEM — backward compat
+        e.oem_list = matched_oems           # all OEMs for multi-OEM SQL
 
 
     # ── 6b. Industry group extraction — from real DB values ──────────────────
