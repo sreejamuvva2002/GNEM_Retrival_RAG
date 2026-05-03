@@ -1,0 +1,352 @@
+[
+  {
+    "Num": "1",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Show all \"Tier 1/2\" suppliers in Georgia, list their EV Supply Chain Role and Product / Service.",
+    "Human validated answers": "There are 18 Tier 1/2 companies in Georgia (using Updated Location).\nF&P Georgia Manufacturing [Tier 1/2] | Role: Battery Pack | Product: Lithium-ion battery recycler and raw materials provider\nFouts Brothers Fire Equipment [Tier 1/2] | Role: General Automotive | Product: Automotive body parts and electronics Cylinder-head and specialty gaskets, housing modules and shielding systems for engines, transmissions, exhaust systems and auxiliary units\nHitachi Astemo [Tier 1/2] | Role: General Automotive | Product: Car audio systems\nHitachi Astemo Americas Inc. [Tier 1/2] | Role: Battery Cell | Product: Battery cells for electric mobility\nHollingsworth & Vose Co. [Tier 1/2] | Role: Battery Pack | Product: Lithium-ion battery materials\nHonda Development & Manufacturing [Tier 1/2] | Role: Battery Cell | Product: Battery cells for electric mobility\nHwashin [Tier 1/2] | Role: General Automotive | Product: Modules and storage systems\nHyundai & LG Energy Solution (LGES) [Tier 1/2] | Role: General Automotive | Product: Storage batteries\nHyundai Industrial Co. [Tier 1/2] | Role: General Automotive | Product: Automotive batteries\nHyundai MOBIS (Georgia) [Tier 1/2] | Role: General Automotive | Product: Capacitors, electronic automotive components\nHyundai Motor Group [Tier 1/2] | Role: Battery Pack | Product: Battery parts for electric vehicles\nHyundai Transys Georgia Powertrain [Tier 1/2] | Role: Thermal Management | Product: Electrical heaters, control units, and actuators\nHyundai Transys Georgia Seating Systems [Tier 1/2] | Role: General Automotive | Product: Automotive electronics, resonators, capacitors, resistors, electronics and electronic parts\nIMMI [Tier 1/2] | Role: Battery Pack | Product: Battery electrolyte\nIMS Gear Georgia Inc. [Tier 1/2] | Role: General Automotive | Product: Car audio systems\nInalfa Roof Systems Inc. [Tier 1/2] | Role: General Automotive | Product: Automotive electronic safety systems\nJAC Products Inc. [Tier 1/2] | Role: General Automotive | Product: Switches, resistors and related products\nJefferson Southern Corp. [Tier 1/2] | Role: General Automotive | Product: High current switches and resistors for automotive HVAC systems",
+    "": ""
+  },
+  {
+    "Num": "2",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Which Georgia companies are classified under Battery Cell or Battery Pack roles, and what tier is each assigned?",
+    "Human validated answers": "There are 6 companies found with Battery Cell or Battery Pack roles.    \n\nF&P Georgia Manufacturing [Tier 1/2] | Role: Battery Pack \nHitachi Astemo Americas Inc. [Tier 1/2] | Role: Battery Cell \nHollingsworth & Vose Co. [Tier 1/2] | Role: Battery Pack \nHonda Development & Manufacturing [Tier 1/2] | Role: Battery Cell \nHyundai Motor Group [Tier 1/2] | Role: Battery Pack \nIMMI [Tier 1/2] | Role: Battery Pack",
+    "": ""
+  },
+  {
+    "Num": "3",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Map all Thermal Management suppliers in Georgia and show which Primary OEMs they are linked to.",
+    "Human validated answers": "There are 5 Thermal Management companies in Georgia.\nZF Gainesville LLC | OEMs: Multiple OEMs\nFreudenberg-NOK | OEMs: Multiple OEMs\nHyundai Transys Georgia Powertrain | OEMs: Hyundai Kia Rivian\nNovelis Inc. | OEMs: Multiple OEMs\nPeerless-Winsmith Inc. | OEMs: Multiple OEMs",
+    "": ""
+  },
+  {
+    "Num": "4",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "List every Georgia company classified under Power Electronics or Charging Infrastructure, along with their Employment size.",
+    "Human validated answers": "There are 4 companies strictly classified under Power Electronics or Charging Infrastructure:\nGSC Steel Stamping LLC | Role: Power Electronics | Employment: 350\nMorgan Corp. | Role: Charging Infrastructure | Employment: 320\nYazaki North America | Role: Power electronics, sensors, and EV systems | Employment: 230000\nZF Gainesville LLC has a combined role (EV thermal management and power electronics) | Employment: 17500",
+    "": ""
+  },
+  {
+    "Num": "5",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Which companies are classified as Direct Manufacturer, and what EV Supply Chain Roles do they cover?",
+    "Human validated answers": "Original Equipment Manufacturer companies (11):\nKia Georgia Inc. | EV Supply Chain Role: Vehicle Assembly\nMinebea AccessSolutions USA Inc. | EV Supply Chain Role: General Automotive\nSuperior Essex Inc. | EV Supply Chain Role: Vehicle Assembly\nSuzuki Manufacturing of America Corp. | EV Supply Chain Role: Vehicle Assembly\nTCI Powder Coatings | EV Supply Chain Role: Vehicle Assembly\nTDK Components USA Inc. | EV Supply Chain Role: Vehicle Assembly\nTE Connectivity | EV Supply Chain Role: Vehicle Assembly\nTeklas USA | EV Supply Chain Role: Vehicle Assembly\nTextron Specialized Vehicles | EV Supply Chain Role: Vehicle Assembly\nThermal Ceramics Inc. | EV Supply Chain Role: Vehicle Assembly\nThomson Plastics Inc. | EV Supply Chain Role: Vehicle Assembly",
+    "": ""
+  },
+  {
+    "Num": "6",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "What locations does Novelis Inc. operate in, and what primary facility types are associated with each location?",
+    "Human validated answers": "Novelis Inc. has three operating entries in Georgia, and all three are located in Atlanta, Fulton County, with each one classified as a Manufacturing Plant as its primary facility type.",
+    "": ""
+  },
+  {
+    "Num": "7",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "In Gwinnett County, which company has the highest Employment and what is its EV Supply Chain Role?",
+    "Human validated answers": "WIKA USA has the highest employment in Gwinnett County (Employment: 250000; Role: HV and LV wiring harnesses for EVs and ICE vehicles).",
+    "": ""
+  },
+  {
+    "Num": "8",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Which county have the highest total Employment among Tier 1 suppliers only?",
+    "Human validated answers": "Troup County has the highest total Employment among Tier 1 suppliers with a total of 2,435 employees",
+    "": ""
+  },
+  {
+    "Num": "9",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Which county has the highest total employment across all companies, and what is the combined employment in that county?",
+    "Human validated answers": "Gwinnett County has the highest total employment across all companies: 253022.",
+    "": ""
+  },
+  {
+    "Num": "10",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Identify all Vehicle Assembly facilities in Georgia and list the corresponding Primary OEM associated with each facility.",
+    "Human validated answers": "There are 10 Vehicle Assembly OEMs along with their Primary OEMs are:\nKia Georgia Inc. | Primary OEMs: Club Car LLC\nSuperior Essex Inc. | Primary OEMs: Hyundai Motor Group\nSuzuki Manufacturing of America Corp. | Primary OEMs: Rivian Automotive\nTCI Powder Coatings | Primary OEMs: Kia Georgia Inc.\nTDK Components USA Inc. | Primary OEMs: Mercedes-Benz USA LLC\nTE Connectivity | Primary OEMs: Blue Bird Corp.\nTeklas USA | Primary OEMs: Yamaha Motor Manufacturing Corp.\nTextron Specialized Vehicles | Primary OEMs: Textron Specialized Vehicles\nThermal Ceramics Inc. | Primary OEMs: SK Battery America\nThomson Plastics Inc. | Primary OEMs: Archer Aviation Inc.",
+    "": ""
+  },
+  {
+    "Num": "11",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Identify the primary products and services associated with Sewon America Inc. across its different operational sites in Georgia.",
+    "Human validated answers": "Sewon America Inc. has three operating entries in Georgia and all three are located in LaGrange, Troup County, Georgia.\nSewon America Inc. | Product: Motor vehicle engines and parts\nSewon America Inc. | Product: Fire truck bodies\nSewon America Inc. | Product: Automotive aftermarket parts",
+    "": ""
+  },
+  {
+    "Num": "12",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "List all Tier 2/3 companies in Georgia with primary involvement in the electric vehicle or battery supply chain and specify their respective roles.",
+    "Human validated answers": "There are 3 companies with primary involvement in the electric vehicle or battery supply chain. \n\nDuckyang | Role: General Automotive \nGSC Steel Stamping LLC | Role: Power Electronics \nEnchem America Inc. | Role: General Automotive",
+    "": ""
+  },
+  {
+    "Num": "13",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Show the full supplier network linked to Rivian Automotive in Georgia, broken down by tier and EV Supply Chain Role.",
+    "Human validated answers": "Rivian-linked suppliers in GA (by Primary OEMs column):\nDuckyang [Tier 2/3] | Role: General Automotive | Primary OEMs: Hyundai Kia Rivian\nEnchem America Inc. [Tier 2/3] | Role: General Automotive | Primary OEMs: Hyundai Kia Rivian\nGSC Steel Stamping LLC [Tier 2/3] | Role: Power Electronics | Primary OEMs: Hyundai Kia Rivian\nHyundai Transys Georgia Powertrain [Tier 1/2] | Role: Thermal Management | Primary OEMs: Hyundai Kia Rivian\nRacemark International LLC [Tier 1] | Role: General Automotive | Primary OEMs: Hyundai Kia Rivian\nSuzuki Manufacturing of America Corp. [OEM] | Role: Vehicle Assembly | Primary OEMs: Rivian Automotive",
+    "": ""
+  },
+  {
+    "Num": "14",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Which Georgia companies produce battery materials such as anodes, cathodes, electrolytes, or copper foil, and what tier are they classified as?",
+    "Human validated answers": "There are 4 Georgia companies producing battery materials such as anodes, cathodes, electrolytes, or copper foil. \nDuckyang [Tier 2/3] | Produce: High-quality electrodeposited (ED) copper foil for electric vehicles\nF&P Georgia Manufacturing [Tier 1/2] | Produce: Lithium-ion battery recycler and raw materials provider\nHollingsworth & Vose Co. [Tier 1/2] | Produce: Lithium-ion battery materials\nIMMI [Tier 1/2]  | Produce: Battery electrolyte",
+    "": ""
+  },
+  {
+    "Num": "15",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Identify all Georgia companies with an EV Supply Chain Role related to wiring harnesses and show their Primary OEMs.",
+    "Human validated answers": "There are 2 Georgia companies with an EV Supply Chain Role related to wiring harnesses:\nWIKA USA | Primary OEMs: n/a\nWoodbridge Foam Corp. | Primary OEMs: n/a",
+    "": ""
+  },
+  {
+    "Num": "16",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery electrolytes or lithium-ion battery materials with existing OEM contracts.",
+    "Human validated answers": "The Georgia-based suppliers that match battery electrolytes or lithium-ion battery materials and also have existing OEM contracts are:\nHollingsworth & Vose Co. [Tier 1/2] | OEMs: Hyundai Kia | Produces: Lithium-ion battery materials\nIMMI [Tier 1/2] | OEMs: Hyundai Kia | Produces: Battery electrolyte",
+    "": ""
+  },
+  {
+    "Num": "17",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Which Georgia companies manufacture high-voltage wiring harnesses or EV electrical distribution components suitable for BEV platforms?",
+    "Human validated answers": "There are 2 Georgia companies manufacturing high-voltage wiring harnesses or EV electrical distribution components suitable for BEV platforms\n\nWIKA USA | Role: HV and LV wiring harnesses for EVs and ICE vehicles | Product: Vehicle power & data solutions; wiring harnesses and connectors | Ev Relevant: Yes\nWoodbridge Foam Corp. | Role: EV wiring harnesses and power distribution | Product: Automotive wiring harnesses & electrical distribution systems | Ev Relevant: Yes",
+    "": ""
+  },
+  {
+    "Num": "18",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment industry group that could be upgraded to supply EV power electronics.",
+    "Human validated answers": "There are no Georgia Tier 2/3 companies listed under the Electronic and Other Electrical Equipment and Components industry group. So none can be upgraded to supply EV power electronics based on the provided evidence.",
+    "": ""
+  },
+  {
+    "Num": "19",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Find Georgia-based companies that manufacture copper foil or electrodeposited materials suitable for EV battery current collectors.",
+    "Human validated answers": "There is 1 company in Georgia specifically identified for the manufacture of materials suitable for EV battery current collectors:\nDuckyang | Produce: High-quality electrodeposited (ED) copper foil for electric vehicles",
+    "": ""
+  },
+  {
+    "Num": "20",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or composite materials applicable to EV structural or thermal components?",
+    "Human validated answers": "No Georgia Tier 1/2 companies are explicitly identified as producing engineered plastics, polymers, or composite materials applicable to EV structural or thermal components.",
+    "": ""
+  },
+  {
+    "Num": "21",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Find Georgia suppliers with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's EV battery production ramp-up.",
+    "Human validated answers": "There are 11 companies with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's EV battery production ramp-up.  \n\nF&P Georgia Manufacturing \nDuckyang \nGSC Steel Stamping LLC \nHitachi Astemo Americas Inc. \nHollingsworth & Vose Co. \nHonda Development & Manufacturing \nHyundai Motor Group \nHyundai Transys Georgia Powertrain \nIMMI \nEnchem America Inc. \nRacemark International LLC",
+    "": ""
+  },
+  {
+    "Num": "22",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Identify Georgia companies producing DC-to-DC converters, capacitors, or power electronics components relevant to EV drivetrains and what tier is each assigned?",
+    "Human validated answers": "There are 3 Georgia companies producing DC-to-DC converters, capacitors, or power electronics components relevant to EV drivetrains. \n\nGSC Steel Stamping LLC [Tier 2/3] \nHyundai MOBIS (Georgia) [Tier 1/2] \nHyundai Transys Georgia Seating Systems [Tier 1/2]",
+    "": ""
+  },
+  {
+    "Num": "23",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Which Georgia companies provide powder coating-related products or services, and what tier are they classified under?",
+    "Human validated answers": "There is only 1 Georgia company that provides Powder coating-related products/services:\nArcher Aviation Inc. [Tier 2/3] | Produces: Powder coatings for automotive and other industries",
+    "": ""
+  },
+  {
+    "Num": "24",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Which Georgia companies manufacture battery parts or enclosure systems and are classified as Tier 1/2, making them ready for direct OEM engagement and show which Primary OEMs they are linked to.",
+    "Human validated answers": "There are 6 Georgia companies manufacturing battery parts or enclosure systems and are classified as Tier 1/2, making them ready for direct OEM engagement. \n\nF&P Georgia Manufacturing | OEMs: Hyundai Kia \nHitachi Astemo Americas Inc. | OEMs: Hyundai Kia \nHollingsworth & Vose Co. | OEMs: Hyundai Kia \nHonda Development & Manufacturing | OEMs: Hyundai Kia \nHyundai Motor Group | OEMs: Hyundai Kia \nIMMI | OEMs: Hyundai Kia",
+    "": ""
+  },
+  {
+    "Num": "25",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classified as General Automotive but produce components transferable to EV platforms.",
+    "Human validated answers": "There are 8 Tier 2/3 Georgia-based suppliers with employment over 300 that are classified as General Automotive but produce components transferable to EV platforms. \n\nArising Industries Inc. | Employment: 582 \nDinex Emissions Inc. | Employment: 500 \nACM Georgia LLC | Employment: 400 \nDongwon Autopart Technology Georgia LLC | Employment: 315 \nFOX Factory | Employment: 345 \nAVS | Employment: 310 \nFlambeau Inc. | Employment: 700\nGrudem | Employment: 807",
+    "": ""
+  },
+  {
+    "Num": "26",
+    "Use Case Category": "Supplier Discovery & Matchmaking",
+    "Question": "Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industry group and list their products.",
+    "Human validated answers": "There are 2 Georgia Tier 2/3 companies in Chemicals and Allied Products industry group.\n\nArcher Aviation Inc. | Product: Powder coatings for automotive and other industries \nArising Industries Inc. | Product: Rubber powders for tires",
+    "": ""
+  },
+  {
+    "Num": "27",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "Which EV Supply Chain Roles in Georgia are served by only a single company, creating a single-point-of-failure risk for the state's EV ecosystem?",
+    "Human validated answers": "There are 28 Supply Chain Roles in Georgia served by only a single company, creating a single-point-of-failure risk for the state's EV ecosystem  \n\nRole: Advanced electrical architecture for EVs | Only company: Yamaha Motor Manufacturing Corp.\nRole: Body and chassis components for EV and ICE OEMs | Only company: Vanguard National Trailer Corp.\nRole: Charging Infrastructure | Only company: Morgan Corp.\nRole: EV and ICE component manufacturing | Only company: Vista Metals Corp.\nRole: EV and ICE powertrain and HVAC components | Only company: Voestalpine Automotive Body Parts Inc.\nRole: EV body, powertrain, and thermal components | Only company: ZF Gainesville LLC\nRole: EV electrical distribution and interior systems | Only company: Yachiyo Manufacturing of America LLC\nRole: EV sensors, braking, and control systems | Only company: YKK USA Inc.\nRole: EV thermal management and power electronics | Only company: ZF Gainesville LLC\nRole: EV thermal systems and electronics | Only company: ZF Gainesville LLC\nRole: EV wiring harnesses and power distribution | Only company: Woodbridge Foam Corp.\nRole: HV and LV wiring harnesses for EVs and ICE vehicles | Only company: WIKA USA\nRole: High‑voltage EV connectors and electronics | Only company: Woory Industrial Co.\nRole: Interior and exterior plastic parts | Only company: Wabash National Corp.\nRole: Interior trim and textile components | Only company: Wheelabrator Group Inc.\nRole: Machined components supporting EV and ICE vehicles | Only company: Trenton Pressing Inc.\nRole: OEM corporate and engineering footprint (electrification) | Only company: Tie Down Engineering\nRole: OEM corporate footprint and supplier integration | Only company: Trenton Pressing\nRole: OEM corporate footprint influencing EV strategy | Only company: TI Fluid Systems\nRole: OEM parent group footprint (EV + HD electrification) | Only company: TN Americas Holding Inc.\nRole: OEM parent group footprint (electric truck strategy) | Only company: Toyota Industries Group (TACG-TICA)\nRole: Plastic components for EV and ICE vehicles | Only company: Volvo Cars USA\nRole: Power Electronics | Only company: GSC Steel Stamping LLC\nRole: Power electronics, sensors, and EV systems | Only company: Yazaki North America\nRole: Stamped and welded assemblies for OEMs | Only company: Vernay\nRole: Stamped metal components for OEMs | Only company: Volvo Group North America\nRole: Tier 1 automotive components | Only company: Valeo\nRole: Vehicle safety systems OEM (EV + ICE) → Only company: TI Fluid Systems",
+    "": ""
+  },
+  {
+    "Num": "28",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a specific OEM, indicating high dependency risk?",
+    "Human validated answers": "There are 6 Georgia Battery Cell or Battery Pack suppliers that are sole-sourced by a specific OEM, indicating high dependency risk.\n  • F&P Georgia Manufacturing | Role: Battery Pack | Primary OEM: Hyundai Kia\n  • Hitachi Astemo Americas Inc. | Role: Battery Cell | Primary OEM: Hyundai Kia\n  • Hollingsworth & Vose Co. | Role: Battery Pack | Primary OEM: Hyundai Kia\n  • Honda Development & Manufacturing | Role: Battery Cell | Primary OEM: Hyundai Kia\n  • Hyundai Motor Group | Role: Battery Pack | Primary OEM: Hyundai Kia\n  • IMMI | Role: Battery Pack | Primary OEM: Hyundai Kia",
+    "": ""
+  },
+  {
+    "Num": "29",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have fewer than 200 employees, flagging potential capacity fragility?",
+    "Human validated answers": "For Hyundai Metaplant, there are 6 Georgia-based EV component suppliers with less than 200 employees, flagging potential capacity fragility.\nEnchem America Inc. | Employment: 155\nF&P Georgia Manufacturing | Employment: 104\nHyundai Motor Group | Employment: 164\nHyundai Transys Georgia Powertrain | Employment: 130\nIMMI | Employment: 100\nRacemark International LLC | Employment: 120",
+    "": ""
+  },
+  {
+    "Num": "30",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General Automotive, and provide materials to Battery Cell or Battery Pack companies, suggesting supply chain misalignment risk.",
+    "Human validated answers": "There are 2 Georgia Tier 2/3 suppliers that are EV Relevant, classified as General Automotive, and provide materials to Battery Cell or Battery Pack companies, suggesting supply chain misalignment risk.\nDuckyang | OEMs: Hyundai Kia Rivian\nEnchem America Inc. | OEMs: Hyundai Kia Rivian",
+    "": ""
+  },
+  {
+    "Num": "31",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversified customer base (serving 'Multiple OEMs').",
+    "Human validated answers": "There are 11 Georgia-based Tier 1/2 automotive suppliers that maintain a diversified customer base.  \nFouts Brothers Fire Equipment \nHitachi Astemo\nHwashin\nHyundai & LG Energy Solution (LGES)\nIMS Gear Georgia Inc.\nJAC Products Inc.\nHyundai Industrial Co.\nHyundai MOBIS (Georgia)\nHyundai Transys Georgia Seating Systems\nInalfa Roof Systems Inc.\nJefferson Southern Corp.",
+    "": ""
+  },
+  {
+    "Num": "32",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "Identify Georgia companies in the Thermal Management or Power Electronics role with fewer than 200 employees - their small scale may limit surge production capacity.",
+    "Human validated answers": "There are 3 Georgia companies in the Thermal Management or Power Electronics role with fewer than 200 employees.\n Freudenberg-NOK | Employment: 160 | Role: Thermal Management\n Hyundai Transys Georgia Powertrain | Employment: 130 | Role: Thermal Management\n Peerless-Winsmith Inc. | Employment: 160 | Role: Thermal Management",
+    "": ""
+  },
+  {
+    "Num": "33",
+    "Use Case Category": "Supply Chain Risk & Resilience",
+    "Question": "Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Supply Chain?",
+    "Human validated answers": "There are 24 Georgia‑based companies that are classified as OEM Footprint or OEM Supply Chain\n\nOEM Footprint\n\nTI Fluid Systems\nTie Down Engineering\nTN Americas Holding Inc.\nToyota Industries Group (TACG-TICA)\nTrenton Pressing\nYazaki North America\nYKK USA Inc.\nZF Gainesville LLC\n\nOEM Supply Chain:\n\nTrenton Pressing Inc.\nValeo\nVanguard National Trailer Corp.\nVernay\nVista Metals Corp.\nVoestalpine Automotive Body Parts Inc.\nVolvo Cars USA\nVolvo Group North America\nWabash National Corp.\nWheelabrator Group Inc.\nWIKA USA\nWoodbridge Foam Corp.\nWoory Industrial Co.\nYachiyo Manufacturing of America LLC\nYamaha Motor Manufacturing Corp.\nZF Gainesville LLC",
+    "": ""
+  },
+  {
+    "Num": "34",
+    "Use Case Category": "Supply Chain Mapping & Visibility",
+    "Question": "Top 10 Georgia companies based on employment size that supply both General Automotive and EV-specific components, indicating transition readiness?",
+    "Human validated answers": "Top 10 Georgia companies based on the employment size supply both General Automotive and have some EV relevance (Yes or Indirect): \n\nJTEKT North America Corp. | Employment: 860 \nKautex Inc. | Employment: 800 \nLark United Manufacturing Inc. | Employment: 700 \nFouts Brothers Fire Equipment | Employment: 630 \nArising Industries Inc. | Employment: 582 \nDinex Emissions Inc. | Employment: 500 \nLund International Inc. | Employment: 500 \nMack Trucks | Employment: 500 \nMando America Corp. | Employment: 460 \nACM Georgia LLC | Employment: 400",
+    "": ""
+  },
+  {
+    "Num": "35",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "How many Georgia companies are now producing lithium-ion battery materials, cells, or electrolytes?",
+    "Human validated answers": "There are 5 Georgia‑based companies currently producing lithium‑ion battery materials, battery cells, or battery electrolytes:\n  F&P Georgia Manufacturing [Tier 1/2] | Lithium-ion battery recycler & raw materials\n  Hitachi Astemo Americas Inc. [Tier 1/2] | Battery cells for electric mobility\n  Hollingsworth & Vose Co. [Tier 1/2] | Lithium-ion battery materials\n  Honda Development & Manufacturing [Tier 1/2] | Battery cells\n  IMMI [Tier 1/2] | Battery electrolyte",
+    "": ""
+  },
+  {
+    "Num": "36",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or composite materials and are growing their EV-specific customer base?",
+    "Human validated answers": "There are 7 Tier 2/3 companies producing lightweight aluminum or composite materials and are growing their EV-specific customer base\nBridgestone Bandag | Product: Composite materials and specialty polymers for automotive components | EV Relevant: Indirect\nDinex Emissions Inc. | Product: Aluminum sheet for automotive bodies | EV Relevant: Indirect\nDown 2 Earth Trailers | Product: Standard and custom aluminum-lithium products for automotive customers | EV Relevant: Indirect\nEaton Corp. | Product: Aluminum products for various markets including automotive market | EV Relevant: Indirect\nEcoplastic America Corporation | Product: Aluminum sheet for automotive bodies | EV Relevant: Indirect\nErdrich USA Inc. | Product: Aluminum sheet for automotive bodies | EV Relevant: Indirect\nGlobal Powertrain Systems LLC | Product: Motor vehicle brake systems and parts Fabricates metal products, including coate | EV Relevant: Indirect",
+    "": ""
+  },
+  {
+    "Num": "37",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Identify Georgia companies whose product descriptions include 'high-voltage', 'DC-to-DC', 'inverter', or 'motor controller' — these signal EV powertrain electronics growth.",
+    "Human validated answers": "There is only 1 Georgia company with 'high-voltage', 'DC-to-DC', 'inverter', or 'motor controller' product signals.\nGSC Steel Stamping LLC | Product: DC-to-DC converters",
+    "": ""
+  },
+  {
+    "Num": "38",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which Georgia automotive companies employ over 1,000 workers but are currently categorized as only \"Indirectly Relevant\" to the EV sector, indicating a massive workforce pool ready for a strategic pivot?",
+    "Human validated answers": "There are 3 Georgia automotive companies employ over 1,000 workers but are currently categorized as only \"Indirectly Relevant\" to the EV sector\nTCI Powder Coatings | Employment: 3000 | Role: Vehicle Assembly\nTeklas USA | Employment: 1800 | Role: Vehicle Assembly\nTextron Specialized Vehicles | Employment: 1100 | Role: Vehicle Assembly",
+    "": ""
+  },
+  {
+    "Num": "39",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which three Georgia companies have the largest employment in EV thermal management, and how many employees does each have?",
+    "Human validated answers": "The 4 companies with the largest thermal-management-related employment in Georgia are:\nZF Gainesville LLC: 17,500 employees\nNovelis Inc.: 200 employees\nFreudenberg-NOK: 160 employees\nPeerless-Winsmith Inc.: 160 employees",
+    "": ""
+  },
+  {
+    "Num": "40",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which companies are involved in thermal-related products or services, and what roles and facility types are they associated with?",
+    "Human validated answers": "There are 5 companies involved in thermal-related products or services, along with their associated EV supply chain roles and primary facility types are:\nFreudenberg-NOK | Role: Thermal Management | Facility Type: Manufacturing Plant\nHyundai Transys Georgia Powertrain |Role: Thermal Management | Facility Type: Manufacturing Plant\nNovelis Inc. | Role: Thermal Management | Facility Type: Manufacturing Plant\nPeerless-Winsmith Inc. | Role: Thermal Management | Facility Type: Manufacturing Plant\nZF Gainesville LLC | Role: EV thermal management and power electronics | Facility Type: Manufacturing",
+    "": ""
+  },
+  {
+    "Num": "41",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradual evolution toward EV-related products or markets?",
+    "Human validated answers": "There are 6 Tier 1/2 Georgia companies listed under General Automotive:\nFouts Brothers Fire Equipment [Tier 1/2] | Role: General Automotive\nHyundai Industrial Co. [Tier 1/2] | Role: General Automotive\nHyundai MOBIS (Georgia) [Tier 1/2] | Role: General Automotive\nHyundai Transys Georgia Seating Systems [Tier 1/2] | Role: General Automotive\nInalfa Roof Systems Inc. [Tier 1/2] | Role: General Automotive\nJefferson Southern Corp. [Tier 1/2] | Role: General Automotive",
+    "": ""
+  },
+  {
+    "Num": "42",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "How is demand for thermal management solutions reflected in the number and employment size of Georgia Thermal Management suppliers?",
+    "Human validated answers": "There are 4 companies for Thermal Management suppliers in Georgia\nEmployment Size: 650\nFreudenberg-NOK | Employment: 160\nHyundai Transys Georgia Powertrain | Employment: 130\nNovelis Inc. | Employment: 200\nPeerless-Winsmith Inc. | Employment: 160",
+    "": ""
+  },
+  {
+    "Num": "43",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which Georgia companies are involved in battery recycling or second-life battery processing, reflecting the emerging circular economy trend?",
+    "Human validated answers": "There are 3 Georgia companies involved in battery recycling or end-of-life processing:\nEnplas USA Inc. | Product: Recycler of lithium ion batteries\nEVCO Plastics | Product: Recycler of copper, precious metals, and non-ferrous materials\nF&P Georgia Manufacturing | Product: Lithium-ion battery recycler and raw materials provider",
+    "": ""
+  },
+  {
+    "Num": "44",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which Georgia suppliers appear to play innovation-stage roles through research, development, or prototyping activity?",
+    "Human validated answers": "There is only 1 Georgia company that clearly appears to be an innovation-stage roles through research, development, or prototyping activity.\nRacemark International LLC | Product: Manufacturing and R&D engine parts for EV",
+    "": ""
+  },
+  {
+    "Num": "45",
+    "Use Case Category": "Product & Technology Trends",
+    "Question": "Which Georgia suppliers currently serving traditional OEMs are also linked to EV-native OEMs, showing dual-platform supply capability?",
+    "Human validated answers": "There are 5 Georgia-based suppliers that exhibit dual-platform supply capability, as they are linked to both traditional OEMs such as Hyundai/Kia and the EV-native OEM Rivian.\nDuckyang\nGSC Steel Stamping LLC\nHyundai Transys Georgia Powertrain\nEnchem America Inc.\nRacemark International LLC",
+    "": ""
+  },
+  {
+    "Num": "46",
+    "Use Case Category": "Site Selection & Expansion Planning",
+    "Question": "Identify Georgia areas that currently lack Battery Cell or Battery Pack suppliers but have existing Tier 1 general automotive infrastructure.",
+    "Human validated answers": "There are 39 Georgia counties that have Tier 1 suppliers but no Battery Cell/Pack suppliers (using Updated Location).\nBaldwin County, Bibb County, Carroll County, Catoosa County, Chatham County, Chattahoochee County, Chattooga County, Clarke County, Clayton County, Cobb County, Dawson County, Dougherty County, Douglas County, Elbert County, Fayette County, Forsyth County, Franklin County, Fulton County, Grady County, Gwinnett County, Habersham County, Hall County, Haralson County, Henry County, Jackson County, Jones County, Lamar County, Lowndes County, Lumpkin County, Meriwether County, Morgan County, Newton County, Paulding County, Rabun County, Spalding County, Stephens County, Troup County, Walton County, Whitfield County",
+    "": ""
+  },
+  {
+    "Num": "47",
+    "Use Case Category": "Site Selection & Expansion Planning",
+    "Question": "For a new Tier 1 battery thermal management company looking to locate in Georgia, which areas have the highest concentration of Materials-category suppliers that could support thermal management production?",
+    "Human validated answers": "Covington, Henry County has 2 Materials‑category suppliers that could support battery thermal management production for a new Tier 1 company in Georgia.",
+    "": ""
+  },
+  {
+    "Num": "48",
+    "Use Case Category": "Site Selection & Expansion Planning",
+    "Question": "How many Georgia areas have concentrated Manufacturing Plant facilities but no EV-specific production presence, indicating potential conversion-ready industrial sites?",
+    "Human validated answers": "There are 100 Georgia areas that currently host Manufacturing Plant facilities but have no EV‑specific production presence, indicating a large pool of potentially conversion‑ready industrial sites.\nTop concentrations include:\nLaGrange, Troup County | 7 plants\nAtlanta, Fulton County | 6 plants\nWest Point, Troup County | 6 plants\nDublin, Laurens County | 4 plants\nSavannah, Chatham County | 4 plants\nGriffin, Spalding County | 3 plants\nMadison, Morgan County | 3 plants\nLavonia, Franklin County | 3 plants\nDuluth, Gwinnett County | 3 plants\nJefferson, Jackson County | 3 plants",
+    "": ""
+  },
+  {
+    "Num": "49",
+    "Use Case Category": "Site Selection & Expansion Planning",
+    "Question": "For an international battery materials company seeking a Georgia location, which areas have existing chemical manufacturing infrastructure?",
+    "Human validated answers": "There are 2 Georgia areas with existing chemical manufacturing infrastructure:\nCovington, Morgan County: Archer Aviation Inc.\nNorcross, Gwinnett County: Arising Industries Inc.",
+    "": ""
+  },
+  {
+    "Num": "50",
+    "Use Case Category": "Site Selection & Expansion Planning",
+    "Question": "Which Georgia areas have R&D facility types in the automotive sector, suggesting innovation infrastructure suitable for EV technology development centers?",
+    "Human validated answers": "There is only 1 Georgia area with an R&D facility type in the automotive sector:\nGray, Jones County | Company: Racemark International LLC | Product: Manufacturing and R&D engine parts for EV",
+    "": ""
+  }
+]

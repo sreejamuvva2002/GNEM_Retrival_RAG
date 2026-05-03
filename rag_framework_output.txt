@@ -1,0 +1,187 @@
+﻿=== RAG_Data_Management_Framework.xlsx ===
+Sheet names: ['README', 'Document_Registry', 'Category_Taxonomy', 'Data_Catalog', 'Chunk_Registry', 'Processing_Pipeline', 'Processing_Log', 'Quality_Metrics', 'Evaluation_Questions']
+
+======== Sheet: README | 44 rows x 3 cols ========
+Columns: ['RAG Pipeline - Data Management Framework', 'Unnamed: 1', 'Unnamed: 2']
+          RAG Pipeline - Data Management Framework                           Unnamed: 1                              Unnamed: 2
+0                                              NaN                                  NaN                                     NaN
+1                                              NaN                                  NaN                                     NaN
+2                                              NaN                                  NaN                                     NaN
+3                                              NaN                                  NaN                                     NaN
+4                                              NaN                                  NaN                                     NaN
+5                                              NaN                                  NaN                                     NaN
+6                                   SHEET OVERVIEW                                  NaN                                     NaN
+7                                              NaN                                  NaN                                     NaN
+8                                              NaN                                  NaN                                     NaN
+9                                       Sheet Name                              Purpose                              Key Fields
+10                               Document_Registry  Master list of all source documents     Document_ID, Type, Category, Status
+11                               Category_Taxonomy   Hierarchical classification system  Category, Sub_Category, Document_Types
+12                                    Data_Catalog     Field-level metadata definitions         Field_Name, Data_Type, RAG Role
+13                                  Chunk_Registry                 Track all RAG chunks      Chunk_ID, Entity, Embedding Status
+14                             Processing_Pipeline           Document processing stages                       Stage, Tools, SLA
+15                                  Processing_Log            Processing status tracker         Document, Stage, Status, Errors
+16                                 Quality_Metrics             Data quality definitions                   Metric, Target, Owner
+17                            Evaluation_Questions                RAG testing questions          Question, Category, Difficulty
+18                                             NaN                                  NaN                                     NaN
+19                                             NaN                                  NaN                                     NaN
+20                        SUPPORTED DOCUMENT TYPES                                  NaN                                     NaN
+21                                             NaN                                  NaN                                     NaN
+22                                             NaN                                  NaN                                     NaN
+23                                            Type                           Extensions                       Extraction Method
+24                                             PDF                                 .pdf                 PyPDF2, pdfplumber, OCR
+25                                           Excel                   .xlsx, .xls, .xlsm                        pandas, openpyxl
+26                                         CSV/TSV                           .csv, .tsv                                  pandas
+27                                            Word                          .docx, .doc                             python-docx
+28                                            HTML                          .html, .htm                           BeautifulSoup
+29                                            JSON                                .json                           Native Python
+30                                             XML                                 .xml                       lxml, ElementTree
+31                                            Text                            .txt, .md                           Native Python
+32                                             NaN                                  NaN                                     NaN
+33                                             NaN                                  NaN                                     NaN
+34                              USAGE INSTRUCTIONS                                  NaN                                     NaN
+35                                             NaN                                  NaN                                     NaN
+36                                             NaN                                  NaN                                     NaN
+37  1. Register new documents in Document_Registry                                  NaN                                     NaN
+38             2. Classify using Category_Taxonomy                                  NaN                                     NaN
+39         3. Map fields to Data_Catalog standards                                  NaN                                     NaN
+40           4. Track processing in Processing_Log                                  NaN                                     NaN
+41            5. Register chunks in Chunk_Registry                                  NaN                                     NaN
+42          6. Monitor quality via Quality_Metrics                                  NaN                                     NaN
+43     7. Test retrieval with Evaluation_Questions                                  NaN                                     NaN
+
+======== Sheet: Document_Registry | 6 rows x 22 cols ========
+Columns: ['Document_ID', 'Document_Name', 'Document_Type', 'Category', 'Sub_Category', 'Source', 'Source_URL', 'File_Path', 'File_Size_MB', 'Page_Count', 'Date_Published', 'Date_Acquired', 'Date_Processed', 'Processing_Status', 'Language', 'Contains_Tables', 'Contains_Images', 'Confidentiality', 'Retention_Period', 'Owner', 'Quality_Score', 'Notes']
+  Document_ID                                Document_Name Document_Type          Category       Sub_Category                              Source                     Source_URL                               File_Path  File_Size_MB  Page_Count Date_Published Date_Acquired Date_Processed Processing_Status Language Contains_Tables Contains_Images Confidentiality  Retention_Period                      Owner  Quality_Score                                             Notes
+0     DOC_001  GaPowerEconDev_Automotive_Industry_2024.pdf           PDF  Industry Reports         Automotive  Georgia Power Economic Development  https://www.selectgeorgia.com  /data/raw/industry_reports/automotive/          2.50        13.0     2024-01-01    2024-01-15     2024-01-20         Completed  English             Yes             Yes          Public         Permanent  Economic Development Team           95.0    Primary source for GA automotive industry data
+1     DOC_002       GA_Automotive_All_Companies_50plus.csv           CSV   Structured Data   Company Database  Georgia Power Economic Development                            NaN                   /data/raw/structured/          0.05         NaN     2024-01-01    2024-01-15     2024-01-20         Completed  English             Yes              No          Public         Permanent  Economic Development Team           90.0           Extracted from PDF, 173 company records
+2     DOC_003      [Example] Financial_Report_Q4_2024.xlsx          XLSX    Financial Data  Quarterly Reports                      [Company Name]                            NaN                    /data/raw/financial/           NaN         NaN            NaN           NaN            NaN          Template  English             Yes              No    Confidential           7 Years                        NaN            NaN  TEMPLATE - Delete or modify for actual documents
+3     DOC_004        [Example] Company_Website_Scrape.html          HTML       Web Content   Company Websites                       [Website URL]                            NaN                  /data/raw/web_scrapes/           NaN         NaN            NaN           NaN            NaN          Template  English           Maybe             Yes          Public            1 Year                        NaN            NaN  TEMPLATE - Delete or modify for actual documents
+4     DOC_005               [Example] Policy_Document.docx          DOCX  Policy Documents  Internal Policies                        [Department]                            NaN                     /data/raw/policies/           NaN         NaN            NaN           NaN            NaN          Template  English           Maybe           Maybe        Internal  Until Superseded                        NaN            NaN  TEMPLATE - Delete or modify for actual documents
+5     DOC_006             [Example] API_Response_Data.json          JSON          API Data      External APIs                      [API Provider]                            NaN                /data/raw/api_responses/           NaN         NaN            NaN           NaN            NaN          Template  English              No              No          Varies            Varies                        NaN            NaN  TEMPLATE - Delete or modify for actual documents
+
+======== Sheet: Category_Taxonomy | 19 rows x 8 cols ========
+Columns: ['Category_ID', 'Category', 'Sub_Category', 'Description', 'Document_Types', 'Expected_Fields', 'Update_Frequency', 'Priority']
+   Category_ID             Category       Sub_Category                                           Description      Document_Types                           Expected_Fields Update_Frequency Priority
+0      CAT_001     Industry Reports         Automotive  Automotive industry analysis, market reports, trends           PDF, DOCX   Company, Employment, Products, Location           Annual     High
+1      CAT_002     Industry Reports      Manufacturing           Manufacturing sector reports and statistics           PDF, DOCX              Facility, Output, Employment        Quarterly     High
+2      CAT_003     Industry Reports             Energy           Energy sector analysis including renewables           PDF, DOCX          Capacity, Production, Investment           Annual   Medium
+3      CAT_004     Industry Reports         Technology               Technology industry trends and analysis           PDF, HTML            Company, Product, Market Share        Quarterly     High
+4      CAT_010       Financial Data     Annual Reports               Company annual financial reports (10-K)           PDF, XLSX      Revenue, Profit, Assets, Liabilities           Annual     High
+5      CAT_011       Financial Data  Quarterly Reports                      Company quarterly reports (10-Q)           PDF, XLSX                 Revenue, Profit, Guidance        Quarterly     High
+6      CAT_012       Financial Data        Market Data            Stock prices, market indices, trading data     CSV, JSON, XLSX               Price, Volume, Date, Symbol            Daily   Medium
+7      CAT_020      Structured Data   Company Database              Structured company information databases     CSV, XLSX, JSON          Company, Address, Industry, Size          Monthly     High
+8      CAT_021      Structured Data    Geographic Data                   Location and geographic information  CSV, JSON, GeoJSON             Location, Coordinates, Region        As Needed   Medium
+9      CAT_022      Structured Data     Reference Data                 Lookup tables, codes, classifications           CSV, XLSX               Code, Description, Category             Rare      Low
+10     CAT_030          Web Content   Company Websites                       Scraped company website content           HTML, PDF                Company, Products, Contact          Monthly   Medium
+11     CAT_031          Web Content      News Articles                               News and press releases           HTML, PDF              Title, Date, Content, Source            Daily   Medium
+12     CAT_032          Web Content   Government Sites                     Government and regulatory content           HTML, PDF                      Agency, Policy, Date           Weekly     High
+13     CAT_040     Policy Documents        Regulations                   Industry regulations and compliance           PDF, DOCX  Regulation, Effective Date, Requirements       As Changed     High
+14     CAT_041     Policy Documents  Internal Policies              Internal company policies and procedures           PDF, DOCX               Policy, Department, Version           Annual   Medium
+15     CAT_050             API Data      External APIs                        Data from external API sources           JSON, XML                             Varies by API        Real-time     High
+16     CAT_051             API Data      Internal APIs                            Data from internal systems                JSON                          Varies by System        Real-time     High
+17     CAT_060  Research & Analysis    Market Research                   Third-party market research reports                 PDF             Market Size, Growth, Segments        Quarterly     High
+18     CAT_061  Research & Analysis  Internal Analysis                           Internal analytical reports     PDF, XLSX, PPTX       Analysis, Findings, Recommendations        As Needed   Medium
+
+======== Sheet: Data_Catalog | 27 rows x 12 cols ========
+Columns: ['Field_ID', 'Field_Name', 'Display_Name', 'Data_Type', 'Max_Length', 'Filterable', 'Embedding_Include', 'Description', 'Example', 'Source_Documents', 'Validation_Rule', 'Notes']
+   Field_ID          Field_Name        Display_Name Data_Type  Max_Length Filterable Embedding_Include                           Description                    Example   Source_Documents       Validation_Rule                           Notes
+0   FLD_001        company_name        Company Name    string       255.0        Yes               Yes             Legal name of the company           Kia Georgia Inc.   DOC_001, DOC_002             Not empty       Primary entity identifier
+1   FLD_002          company_id          Company ID    string        50.0        Yes                No         Unique identifier for company                   COMP_001   System Generated  Unique, alphanumeric     Auto-generated UUID or hash
+2   FLD_003          employment          Employment   integer         NaN        Yes               Yes                   Number of employees                       3000   DOC_001, DOC_002                   > 0             As of document date
+3   FLD_010              county              County    string       100.0        Yes               Yes      County where facility is located                      Troup   DOC_001, DOC_002       Valid GA county           Georgia counties only
+4   FLD_011               state               State    string         2.0        Yes                No                    State abbreviation                         GA                All        Valid US state                   2-letter code
+5   FLD_012                city                City    string       100.0        Yes               Yes                             City name                 West Point            Various                   NaN      May be derived from county
+6   FLD_013             address      Street Address    string       500.0         No                No                   Full street address        123 Industrial Blvd            Various                   NaN            Not always available
+7   FLD_014            zip_code            ZIP Code    string        10.0        Yes                No                      5 or 9 digit ZIP                      31833            Various      Valid ZIP format                             NaN
+8   FLD_015         coordinates     GPS Coordinates    string        50.0         No                No                  Lat/Long coordinates           33.1234,-85.5678          Geocoding        Valid lat/long                     For mapping
+9   FLD_020       industry_code       Industry Code   integer         NaN        Yes                No               SIC/NAICS industry code                         37   DOC_001, DOC_002        Valid SIC code         Standard classification
+10  FLD_021       industry_name       Industry Name    string       200.0        Yes               Yes                  Industry description   Transportation Equipment   DOC_001, DOC_002                   NaN             Human-readable name
+11  FLD_022          tier_level   Supply Chain Tier    string        20.0        Yes               Yes                 Tier 1, Tier 2/3, OEM                     Tier 1            DOC_001           Enum values           Supply chain position
+12  FLD_023              is_oem              Is OEM   boolean         NaN        Yes               Yes  Original Equipment Manufacturer flag                       True            DOC_001               Boolean                             NaN
+13  FLD_030     product_service   Products/Services      text      2000.0         No               Yes   Description of products or services  Automotive assembly plant   DOC_001, DOC_002             Not empty   Key field for semantic search
+14  FLD_031  product_categories  Product Categories     array         NaN        Yes               Yes            List of product categories       ["Vehicles", "SUVs"]            Derived      Valid JSON array  Extracted from product_service
+15  FLD_040             revenue      Annual Revenue   decimal         NaN        Yes                No                 Annual revenue in USD                 1500000000  Financial Reports                  >= 0                  When available
+16  FLD_041  capital_investment  Capital Investment   decimal         NaN        Yes               Yes              Total capital investment                 5540000000            DOC_001                  >= 0           Announced investments
+17  FLD_050    date_established    Date Established      date         NaN        Yes                No     Year company/facility established                       2009            Various            Valid date                May be year only
+18  FLD_051      date_announced   Announcement Date      date         NaN        Yes                No         Date of facility announcement                 2023-01-15            DOC_001            Valid date          For planned facilities
+19  FLD_052     is_announcement        Is Announced   boolean         NaN        Yes               Yes       Planned vs operational facility                      False   DOC_001, DOC_002               Boolean      True = not yet operational
+20  FLD_060            chunk_id            Chunk ID    string        50.0        Yes                No               Unique chunk identifier               GA_AUTO_0001   System Generated                Unique             Primary key for RAG
+21  FLD_061      embedding_text      Embedding Text      text      8000.0         No               Yes             Text for vector embedding    Company: Kia Georgia...            Derived             Not empty             Concatenated fields
+22  FLD_062    embedding_vector    Embedding Vector     array         NaN         No                No           Vector embedding (1536 dim)       [0.123, -0.456, ...]   OpenAI/Anthropic     Valid float array             Stored in vector DB
+23  FLD_063         token_count         Token Count   integer         NaN        Yes                No                 Estimated token count                        150         Calculated                   > 0       For chunking optimization
+24  FLD_070  source_document_id     Source Document    string        50.0        Yes                No          Reference to source document                    DOC_001                All          Valid DOC_ID                     Foreign key
+25  FLD_071         source_page         Source Page   integer         NaN         No                No                 Page number in source                         11               PDFs                   > 0                    For citation
+26  FLD_072          source_url          Source URL    string      2000.0         No                No                         URL to source                https://...        Web Content             Valid URL                 For web sources
+
+======== Sheet: Chunk_Registry | 3 rows x 18 cols ========
+Columns: ['Chunk_ID', 'Document_ID', 'Category', 'Entity_Type', 'Entity_Name', 'Chunk_Type', 'Char_Count', 'Token_Estimate', 'Embedding_Model', 'Embedding_Dimension', 'Created_Date', 'Last_Updated', 'Version', 'Status', 'Quality_Score', 'Retrieval_Count', 'Avg_Relevance_Score', 'Notes']
+           Chunk_ID Document_ID         Category Entity_Type        Entity_Name                  Chunk_Type  Char_Count  Token_Estimate         Embedding_Model  Embedding_Dimension Created_Date Last_Updated  Version    Status  Quality_Score  Retrieval_Count  Avg_Relevance_Score                                        Notes
+0      GA_AUTO_0000     DOC_002  Structured Data     Company  Apache Mills Inc.               Entity Record       266.0            66.0  text-embedding-3-small                 1536   2024-01-20   2024-01-20        1    Active           95.0                0                  NaN                                          NaN
+1      GA_AUTO_0089     DOC_002  Structured Data     Company   Kia Georgia Inc.               Entity Record       285.0            71.0  text-embedding-3-small                 1536   2024-01-20   2024-01-20        1    Active           98.0                0                  NaN                     High-priority OEM record
+2  [AUTO_GENERATED]   [DOC_XXX]       [Category]      [Type]             [Name]  [Record/Section/Paragraph]         NaN             NaN  text-embedding-3-small                 1536          NaN          NaN        1  Template            NaN                0                  NaN  TEMPLATE - Auto-populated during processing
+
+======== Sheet: Processing_Pipeline | 10 rows x 10 cols ========
+Columns: ['Stage_ID', 'Stage_Name', 'Stage_Order', 'Description', 'Input', 'Output', 'Tools', 'Validation', 'SLA_Hours', 'Owner']
+  Stage_ID             Stage_Name  Stage_Order                                   Description                    Input                  Output                                Tools                    Validation  SLA_Hours                  Owner
+0   STG_01   Document Acquisition            1  Obtain source documents from various sources          Source URL/Path  Raw file in /data/raw/     wget, API clients, manual upload         File exists, readable       24.0  Data Acquisition Team
+1   STG_02  Document Registration            2        Register document in Document Registry                 Raw file    Document_ID assigned               Data Management Script  Unique ID, metadata complete        1.0   Data Management Team
+2   STG_03       Format Detection            3        Identify document format and structure                 Raw file         Format metadata        python-magic, file inspection              Supported format        0.5    Processing Pipeline
+3   STG_04     Content Extraction            4              Extract text and structured data                 Raw file       Extracted content  PyPDF2, pandas, BeautifulSoup, docx             Content not empty        2.0    Processing Pipeline
+4   STG_05          Data Cleaning            5            Clean and normalize extracted data        Extracted content            Cleaned data        pandas, regex, custom scripts           Quality checks pass        4.0      Data Quality Team
+5   STG_06      Entity Extraction            6           Identify and extract named entities             Cleaned data          Entity records                    spaCy, custom NER            Entities validated        2.0               NLP Team
+6   STG_07               Chunking            7       Split content into RAG-optimized chunks  Cleaned data + Entities           Chunk records            LangChain, custom chunker      Chunk size within limits        1.0               RAG Team
+7   STG_08   Embedding Generation            8         Generate vector embeddings for chunks            Chunk records       Embedding vectors             OpenAI API, local models               Valid dimension        2.0               RAG Team
+8   STG_09    Vector DB Ingestion            9          Load embeddings into vector database    Embeddings + Metadata          Indexed chunks           Pinecone, Weaviate, Chroma         Query returns results        1.0               RAG Team
+9   STG_10      Quality Assurance           10                Validate RAG retrieval quality           Indexed chunks               QA report                 Evaluation framework       Metrics meet thresholds        4.0                QA Team
+
+======== Sheet: Processing_Log | 3 rows x 14 cols ========
+Columns: ['Log_ID', 'Document_ID', 'Document_Name', 'Stage_ID', 'Stage_Name', 'Status', 'Start_Time', 'End_Time', 'Duration_Minutes', 'Records_Processed', 'Records_Failed', 'Error_Message', 'Processed_By', 'Notes']
+    Log_ID Document_ID                                Document_Name  Stage_ID         Stage_Name     Status           Start_Time             End_Time  Duration_Minutes  Records_Processed  Records_Failed                    Error_Message Processed_By                    Notes
+0  LOG_001     DOC_001  GaPowerEconDev_Automotive_Industry_2024.pdf    STG_10  Quality Assurance  Completed  2024-01-20 10:00:00  2024-01-20 14:30:00             270.0              169.0             0.0                              NaN       System    Initial load complete
+1  LOG_002     DOC_002       GA_Automotive_All_Companies_50plus.csv    STG_10  Quality Assurance  Completed  2024-01-20 10:00:00  2024-01-20 11:00:00              60.0              169.0             4.0  4 rows filtered (non-data rows)       System  CSV extraction complete
+2   [AUTO]   [DOC_XXX]                                   [Filename]  [STG_XX]            [Stage]    Pending                  NaN                  NaN               NaN                NaN             NaN                              NaN          NaN                 TEMPLATE
+
+======== Sheet: Quality_Metrics | 16 rows x 8 cols ========
+Columns: ['Metric_ID', 'Metric_Name', 'Metric_Type', 'Description', 'Formula', 'Target', 'Measurement_Frequency', 'Owner']
+   Metric_ID            Metric_Name Metric_Type                                 Description                                     Formula        Target Measurement_Frequency              Owner
+0     DQ_001           Completeness    Document     Percentage of required fields populated  (Populated Fields / Required Fields) * 100        >= 95%          Per Document  Data Quality Team
+1     DQ_002               Accuracy    Document        Percentage of values matching source      (Accurate Values / Total Values) * 100        >= 98%          Sample Audit  Data Quality Team
+2     DQ_003            Consistency    Document  Cross-field and cross-document consistency       Validation rules passed / Total rules        >= 95%          Per Document  Data Quality Team
+3     DQ_004             Timeliness    Document               Document processed within SLA                     Actual Time <= SLA Time        >= 90%          Per Document         Operations
+4     DQ_005             Uniqueness    Document                        No duplicate records      (Unique Records / Total Records) * 100          100%          Per Document  Data Quality Team
+5     DQ_010  Chunk Size Compliance       Chunk           Chunks within optimal token range              Chunks in range / Total chunks        >= 90%             Per Batch           RAG Team
+6     DQ_011      Embedding Quality       Chunk      Embedding vectors valid and normalized         Valid embeddings / Total embeddings          100%             Per Batch           RAG Team
+7     DQ_012  Metadata Completeness       Chunk      All required metadata fields populated              Complete chunks / Total chunks        >= 98%             Per Batch           RAG Team
+8     DQ_020    Retrieval Precision         RAG          Relevant chunks / Retrieved chunks        Relevant Retrieved / Total Retrieved        >= 0.8        Evaluation Run           RAG Team
+9     DQ_021       Retrieval Recall         RAG         Retrieved relevant / Total relevant         Relevant Retrieved / Total Relevant        >= 0.7        Evaluation Run           RAG Team
+10    DQ_022        Answer Accuracy         RAG           Correct answers to test questions           Correct Answers / Total Questions        >= 85%        Evaluation Run           RAG Team
+11    DQ_023     Hallucination Rate         RAG             Unsupported claims in responses          Hallucinated Claims / Total Claims         <= 5%        Evaluation Run           RAG Team
+12    DQ_024       Response Latency         RAG                   Time to generate response                           P95 response time  <= 3 seconds            Continuous        Engineering
+13    DQ_030        Pipeline Uptime      System            Processing pipeline availability                         Uptime / Total Time      >= 99.5%            Continuous         Operations
+14    DQ_031  Processing Throughput      System                Documents processed per hour                            Documents / Hour    >= 50/hour                 Daily         Operations
+15    DQ_032             Error Rate      System                  Failed processing attempts                     Failed / Total Attempts         <= 2%                 Daily         Operations
+
+======== Sheet: Evaluation_Questions | 21 rows x 10 cols ========
+Columns: ['Q_ID', 'Question', 'Category', 'Sub_Category', 'Difficulty', 'Question_Template', 'Expected_Answer_Type', 'Filters_Required', 'Evaluation_Criteria', 'Data_Sources']
+    Q_ID                                                    Question        Category         Sub_Category Difficulty Question_Template Expected_Answer_Type    Filters_Required         Evaluation_Criteria      Data_Sources
+0   Q001                     How many employees does [Company] have?  Factual Lookup           Employment       Easy               Yes               Number        company_name                 Exact match  Company Database
+1   Q002              What products/services does [Company] provide?  Factual Lookup             Products       Easy               Yes                 Text        company_name              Semantic match  Company Database
+2   Q003                                 Where is [Company] located?  Factual Lookup             Location       Easy               Yes             Location        company_name                 Exact match  Company Database
+3   Q004                              What industry is [Company] in?  Factual Lookup             Industry       Easy               Yes             Category        company_name                 Exact match  Company Database
+4   Q010                   What is the total employment in [County]?     Aggregation                  Sum     Medium               Yes               Number              county                  Within 10%  Company Database
+5   Q011                       How many companies are in [Industry]?     Aggregation                Count     Medium               Yes               Number       industry_name                 Exact match  Company Database
+6   Q012             What is the average company size in [Category]?     Aggregation              Average     Medium               Yes               Number            category                  Within 15%  Company Database
+7   Q020                       What are the top 5 largest employers?         Ranking                Top-N     Medium                No                 List                 NaN             Correct ranking  Company Database
+8   Q021                     Which counties have the most companies?         Ranking                Top-N     Medium                No                 List                 NaN               Top 5 correct  Company Database
+9   Q030               Compare [Entity A] and [Entity B] by [Metric]      Comparison    Entity Comparison       Hard               Yes           Comparison   Multiple entities         Accurate comparison          Multiple
+10  Q031                How do Tier 1 and Tier 2/3 suppliers differ?      Comparison  Category Comparison       Hard                No             Analysis          tier_level  Key differences identified  Company Database
+11  Q040                      What are the recent investment trends?  Trend Analysis           Investment       Hard                No             Analysis        date filters           Trends identified          Multiple
+12  Q041                               How is the EV sector growing?  Trend Analysis        Sector Growth       Hard                No             Analysis  product_categories        Growth metrics cited          Multiple
+13  Q050                         What companies are near [Location]?      Geographic            Proximity     Medium               Yes                 List            location            Relevant results  Company Database
+14  Q051                  Which regions have the most manufacturing?      Geographic    Regional Analysis     Medium                No             Analysis                 NaN      Accurate regional data  Company Database
+15  Q060                                 Who supplies [OEM Company]?    Supply Chain      Supplier Lookup       Hard               Yes                 List   Relationship data        Suppliers identified  Company Database
+16  Q061                     What is the supply chain for [Product]?    Supply Chain       Chain Analysis       Hard               Yes             Analysis  product_categories                Chain mapped          Multiple
+17  Q070            Are there any [Non-existent entity] in the data?   Negative Test           No Results       Easy               Yes             Negative                 NaN  Correctly states not found               All
+18  Q071             What is the [Unavailable metric] for companies?   Negative Test         Missing Data       Easy               Yes           Limitation                 NaN       Acknowledges data gap               All
+19  Q080   Which county would be best for a new [Industry] supplier?       Multi-hop       Recommendation       Hard               Yes       Recommendation            Multiple           Logical reasoning          Multiple
+20  Q081  What is the economic impact of [Company type] in [Region]?       Multi-hop      Impact Analysis       Hard               Yes             Analysis            Multiple           Impact quantified          Multiple

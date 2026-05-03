@@ -1,0 +1,45 @@
+# Georgia EV Intelligence — Project Settings
+# All secrets go in .env — only non-secret config here
+
+project:
+  name: "Georgia EV Supply Chain Intelligence"
+  version: "1.0.0"
+  companies_source: "../Kb_Enrichment/config/companies.json"
+  gnem_excel: "../kb/GNEM - Auto Landscape Lat Long Updated.xlsx"
+  validated_qa: "../kb/Human validated 50 questions.xlsx"
+  rag_framework: "../kb/RAG_Data_Management_Framework.xlsx"
+
+phase1:
+  parallel_workers: 5              # Companies processed simultaneously
+  tavily_max_results: 10           # Results per Tavily search
+  ddg_fallback: true               # Use DuckDuckGo if Tavily fails
+  min_relevance_score: 0.45        # Minimum relevance to keep a URL
+  entity_extract_batch: 10         # Docs processed per entity extraction batch
+
+phase2:
+  child_chunk_size: 256            # Child chunk tokens (for vector search)
+  parent_chunk_size: 800           # Parent chunk tokens (fed to LLM)
+  chunk_overlap: 50                # Overlap between child chunks
+  embed_batch_size: 32             # Embeddings sent to Ollama per batch
+  qdrant_collection: "georgia_ev_chunks"
+
+phase3:
+  neo4j_batch_size: 100            # Nodes loaded per Neo4j batch
+  graph_schema_version: "1.0"
+
+phase4:
+  confidence_threshold: 0.75       # Below this → trigger Tavily fallback
+  max_retrieved_chunks: 5          # Chunks sent to LLM per query
+  max_cypher_results: 20           # Max Neo4j results per Cypher query
+  tavily_store_results: true       # Auto-store Tavily results back to KB
+
+phase5:
+  host: "0.0.0.0"
+  port: 8000
+  stream_responses: true
+  max_history_turns: 10            # Chat history kept per session
+
+evaluation:
+  qa_file: "../kb/Human validated 50 questions.xlsx"
+  target_accuracy: 0.80            # 80% correct answers = Phase 4 done
+  max_hallucination_rate: 0.05     # 5% max hallucination rate

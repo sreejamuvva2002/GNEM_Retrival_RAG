@@ -1,0 +1,7 @@
+Kb_Enrichment/
+ev_data_LLM_comparsions/
+.env
+__pycache__/
+*.pyc
+.venv/
+venv/
