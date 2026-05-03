@@ -2,28 +2,10 @@
 phase5_fewshot/qdrant_store.py
 ─────────────────────────────────────────────────────────────────────────────
 Qdrant vector store for few-shot examples.
+Uses local on-disk mode (no extra service needed).
 
-WHY LOCAL QDRANT (not Qdrant Cloud):
-  - No additional service to run — uses qdrant-client in local mode (SQLite backend)
-  - Zero cost, zero network latency
-  - Persistence: data survives restarts (stored in outputs/fewshot_store/)
-  - Easy to upgrade to cloud later (just swap QdrantClient constructor)
-
-COLLECTION SCHEMA:
-  Each point represents one verified (question → query → answer) triplet:
-  {
-    "id":           UUID,
-    "vector":       [768 floats],   ← nomic-embed-text of the question
-    "payload": {
-      "question":   str,            ← original question text
-      "query_type": "sql" | "cypher" | "direct",
-      "sql":        str | None,     ← verified SQL query (if applicable)
-      "cypher":     str | None,     ← verified Cypher query (if applicable)
-      "answer":     str,            ← human-validated answer
-      "category":   str,            ← AGGREGATE / COUNTY / OEM / RISK / GENERAL
-      "source":     str,            ← "manual" | "ragas_eval" | "auto"
-    }
-  }
+API NOTE: Uses query_points() (qdrant-client >= 1.9.0 stable API).
+          The older client.search() was deprecated in 1.9+ and removed in 2.x.
 """
 from __future__ import annotations
 
@@ -41,18 +23,10 @@ _EMBED_DIM       = 768
 
 
 def _get_client():
-    """
-    Return a Qdrant client in local (on-disk) mode.
-    Import is deferred so the module can be imported even if qdrant-client
-    is not installed (will fail only when client is first accessed).
-    """
     try:
         from qdrant_client import QdrantClient
     except ImportError:
-        raise ImportError(
-            "qdrant-client is not installed. "
-            "Run: pip install qdrant-client"
-        )
+        raise ImportError("qdrant-client not installed. Run: pip install qdrant-client")
     _STORE_PATH.mkdir(parents=True, exist_ok=True)
     return QdrantClient(path=str(_STORE_PATH))
 
@@ -69,10 +43,25 @@ def _ensure_collection(client) -> None:
         logger.info("Created Qdrant collection: %s", _COLLECTION_NAME)
 
 
+def _make_uuid(point_id: str | None) -> str:
+    """
+    Return a valid UUID string for Qdrant.
+    Qdrant local mode requires proper UUID format (not arbitrary strings).
+    If point_id is already a valid UUID string, return it as-is.
+    Otherwise generate a new UUID4.
+    """
+    if point_id:
+        try:
+            return str(uuid.UUID(point_id))
+        except ValueError:
+            pass
+    return str(uuid.uuid4())
+
+
 def upsert_example(
     question: str,
     vector: list[float],
-    query_type: str,           # "sql" | "cypher" | "direct"
+    query_type: str,
     answer: str,
     sql: str | None = None,
     cypher: str | None = None,
@@ -80,16 +69,13 @@ def upsert_example(
     source: str = "manual",
     point_id: str | None = None,
 ) -> str:
-    """
-    Insert or update a single few-shot example.
-    Returns the point ID (UUID string).
-    """
+    """Insert or update a few-shot example. Returns the point ID string."""
     from qdrant_client.models import PointStruct
 
     client = _get_client()
     _ensure_collection(client)
 
-    pid = point_id or str(uuid.uuid4())
+    pid = _make_uuid(point_id)
     client.upsert(
         collection_name=_COLLECTION_NAME,
         points=[
@@ -118,18 +104,19 @@ def search_similar(
     query_type_filter: str | None = None,
 ) -> list[dict[str, Any]]:
     """
-    Find the top-k most similar few-shot examples.
-    Optionally filter by query_type ("sql", "cypher", "direct").
+    Find top-k most similar examples using cosine similarity.
+    Uses query_points() API (stable in qdrant-client >= 1.9.0).
+    Falls back to legacy search() for older clients.
 
-    Returns list of payload dicts with an added "score" field.
+    Returns list of payload dicts with added 'score' field.
     """
-    from qdrant_client.models import Filter, FieldCondition, MatchValue
-
     client = _get_client()
     _ensure_collection(client)
 
+    # Build filter if needed
     search_filter = None
     if query_type_filter:
+        from qdrant_client.models import Filter, FieldCondition, MatchValue
         search_filter = Filter(
             must=[FieldCondition(
                 key="query_type",
@@ -137,22 +124,35 @@ def search_similar(
             )]
         )
 
-    results = client.search(
-        collection_name=_COLLECTION_NAME,
-        query_vector=vector,
-        limit=top_k,
-        query_filter=search_filter,
-        with_payload=True,
-    )
+    # Try query_points (>= 1.9.0) first, fall back to search (< 1.9.0)
+    raw_results = []
+    try:
+        result = client.query_points(
+            collection_name=_COLLECTION_NAME,
+            query=vector,
+            limit=top_k,
+            query_filter=search_filter,
+            with_payload=True,
+        )
+        raw_results = result.points
+    except AttributeError:
+        # Older qdrant-client — use legacy search API
+        raw_results = client.search(
+            collection_name=_COLLECTION_NAME,
+            query_vector=vector,
+            limit=top_k,
+            query_filter=search_filter,
+            with_payload=True,
+        )
 
     hits = []
-    for r in results:
+    for r in raw_results:
         payload = dict(r.payload or {})
-        payload["score"] = round(r.score, 4)
+        payload["score"] = round(float(r.score), 4)
         hits.append(payload)
 
-    logger.debug("Few-shot search returned %d hits (top score=%.3f)",
-                 len(hits), hits[0]["score"] if hits else 0)
+    if hits:
+        logger.debug("Few-shot search: %d hits, top=%.3f", len(hits), hits[0]["score"])
     return hits
 
 

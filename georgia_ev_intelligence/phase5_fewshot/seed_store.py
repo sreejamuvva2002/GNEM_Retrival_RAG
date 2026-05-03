@@ -294,15 +294,9 @@ ORDER BY c.ev_supply_chain_role
         "category": "RISK",
     },
     {
-        "question": "Which Battery Cell suppliers have fewer than 300 employees, indicating fragile capacity?",
-        "sql": """
-SELECT company_name, tier, ev_supply_chain_role, location_county, employment
-FROM gev_companies
-WHERE ev_supply_chain_role ILIKE '%Battery Cell%'
-  AND employment < 300
-ORDER BY employment ASC
-""".strip(),
-        "answer": "Small Battery Cell suppliers with limited production capacity.",
+        "question": "Which Battery Cell or Battery Pack suppliers have fewer than 500 employees, suggesting limited capacity?",
+        "sql": """\nSELECT company_name, tier, ev_supply_chain_role, location_county, employment\nFROM gev_companies\nWHERE (ev_supply_chain_role ILIKE '%Battery Cell%'\n   OR ev_supply_chain_role ILIKE '%Battery Pack%')\n  AND employment < 500\nORDER BY employment ASC\n""".strip(),
+        "answer": "Small Battery Cell/Pack suppliers with under 500 employees — capacity risk.",
         "category": "RISK",
     },
 
@@ -398,17 +392,10 @@ ORDER BY employment DESC NULLS LAST
 
     # ── Compound filters ───────────────────────────────────────────────────────
     {
-        "question": "Which Tier 1 suppliers in Hall County have more than 500 employees?",
-        "sql": """
-SELECT company_name, tier, ev_supply_chain_role, location_county, employment
-FROM gev_companies
-WHERE LOWER(tier) = 'tier 1'
-  AND location_county ILIKE '%Hall%'
-  AND employment > 500
-ORDER BY employment DESC
-""".strip(),
-        "answer": "Large Tier 1 suppliers in Hall County, Georgia.",
-        "category": "COUNTY",
+        "question": "Which Tier 1 suppliers in Georgia have more than 300 employees?",
+        "sql": """\nSELECT company_name, tier, ev_supply_chain_role, location_county, employment\nFROM gev_companies\nWHERE LOWER(tier) = 'tier 1'\n  AND employment > 300\nORDER BY employment DESC\n""".strip(),
+        "answer": "Large Tier 1 suppliers in Georgia with over 300 employees.",
+        "category": "GENERAL",
     },
     {
         "question": "Which EV-relevant companies are in Jackson County?",

@@ -96,9 +96,9 @@ def run():
 
         entities = result["entities"]
         print(f"\n  ⚙  Entities: tier={entities.get('tier')} | oem={entities.get('oem')} | "
-              f"industry={entities.get('industry_group')} | role={entities.get('role')}")
-        print(f"  ⚙  Flags: risk={entities.get('risk_query')} | oem_dep={entities.get('oem_dependency')} | "
-              f"capacity={entities.get('capacity_risk')} | misalign={entities.get('misalignment')}")
+              f"industry={entities.get('industry_group')} | role={entities.get('ev_role') or entities.get('ev_role_list')}")
+        print(f"  ⚙  Flags: risk={entities.get('is_risk_query')} | oem_dep={entities.get('is_oem_dependency')} | "
+              f"capacity={entities.get('is_capacity_risk')} | misalign={entities.get('is_misalignment')}")
         print(f"  ⚙  Route: cypher={entities.get('cypher_used')} | rows={result.get('retrieved_count')}")
         print(f"\n  Answer preview: {result['answer'][:300]}")
         print(f"\n  ⏱  {elapsed:.1f}s")

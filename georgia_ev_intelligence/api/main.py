@@ -28,7 +28,7 @@ from pydantic import BaseModel
 
 from phase4_agent.pipeline import EVAgent
 from phase4_agent.entity_extractor import extract
-from phase4_agent.streaming import stream_answer, ANSWER_PROMPT, _budget_tokens
+from phase4_agent.streaming import stream_answer, build_answer_prompt, _budget_tokens
 from shared.config import Config
 from shared.logger import get_logger
 

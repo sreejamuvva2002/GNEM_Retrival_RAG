@@ -17,6 +17,7 @@ WHY TEXT-TO-SQL REPLACES HARDCODED RULES:
 """
 from __future__ import annotations
 
+import dataclasses
 import time
 from typing import Any
 
@@ -104,19 +105,18 @@ def _parse_company_context(context: str) -> list[dict]:
 
 
 def _sql_row_to_company(row: dict) -> dict:
-    """Map a raw SQL result row to the standard company dict for _format_companies."""
-    return {
-        "company_name":         row.get("company_name", ""),
-        "tier":                 row.get("tier", ""),
-        "ev_supply_chain_role": row.get("ev_supply_chain_role", ""),
-        "location_county":      row.get("location_county", ""),
-        "employment":           row.get("employment", ""),
-        "industry_group":       row.get("industry_group", ""),
-        "ev_battery_relevant":  row.get("ev_battery_relevant", ""),
-        "facility_type":        row.get("facility_type", ""),
-        "products_services":    row.get("products_services", ""),
-        "primary_oems":         row.get("primary_oems", ""),
-    }
+    """
+    Map a raw SQL result row to a company dict for _format_companies.
+
+    WHY SCHEMA-AGNOSTIC (not a hardcoded column whitelist):
+      If a new column is added to gev_companies (e.g. latitude, naics_code,
+      supplier_tier_2_of, etc.) it is automatically passed through here.
+      _format_companies reads specific named keys and ignores extras, so
+      new columns are available in context without any code change needed.
+
+      Rule: pass ALL row keys through, coercing None -> empty string.
+    """
+    return {k: (v if v is not None else "") for k, v in row.items()}
 
 
 class EVAgent:
@@ -456,25 +456,17 @@ class EVAgent:
         elapsed = time.monotonic() - start
         logger.info("Answered in %.1fs | rows=%d | cypher=%s", elapsed, retrieved_count, cypher_used)
 
+        # Serialize ALL entity fields automatically using dataclasses.asdict().
+        # WHY: a hardcoded dict silently drops new fields added to Entities.
+        # dataclasses.asdict() always includes every field — zero maintenance.
+        entity_dict = dataclasses.asdict(entities)
+        entity_dict["cypher_used"] = cypher_used   # pipeline-level flag, not in dataclass
+
         return {
             "question":          question,
             "answer":            answer,
-            "retrieved_context": context,   # ← for RAGAS faithfulness/precision/recall
-            "entities": {
-                "tier":           entities.tier,
-                "county":         entities.county,
-                "company":        entities.company_name,
-                "oem":            entities.oem,
-                "industry_group": entities.industry_group,
-                "role":           entities.ev_role or entities.ev_role_list,
-                "keywords":       entities.product_keywords,
-                "aggregate":      entities.is_aggregate,
-                "risk_query":     entities.is_risk_query,
-                "oem_dependency": entities.is_oem_dependency,
-                "capacity_risk":  entities.is_capacity_risk,
-                "misalignment":   entities.is_misalignment,
-                "cypher_used":    cypher_used,
-            },
+            "retrieved_context": context,
+            "entities":          entity_dict,
             "retrieved_count":   retrieved_count,
             "elapsed_s":         round(elapsed, 1),
         }

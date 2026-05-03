@@ -57,7 +57,7 @@ for i, (path_type, question) in enumerate(TEST_QUESTIONS, 1):
     cypher_used = ents.get("cypher_used", False)
     print(f"  Path      : {'Neo4j Cypher ✓' if cypher_used else 'PostgreSQL / Direct'}")
     print(f"  Tier      : {ents.get('tier')} | County: {ents.get('county')} | OEM: {ents.get('oem')}")
-    print(f"  Aggregate : {ents.get('aggregate')} | Retrieved~: {result['retrieved_count']} rows")
+    print(f"  Aggregate : {ents.get('is_aggregate')} | Retrieved~: {result['retrieved_count']} rows")
     print(f"  Time      : {result['elapsed_s']}s")
     print(f"\n  ANSWER:\n")
     for line in result['answer'].split('\n'):

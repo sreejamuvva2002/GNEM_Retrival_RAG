@@ -47,28 +47,54 @@ from shared.logger import get_logger
 
 logger = get_logger("phase4.streaming")
 
-ANSWER_PROMPT = """You are an expert analyst for the Georgia EV Supply Chain Intelligence System.
+_ANSWER_PROMPT_TEMPLATE = """You are an expert analyst for the Georgia EV Supply Chain Intelligence System.
 
 QUESTION: {question}
 
-RETRIEVED DATA (pre-filtered by the pipeline to match the question):
+RETRIEVED DATA (pre-filtered by SQL/graph queries — every row below matches the question):
 {context}
 
-CRITICAL INSTRUCTIONS — read carefully before answering:
-1. The RETRIEVED DATA above has ALREADY been filtered by SQL/graph queries to match the question.
-   You MUST treat every row in the table as a valid answer. Do NOT re-apply question criteria.
-2. Read EVERY single row in the table from top to bottom. Do not stop reading early.
-3. List ALL companies shown in the table — do not skip, omit, or summarize any.
-4. Include exact values: company name, tier, role, county, and employment number.
-5. If the table shows employment by county, identify the county with the highest total.
-6. Do NOT say "database does not contain" or "not found" if ANY rows appear in the table above.
-7. Only say "No companies found" if the retrieved data says "No matching companies found." literally.
-8. Analyze risks, relationships, or trends based only on companies listed — no external knowledge.
-9. Be factual and concise. Use exact numbers.
+CRITICAL INSTRUCTIONS:
+1. The data above has ALREADY been filtered. Treat EVERY row as a valid result. Do NOT re-filter.
+2. This table contains exactly {row_count} {row_noun}. You MUST list all {row_count}.
+3. List them one by one in order. Do not skip, omit, or combine any rows.
+4. For each company include: name, tier, role, county, and employment number.
+5. If the table shows employment by county, identify the highest-total county.
+6. Do NOT say "not found" or "database does not contain" — the data IS the database.
+7. Only say "No companies found" if the context literally says "No matching companies found."
+8. Be factual and concise. Use exact numbers from the table.
 
 Answer:"""
 
 
+def build_answer_prompt(question: str, context: str) -> str:
+    """
+    Build the synthesis prompt with an explicit row count injected into instruction #2.
+    This prevents the LLM from stopping at row 1 when there are multiple rows.
+
+    The row count is computed from the context (pipe-separated rows, excluding header).
+    For county aggregate data (no pipe rows) the count is computed from newlines.
+    """
+    # Count company rows (pipe-separated, excluding the header line)
+    row_count = sum(
+        1 for line in context.splitlines()
+        if " | " in line and not line.strip().startswith("Company")
+    )
+    # Fallback: for county aggregate lines (no pipes), count non-blank non-header lines
+    if row_count == 0:
+        row_count = sum(
+            1 for line in context.splitlines()
+            if line.strip() and not line.startswith("[") and ":" in line
+            and not line.startswith("Total")
+        )
+
+    row_noun = "company" if row_count == 1 else "companies"
+    return _ANSWER_PROMPT_TEMPLATE.format(
+        question=question,
+        context=context[:3500],
+        row_count=row_count if row_count > 0 else "unknown number of",
+        row_noun=row_noun,
+    )
 
 
 def _budget_tokens(context: str) -> int:
@@ -107,10 +133,8 @@ def stream_answer(
         str — each token as it arrives from Ollama
     """
     cfg = Config.get()
-    prompt = ANSWER_PROMPT.format(
-        question=question,
-        context=context[:3500],   # same cap as non-streaming path
-    )
+    prompt = build_answer_prompt(question, context)
+
     payload = {
         "model":  cfg.ollama_llm_model,
         "prompt": prompt,
