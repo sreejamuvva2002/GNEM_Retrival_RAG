@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Georgia EV Intelligence — Evaluation Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:#0f1117; --surface:#1a1d27; --surface2:#22263a;
+    --accent:#6366f1; --accent2:#22d3ee; --text:#e2e8f0;
+    --text2:#94a3b8; --border:#2d3148; --good:#10b981;
+    --warn:#f59e0b; --bad:#ef4444; --radius:12px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh}
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  .hero{background:linear-gradient(135deg,#1e1b4b 0%,#0f172a 50%,#0c1a2e 100%);
+    padding:48px 40px 36px;border-bottom:1px solid var(--border)}
+  .hero h1{font-size:2rem;font-weight:700;background:linear-gradient(90deg,#818cf8,#22d3ee);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{color:var(--text2);margin-top:8px;font-size:0.95rem}
+  .container{max-width:1400px;margin:0 auto;padding:32px 24px}
+  .section-title{font-size:1.1rem;font-weight:600;color:var(--text2);
+    text-transform:uppercase;letter-spacing:.08em;margin-bottom:20px;margin-top:40px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:32px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+    padding:20px;text-align:center}
+  .card .value{font-size:2rem;font-weight:700;color:var(--accent)}
+  .card .label{color:var(--text2);font-size:0.8rem;margin-top:4px;text-transform:uppercase;letter-spacing:.05em}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:32px}
+  @media(max-width:900px){.charts-row{grid-template-columns:1fr}}
+  .chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px}
+  .chart-box h3{font-size:0.95rem;font-weight:600;color:var(--text2);margin-bottom:16px}
+  table{width:100%;border-collapse:collapse;background:var(--surface);
+    border-radius:var(--radius);overflow:hidden;font-size:0.85rem}
+  th{background:var(--surface2);color:var(--text2);font-weight:600;text-transform:uppercase;
+    font-size:0.72rem;letter-spacing:.06em;padding:12px 14px;text-align:left;border-bottom:1px solid var(--border)}
+  td{padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:none}
+  tr:hover td{background:var(--surface2)}
+  .num{text-align:right;font-variant-numeric:tabular-nums}
+  .bold{font-weight:700;color:var(--accent2)}
+  .badge-fmt{background:#312e81;color:#a5b4fc;padding:3px 8px;border-radius:6px;font-size:0.72rem;white-space:nowrap}
+  .badge{padding:2px 8px;border-radius:20px;font-size:0.75rem;font-weight:600}
+  .badge-good{background:#064e3b;color:#6ee7b7}
+  .badge-warn{background:#78350f;color:#fcd34d}
+  .badge-bad{background:#7f1d1d;color:#fca5a5}
+  .q-text{max-width:240px;font-size:0.8rem;color:var(--text2)}
+  .ans-cell{max-width:280px;font-size:0.78rem;color:var(--text2)}
+  .filters{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  select{background:var(--surface2);color:var(--text);border:1px solid var(--border);
+    border-radius:8px;padding:6px 12px;font-size:0.85rem;outline:none}
+  .tab-bar{display:flex;gap:4px;margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:0}
+  .tab{padding:10px 20px;cursor:pointer;color:var(--text2);font-size:0.9rem;border-bottom:3px solid transparent;
+    transition:all .2s}
+  .tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+  .tab-content{display:none}.tab-content.active{display:block}
+  code{background:#1e2235;padding:2px 6px;border-radius:4px;font-size:0.8rem}
+  .format-explainer{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-bottom:32px}
+  .fmt-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+  .fmt-card .fmt-title{font-weight:700;font-size:0.95rem;margin-bottom:8px}
+  .fmt-card p{color:var(--text2);font-size:0.82rem;line-height:1.6}
+  .fmt-card .tag{display:inline-block;margin-top:10px;font-size:0.7rem;padding:2px 8px;
+    border-radius:20px;background:#1e2235;color:var(--accent2)}
+  .winner-badge{background:linear-gradient(90deg,#6366f1,#22d3ee);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+</style>
+</head>
+<body>
+<div class="hero">
+  <h1>🔋 Georgia EV Intelligence — Evaluation Dashboard</h1>
+  <p>RAGAS evaluation comparing 4 retrieval formats × multiple models on 50 Georgia EV supply chain questions</p>
+</div>
+<div class="container">
+
+  <div class="tab-bar">
+    <div class="tab active" onclick="showTab('overview')">📊 Overview</div>
+    <div class="tab" onclick="showTab('formats')">🔍 Format Details</div>
+    <div class="tab" onclick="showTab('questions')">📋 Question Drill-Down</div>
+    <div class="tab" onclick="showTab('explainer')">💡 How It Works</div>
+  </div>
+
+  <!-- OVERVIEW TAB -->
+  <div class="tab-content active" id="tab-overview">
+    <div class="section-title">Summary Metrics</div>
+    <div class="cards">
+      <div class="card"><div class="value">50</div><div class="label">Total Answers</div></div>
+      <div class="card"><div class="value">1</div><div class="label">Formats Tested</div></div>
+      <div class="card"><div class="value">1</div><div class="label">Models Tested</div></div>
+      <div class="card"><div class="value">50</div><div class="label">Questions / Run</div></div>
+    </div>
+
+    <div class="charts-row">
+      <div class="chart-box">
+        <h3>Overall Score by Format &amp; Model</h3>
+        <canvas id="barChart" height="200"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>RAGAS Metrics Radar</h3>
+        <canvas id="radarChart" height="200"></canvas>
+      </div>
+    </div>
+
+    <div class="section-title">Score Comparison Table</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Format</th><th>Model</th>
+          <th class="num">Faithfulness</th><th class="num">Relevancy</th>
+          <th class="num">Ctx Precision</th><th class="num">Ctx Recall</th>
+          <th class="num">Correctness</th><th class="num">Overall ↑</th><th class="num">N</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge-fmt">F3</span></td>
+          <td><code>qwen2.5:7b</code></td>
+          <td class="num">0.76</td><td class="num">0.90</td>
+          <td class="num">0.82</td><td class="num">0.94</td>
+          <td class="num">0.78</td>
+          <td class="num bold">0.841</td>
+          <td class="num">50</td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <!-- FORMAT DETAILS TAB -->
+  <div class="tab-content" id="tab-formats">
+    <div class="section-title">Format Breakdown</div>
+    <div class="format-explainer">
+      <div class="fmt-card">
+        <div class="fmt-title">F1 — Only RAG</div>
+        <p>SQL + Neo4j retrieves rows from your DB. LLM reads ONLY those rows — no added knowledge.
+        Few-shot injection is disabled. Measures pure pipeline quality.</p>
+        <span class="tag">few-shot: OFF</span>
+      </div>
+      <div class="fmt-card">
+        <div class="fmt-title">F2 — No RAG</div>
+        <p>No retrieval at all. LLM answers entirely from pre-training weights.
+        Expected to score low on Georgia-specific facts — proves your DB adds value.</p>
+        <span class="tag">no retrieval</span>
+      </div>
+      <div class="fmt-card">
+        <div class="fmt-title">F3 — RAG + Pre-trained</div>
+        <p>Full Phase 4+5 system. Few-shot examples guide SQL generation.
+        LLM may supplement with general EV domain knowledge. Current production config.</p>
+        <span class="tag">few-shot: ON</span>
+      </div>
+      <div class="fmt-card">
+        <div class="fmt-title">F4 — RAG + Pre-trained + Web</div>
+        <p>Phase 4+5 plus real-time Tavily web search results. DB context + live web news combined.
+        Covers events not yet in your database.</p>
+        <span class="tag">few-shot: ON + Tavily</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUESTION DRILL-DOWN TAB -->
+  <div class="tab-content" id="tab-questions">
+    <div class="section-title">Per-Question Results</div>
+    <div class="filters">
+      <select id="filterFormat" onchange="filterTable()">
+        <option value="">All Formats</option>
+        <option value="F3">F3</option>
+      </select>
+      <select id="filterModel" onchange="filterTable()">
+        <option value="">All Models</option>
+        <option value="qwen2.5:7b">qwen2.5:7b</option>
+      </select>
+    </div>
+    <table id="qTable">
+      <thead>
+        <tr><th>ID</th><th>Format</th><th>Model</th><th>Question</th>
+        <th>Correctness</th><th class="num">Rows</th><th class="num">Time</th><th>Answer</th></tr>
+      </thead>
+      <tbody>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>1</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Show all "Tier 1/2" suppliers in Georgia, list their EV Supply Chain Role and Pr</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">61.7</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>2</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia companies are classified under Battery Cell or Battery Pack roles,</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">20.0</td>
+          <td class="ans-cell">1. Hitachi Astemo Americas Inc., Tier 1/2, Battery Cell, Harris County, 723
+2. Hollingsworth & Vose Co., Tier 1/2, Batte…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>3</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Map all Thermal Management suppliers in Georgia and show which Primary OEMs they</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">5.9</td>
+          <td class="ans-cell">ZF Gainesville LLC | OEM Supply Chain | EV thermal management and power electronics supplier | Hall County | 1200…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>4</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">List every Georgia company classified under Power Electronics or Charging Infras</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">4</td>
+          <td class="num">23.5</td>
+          <td class="ans-cell">1. Yazaki North America | Tier Footprint | Power electronics, sensors, and EV |  | 2000 | Automotive electronics and sys…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>5</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which companies are classified as Direct Manufacturer, and what EV Supply Chain </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">45.8</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>6</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">What locations does Novelis Inc. operate in, and what primary facility types are</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">1</td>
+          <td class="num">4.6</td>
+          <td class="ans-cell">Novelis Inc. | Tier 1 | General Automotive | Fulton County | 260…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>7</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">In Gwinnett County, which company has the highest Employment and what is its EV </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">11</td>
+          <td class="num">35.4</td>
+          <td class="ans-cell">1. SungEel Recycling Park Georgia | Tier 2/3 | Materials | Gwinnett County | 650 employees
+2. WIKA USA | OEM Supply Chai…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>8</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which county have the highest total Employment among Tier 1 suppliers only?</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">34.3</td>
+          <td class="ans-cell">1. Troup County | Tier 1 | Supplier | Troup County | 2,285 employees
+2. Forsyth County | Tier 1 | Supplier | Forsyth Cou…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>9</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which county has the highest total employment across all companies, and what is </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">36.0</td>
+          <td class="ans-cell">Based on the provided data:
+
+1. Company Name: Jackson County
+   Tier: Not specified in the given data
+   Role: Not speci…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>10</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify all Vehicle Assembly facilities in Georgia and list the corresponding P</td>
+          <td><span class="badge badge-warn">0.60</span></td>
+          <td class="num">10</td>
+          <td class="num">26.8</td>
+          <td class="ans-cell">1. Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+2. Suzuki Manufacturing of America Corp. | OEM | Ve…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>11</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify the primary products and services associated with Sewon America Inc. ac</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">1</td>
+          <td class="num">4.8</td>
+          <td class="ans-cell">Sewon America Inc., Tier 1, General Automotive, Troup County, 75…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>12</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">List all Tier 2/3 companies in Georgia with primary involvement in the electric </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">42.9</td>
+          <td class="ans-cell">1. Grudem | Tier 2/3 | General Automotive | Hall County | 807
+2. Flambeau Inc. | Tier 2/3 | General Automotive | Morgan …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>13</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Show the full supplier network linked to Rivian Automotive in Georgia, broken do</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">20.0</td>
+          <td class="ans-cell">1. Suzuki Manufacturing of America Corp., Tier 1, Vehicle Assembly, Douglas County, 7500
+2. GSC Steel Stamping LLC, Tier…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>14</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia companies produce battery materials such as anodes, cathodes, elec</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">7.2</td>
+          <td class="ans-cell">Hollingsworth & Vose Co., Tier 1/2, Battery Pack, Pulaski County, 400
+
+F&P Georgia Manufacturing, Tier 1/2, Battery Pack…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>15</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify all Georgia companies with an EV Supply Chain Role related to wiring ha</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">15</td>
+          <td class="num">45.8</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>16</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery ele</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">44.8</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>17</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia companies manufacture high-voltage wiring harnesses or EV electric</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">14.5</td>
+          <td class="ans-cell">Woodbridge Foam Corp. | OEM Supply Chain | EV wiring harnesses and power distr | DeKalb County | 1657
+WIKA USA | OEM Sup…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>18</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment i</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">1</td>
+          <td class="num">5.7</td>
+          <td class="ans-cell">GSC Steel Stamping LLC | Tier 2/3 | Power Electronics | Bartow County | 350…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>19</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Find Georgia-based companies that manufacture copper foil or electrodeposited ma</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">4.7</td>
+          <td class="ans-cell">Duckyang, Tier 2/3, General Automotive, Jackson County, 250…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>20</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or compo</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">15</td>
+          <td class="num">44.7</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>21</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Find Georgia suppliers with existing Hyundai Kia contracts that could be expande</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">12</td>
+          <td class="num">36.6</td>
+          <td class="ans-cell">1. Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Batter…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>22</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia companies producing DC-to-DC converters, capacitors, or power e</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">3</td>
+          <td class="num">16.2</td>
+          <td class="ans-cell">Yazaki North America | Tier 1 | Power electronics, sensors, and EV | - | 2000 | Automotive electronics and sys | Yes | E…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>23</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia companies provide powder coating-related products or services, and</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">16</td>
+          <td class="num">44.9</td>
+          <td class="ans-cell">1. TCI Powder Coatings | OEM | Vehicle Assembly | Schley County | 3000
+2. Arising Industries Inc. | Tier 2/3 | General A…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>24</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia companies manufacture battery parts or enclosure systems and are c</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">44.7</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>25</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classifi</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">9</td>
+          <td class="num">26.7</td>
+          <td class="ans-cell">Grudem | Tier 2/3 | General Automotive | Hall County | 807
+Flambeau Inc. | Tier 2/3 | General Automotive | Morgan County…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>26</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industr</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">7.4</td>
+          <td class="ans-cell">Archer Aviation Inc., Tier 2/3, General Automotive, Morgan County, 200
+
+Arising Industries Inc., Tier 2/3, General Autom…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>27</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which EV Supply Chain Roles in Georgia are served by only a single company, crea</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">1.3</td>
+          <td class="ans-cell">Georgia has 25 EV supply chain roles served by only ONE company (single points of failure):
+
+• GSC Steel Stamping LLC [T…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>28</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a speci</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">17.0</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc., Tier 1/2, Battery Cell, Harris County, 723
+Hollingsworth & Vose Co., Tier 1/2, Battery Pac…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>29</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">18.5</td>
+          <td class="ans-cell">Hyundai Transys Georgia Powertrain | Tier 1/2 | Thermal Management | Troup County | 130
+Racemark International LLC | Tie…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>30</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General </td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">3</td>
+          <td class="num">9.5</td>
+          <td class="ans-cell">GSC Steel Stamping LLC | Tier 2/3 | Power Electronics | Bartow County | 350
+Duckyang | Tier 2/3 | General Automotive | J…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>31</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversi</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">11</td>
+          <td class="num">33.0</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Fouts Brothers Fire Equipment | Tier 1/2 | Ge…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>32</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia companies in the Thermal Management or Power Electronics role w</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">4</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Novelis Inc., Tier 1, Thermal Management, Fulton County, 200
+Peerless-Winsmith Inc., Tier 1, Thermal Management, Hall Co…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>33</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Su</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">15.8</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA), OEM (Footprint), OEM parent group footprint (electric and commercial vehicles an…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>34</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Top 10 Georgia companies based on employment size that supply both General Autom</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">10</td>
+          <td class="num">30.8</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA), OEM (Footprint), OEM parent group footprint (electrical and powertrain systems),…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>35</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">How many Georgia companies are now producing lithium-ion battery materials, cell</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">63.5</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc., Tier 1/2, Battery Cell, Harris County, 723
+Hollingsworth & Vose Co., Tier 1/2, Battery Pac…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>36</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or compo</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">15</td>
+          <td class="num">44.4</td>
+          <td class="ans-cell">1. Grudem | Tier 2/3 | General Automotive | Hall County | 807 employees
+2. Flambeau Inc. | Tier 2/3 | General Automotive…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>37</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia companies whose product descriptions include 'high-voltage', 'D</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">13</td>
+          <td class="num">36.2</td>
+          <td class="ans-cell">1. MAT Heavy Duty | Tier 1 | General Automotive | Gwinnett County | 400
+2. Mobis Alabama LLC | Tier 1 | General Automoti…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>38</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia automotive companies employ over 1,000 workers but are currently c</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">15</td>
+          <td class="num">45.7</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>39</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which three Georgia companies have the largest employment in EV thermal manageme</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">18.2</td>
+          <td class="ans-cell">1. ZF Gainesville LLC | OEM Supply Chain | EV thermal management and power ele | Hall County | 1200
+2. Novelis Inc. | Ti…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>40</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which companies are involved in thermal-related products or services, and what r</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">13</td>
+          <td class="num">36.2</td>
+          <td class="ans-cell">1. MAT Heavy Duty | Tier 1 | General Automotive | Gwinnett County | 400
+2. Mobis Alabama LLC | Tier 1 | General Automoti…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>41</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradu</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">11</td>
+          <td class="num">33.9</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800 employees
+2. Fouts Brothers Fire Equipment | Tie…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>42</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">How is demand for thermal management solutions reflected in the number and emplo</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">16.8</td>
+          <td class="ans-cell">ZF Gainesville LLC | OEM Supply Chain | EV thermal management and power ele | Hall County | 1200
+Novelis Inc. | Tier 1 |…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>43</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia companies are involved in battery recycling or second-life battery</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">9</td>
+          <td class="num">25.3</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc., Tier 1/2, Battery Cell, Harris County, 723
+SungEel Recycling Park Georgia, Tier 2/3, Mater…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>44</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia suppliers appear to play innovation-stage roles through research, </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">35.4</td>
+          <td class="ans-cell">Honda Development & Manufacturing | Tier 1/2 | Battery Cell | Cherokee County | 400 | Electronic and Other Electrical | …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>45</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia suppliers currently serving traditional OEMs are also linked to EV</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">15</td>
+          <td class="num">45.8</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>46</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Identify Georgia areas that currently lack Battery Cell or Battery Pack supplier</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">15</td>
+          <td class="num">46.0</td>
+          <td class="ans-cell">1. Joon Georgia, Inc. | Tier 1 | General Automotive | Chattahoochee County | 900 employees
+2. Jefferson Southern Corpora…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>47</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">For a new Tier 1 battery thermal management company looking to locate in Georgia</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">14.9</td>
+          <td class="ans-cell">Novelis Inc., Tier 1, Thermal Management, Fulton County, 200
+Panasonic Automotive Systems Co., Tier 1, Materials, Fayett…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>48</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">How many Georgia areas have concentrated Manufacturing Plant facilities but no E</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">40.2</td>
+          <td class="ans-cell">1. Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+2. Suzuki Manufacturing of America Corp. | OEM | Ve…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>49</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">For an international battery materials company seeking a Georgia location, which</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">44.7</td>
+          <td class="ans-cell">1. Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+2. Suzuki Manufacturing of America Corp. | OEM | Ve…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
+          <td>50</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:7b</code></td>
+          <td class="q-text">Which Georgia areas have R&D facility types in the automotive sector, suggesting</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">6.8</td>
+          <td class="ans-cell">Racemark International LLC | Tier 1 | General Automotive | Jones County | 120 | Transportation Equipment | Yes | R&D | M…</td>
+        </tr></tbody>
+    </table>
+  </div>
+
+  <!-- EXPLAINER TAB -->
+  <div class="tab-content" id="tab-explainer">
+    <div class="section-title">How the Evaluation Works</div>
+    <div class="fmt-card" style="max-width:800px">
+      <div class="fmt-title">LLM-as-Judge Scoring</div>
+      <p>Each answer is scored by a local <code>qwen2.5:7b</code> model acting as a judge.
+      It reads the question, retrieved context, and system answer — then assigns 0.0–1.0 scores
+      for 5 RAGAS metrics. No external API required.</p>
+    </div>
+    <br>
+    <div class="fmt-card" style="max-width:800px">
+      <div class="fmt-title">Bias Isolation</div>
+      <p>The 40 few-shot training examples are NOT used in F1 and F2 evaluations.
+      This ensures the 50 evaluation questions score the pipeline fairly —
+      the model cannot be "hinted" by a similar training example during scoring.</p>
+    </div>
+    <br>
+    <div class="fmt-card" style="max-width:800px">
+      <div class="fmt-title">Key Comparisons</div>
+      <p>
+        <b>F2 vs F1</b>: Proves RAG adds value over bare LLM knowledge.<br>
+        <b>F1 vs F3</b>: Shows impact of few-shot SQL guidance.<br>
+        <b>F3 vs F4</b>: Shows if real-time web data improves completeness.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const METRICS = ["faithfulness", "answer_relevancy", "context_precision", "context_recall", "answer_correctness"];
+const METRIC_LABELS = ["Faithfulness", "Answer Relevancy", "Context Precision", "Context Recall", "Answer Correctness"];
+
+// Bar chart
+new Chart(document.getElementById('barChart'), {
+  type: 'bar',
+  data: {
+    labels: ["F3\nqwen2.5:7b"],
+    datasets: [{
+      label: 'Overall Score',
+      data: [0.841],
+      backgroundColor: ["#6366f1"],
+      borderRadius: 6,
+    }]
+  },
+  options: {
+    responsive: true, plugins: {legend: {display: false}},
+    scales: {
+      y: {min: 0, max: 1, grid: {color: '#2d3148'}, ticks: {color: '#94a3b8'}},
+      x: {grid: {display: false}, ticks: {color: '#94a3b8', font: {size: 10}}}
+    }
+  }
+});
+
+// Radar chart
+new Chart(document.getElementById('radarChart'), {
+  type: 'radar',
+  data: {
+    labels: METRIC_LABELS,
+    datasets: [{"label": "F3 / qwen2.5:7b", "data": [0.758, 0.904, 0.82, 0.938, 0.782], "borderColor": "#6366f1", "backgroundColor": "#6366f133"}]
+  },
+  options: {
+    responsive: true,
+    scales: {r: {min: 0, max: 1, grid: {color: '#2d3148'}, ticks: {display: false},
+      pointLabels: {color: '#94a3b8', font: {size: 10}}}},
+    plugins: {legend: {labels: {color: '#94a3b8', font: {size: 10}}}}
+  }
+});
+
+// Tabs
+function showTab(name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// Filter table
+function filterTable() {
+  const fmt   = document.getElementById('filterFormat').value;
+  const model = document.getElementById('filterModel').value;
+  document.querySelectorAll('#qTable .q-row').forEach(row => {
+    const fmtMatch   = !fmt   || row.dataset.format === fmt;
+    const modelMatch = !model || row.dataset.model  === model;
+    row.style.display = (fmtMatch && modelMatch) ? '' : 'none';
+  });
+}
+</script>
+</body>
+</html>

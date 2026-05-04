@@ -122,24 +122,24 @@ def _sql_row_to_company(row: dict) -> dict:
 class EVAgent:
     """Georgia EV Supply Chain Intelligence Agent — V3 Architecture."""
 
-    def __init__(self) -> None:
+    def __init__(self, model_override: str | None = None) -> None:
         cfg = Config.get()
-        self.llm_model = cfg.ollama_llm_model
+        # model_override lets the evaluator pass 'gemma2:9b', 'qwen2.5:14b' etc.
+        # directly without modifying env vars (Config is @lru_cache — env changes are ignored).
+        self.llm_model = model_override or cfg.ollama_llm_model
         logger.info("EVAgent initialized | model=%s", self.llm_model)
+
 
     # ── Step 3: Generate ──────────────────────────────────────────────────────
 
     def _generate(self, question: str, context: str) -> str:
-        """
-        Synthesize a natural language answer from retrieved context.
-        Uses streaming internally (stream=True) — better per-token timeout handling.
-        Collects tokens into a string for backward compatibility.
-        """
+        """Synthesize answer — uses self.llm_model (supports model_override for eval)."""
         try:
-            return stream_answer_collected(question, context)
+            return stream_answer_collected(question, context, model=self.llm_model)
         except Exception as exc:
             logger.error("Synthesis failed: %s", exc)
             return f"[LLM unavailable] Retrieved data: {context[:500]}"
+
 
     # ── Step 2: Retrieve ──────────────────────────────────────────────────────
 

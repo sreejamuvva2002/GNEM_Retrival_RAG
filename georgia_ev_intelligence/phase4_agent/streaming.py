@@ -129,6 +129,7 @@ def stream_answer(
     question: str,
     context: str,
     timeout: float = 120.0,
+    model: str | None = None,    # overrides cfg.ollama_llm_model when set
 ) -> Generator[str, None, None]:
     """
     Stream synthesis tokens from the LLM.
@@ -146,15 +147,14 @@ def stream_answer(
     prompt = build_answer_prompt(question, context)
 
     payload = {
-        "model":  cfg.ollama_llm_model,
+        "model":  model or cfg.ollama_llm_model,  # model_override takes priority
         "prompt": prompt,
         "stream": True,
         "options": {
             "temperature": 0.05,
-            "num_predict": _budget_tokens(context),  # dynamic: scales with row count
+            "num_predict": _budget_tokens(context),
             "num_ctx":     6144,
         },
-
     }
 
     url = f"{cfg.ollama_base_url}/api/generate"
@@ -187,14 +187,12 @@ def collect_stream(gen: Generator[str, None, None]) -> str:
     return "".join(gen)
 
 
-def stream_answer_collected(question: str, context: str) -> str:
+def stream_answer_collected(question: str, context: str, model: str | None = None) -> str:
     """
-    Non-streaming interface that internally uses streaming.
-    Exactly equivalent to the old _generate() method but uses
-    streaming under the hood (better timeout handling per-token
-    instead of waiting for full response).
+    Non-streaming interface — collects all tokens into a string.
+    Pass model= to override the default LLM (e.g. 'gemma2:9b' for eval).
     """
-    return collect_stream(stream_answer(question, context))
+    return collect_stream(stream_answer(question, context, model=model))
 
 
 # ── FastAPI SSE helper (for chatbot API) ──────────────────────────────────────
