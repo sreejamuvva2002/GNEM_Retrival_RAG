@@ -100,18 +100,17 @@ GOLDEN ANSWER (the ground truth):
 {golden}
 
 Score these 5 metrics (0.00 to 1.00):
-1. faithfulness: Does the answer use only information from the retrieved context? (1.00 = purely faithful, 0.00 = fabricated)
-   Note: For F2 (No RAG), context is empty — skip this, set to null.
+1. faithfulness: Does the answer use only information from the retrieved context? (1.00 = purely faithful. If context is empty, this MUST be 0.00 because nothing can be faithful to an empty context).
 2. answer_relevancy: Does the answer actually address the question? (1.00 = perfectly relevant)
-3. context_precision: Are the retrieved rows relevant to the question? (1.00 = all relevant, null if no context)
-4. context_recall: Did the retrieval capture all the facts present in the GOLDEN ANSWER? (1.00 = complete, null if no context)
+3. context_precision: Are the retrieved rows relevant to the question? (1.00 = all relevant. If context is empty, this MUST be 0.00).
+4. context_recall: Did the retrieval capture all the facts present in the GOLDEN ANSWER? (1.00 = complete. If context is empty, this MUST be 0.00).
 5. answer_correctness: Is the SYSTEM ANSWER factually correct compared to the GOLDEN ANSWER? (1.00 = identical facts)
 
 Return exactly this JSON format (use your own precise scores):
 {{"faithfulness": 0.84, "answer_relevancy": 0.92, "context_precision": 0.76, "context_recall": 0.88, "answer_correctness": 0.95}}"""
 
 
-def score_answer(question: str, context: str, answer: str, golden: str, judge_model: str = "gemma3:12b") -> dict:
+def score_answer(question: str, context: str, answer: str, golden: str, judge_model: str = "qwen2.5:7b") -> dict:
     """Score an answer using LLM-as-judge. Returns dict of metric scores."""
     prompt = _JUDGE_PROMPT.format(
         question=question[:300],
@@ -285,8 +284,8 @@ def main():
         help="Number of questions to evaluate (default: 50)"
     )
     parser.add_argument(
-        "--judge-model", default="gemma3:12b",
-        help="Model to use as LLM judge (default: gemma3:12b)"
+        "--judge-model", default="qwen2.5:7b",
+        help="Model to use as LLM judge (default: qwen2.5:7b)"
     )
     parser.add_argument(
         "--dashboard-only", action="store_true",
