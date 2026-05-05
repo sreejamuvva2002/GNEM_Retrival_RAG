@@ -9,14 +9,15 @@ WHY THIS APPROACH:
   - Research: 256-512 token sweet spot for retrieval accuracy (2025 consensus)
 
 TWO DOCUMENT TYPES:
-  1. GNEM Company records → 1 chunk per company (structured text, ~100 tokens)
-     These are pre-formatted: "Company: X | Tier: Y | Location: Z | ..."
+  1. GNEM Company records → multi-view chunks per company row
+     One master chunk plus focused role/product/OEM/location views
   2. Web documents → hierarchical parent-child split
      Parent = 800 tokens (sent to LLM as context)
      Child  = 256 tokens (used for vector search)
 """
 from __future__ import annotations
 
+import hashlib
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -78,6 +79,123 @@ def _clean_text(text: str) -> str:
     # Remove null bytes
     text = text.replace("\x00", "")
     return text.strip()
+
+
+def _company_row_id(company: dict[str, Any]) -> str:
+    """
+    Stable identifier for one GNEM workbook row.
+
+    We prefer any explicit row/source id already present, then fall back to a
+    deterministic hash of the row content so all semantic views of the same row
+    can be merged back together after retrieval.
+    """
+    for key in ("source_row_id", "row_id"):
+        if company.get(key):
+            return str(company[key])
+    if company.get("id") is not None:
+        return f"company-id-{company['id']}"
+
+    identity_fields = [
+        company.get("company_name", ""),
+        company.get("tier", ""),
+        company.get("ev_supply_chain_role", ""),
+        company.get("primary_oems", ""),
+        company.get("location_city", ""),
+        company.get("location_county", ""),
+        company.get("employment", ""),
+        company.get("products_services", ""),
+        company.get("classification_method", ""),
+        company.get("supplier_affiliation_type", ""),
+    ]
+    raw = "|".join(str(v or "").strip() for v in identity_fields)
+    digest = hashlib.sha1(raw.encode("utf-8")).hexdigest()[:16]
+    return f"gnem-row-{digest}"
+
+
+def _nonempty_parts(parts: list[str]) -> list[str]:
+    return [part for part in parts if part and part.strip()]
+
+
+def _location_text(company: dict[str, Any]) -> str:
+    return " | ".join(_nonempty_parts([
+        str(company.get("location_city") or "").strip(),
+        str(company.get("location_county") or "").strip(),
+        str(company.get("location_state") or "Georgia").strip(),
+    ]))
+
+
+def _company_view_texts(company: dict[str, Any], master_text: str) -> list[tuple[str, str]]:
+    """
+    Build multiple semantic views for the same company row.
+
+    The master view keeps the full structured record for answer generation,
+    while focused views give the retriever cleaner semantic targets.
+    """
+    company_name = str(company.get("company_name") or "").strip()
+    location = _location_text(company)
+    tier = str(company.get("tier") or "").strip()
+    role = str(company.get("ev_supply_chain_role") or "").strip()
+    primary_oems = str(company.get("primary_oems") or "").strip()
+    ev_relevant = str(company.get("ev_battery_relevant") or "").strip()
+    industry = str(company.get("industry_group") or "").strip()
+    facility = str(company.get("facility_type") or "").strip()
+    products = str(company.get("products_services") or "").strip()
+    classification = str(company.get("classification_method") or "").strip()
+    affiliation = str(company.get("supplier_affiliation_type") or "").strip()
+    employment = str(company.get("employment") or "").strip()
+
+    views: list[tuple[str, str]] = [("master", master_text)]
+
+    role_parts = _nonempty_parts([
+        f"Company: {company_name}",
+        "Focus: EV supply chain role and classification",
+        f"Tier: {tier}" if tier else "",
+        f"EV Role: {role}" if role else "",
+        f"EV / Battery Relevant: {ev_relevant}" if ev_relevant else "",
+        f"Classification: {classification}" if classification else "",
+        f"Supplier Affiliation: {affiliation}" if affiliation else "",
+        f"Primary OEMs: {primary_oems}" if primary_oems else "",
+    ])
+    if len(role_parts) > 2:
+        views.append(("role", " | ".join(role_parts)))
+
+    product_parts = _nonempty_parts([
+        f"Company: {company_name}",
+        "Focus: products, services, and technology",
+        f"Products: {products}" if products else "",
+        f"Industry: {industry}" if industry else "",
+        f"EV Role: {role}" if role else "",
+        f"EV / Battery Relevant: {ev_relevant}" if ev_relevant else "",
+        f"Tier: {tier}" if tier else "",
+    ])
+    if products:
+        views.append(("product", " | ".join(product_parts)))
+
+    oem_parts = _nonempty_parts([
+        f"Company: {company_name}",
+        "Focus: OEM relationships and customer network",
+        f"Primary OEMs: {primary_oems}" if primary_oems else "",
+        f"Tier: {tier}" if tier else "",
+        f"EV Role: {role}" if role else "",
+        f"Supplier Affiliation: {affiliation}" if affiliation else "",
+        f"EV / Battery Relevant: {ev_relevant}" if ev_relevant else "",
+    ])
+    if primary_oems:
+        views.append(("oem", " | ".join(oem_parts)))
+
+    location_parts = _nonempty_parts([
+        f"Company: {company_name}",
+        "Focus: location, facility, and workforce",
+        f"Location: {location}" if location else "",
+        f"Facility Type: {facility}" if facility else "",
+        f"Employment: {employment}" if employment else "",
+        f"Industry: {industry}" if industry else "",
+        f"Tier: {tier}" if tier else "",
+    ])
+    if location or facility or employment:
+        views.append(("location", " | ".join(location_parts)))
+
+    return [(view_name, _clean_text(text)) for view_name, text in views if _clean_text(text)]
 
 
 def _split_into_sentences(text: str) -> list[str]:
@@ -162,25 +280,27 @@ def chunk_company_record(
     document_text: str,
 ) -> list[Chunk]:
     """
-    Create a single "company" chunk from a GNEM company record.
+    Create multi-view "company" chunks from a GNEM company record.
 
-    GNEM records are already structured (Company: X | Tier: Y | ...)
-    They are short (~100 tokens) — no splitting needed.
-    One chunk per company, stored with rich metadata.
+    GNEM records are structured and company-centric, so we keep one master view
+    plus a handful of focused semantic views. Retrieval can match the focused
+    chunk, while generation still gets the master record text.
 
     Args:
         company     : Company dict from gev_companies / GNEM Excel
         document_text : Pre-formatted company text (from kb_loader.build_document_text)
 
     Returns:
-        List with exactly 1 Chunk (type="company")
+        List of company chunks (master + focused views)
     """
-    text = _clean_text(document_text)
+    master_text = _clean_text(document_text)
+    row_id = _company_row_id(company)
 
     metadata = {
         # Core identity
         "company_name": company.get("company_name", ""),
         "company_id": company.get("id"),
+        "company_row_id": row_id,
         # Supply chain classification
         "tier": company.get("tier", ""),
         "ev_supply_chain_role": company.get("ev_supply_chain_role", ""),
@@ -203,18 +323,31 @@ def chunk_company_record(
         # Chunk metadata
         "source_type": "gnem_excel",
         "chunk_type": "company",
+        "master_text": master_text,
         "document_id": None,
     }
 
-    chunk = Chunk(
-        chunk_type="company",
-        parent_id=None,
-        text=text,
-        token_estimate=_estimate_tokens(text),
-        metadata=metadata,
+    chunks: list[Chunk] = []
+    for view_name, view_text in _company_view_texts(company, master_text):
+        chunk = Chunk(
+            chunk_type="company",
+            parent_id=None,
+            text=view_text,
+            token_estimate=_estimate_tokens(view_text),
+            metadata={
+                **metadata,
+                "chunk_view": view_name,
+                "text_preview": view_text[:200],
+            },
+        )
+        chunks.append(chunk)
+
+    logger.debug(
+        "Company multi-view chunks: %s -> %d views",
+        company.get("company_name"),
+        len(chunks),
     )
-    logger.debug("Company chunk: %s (%d tokens)", company.get("company_name"), chunk.token_estimate)
-    return [chunk]
+    return chunks
 
 
 def chunk_document(

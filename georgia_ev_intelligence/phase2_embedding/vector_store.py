@@ -12,8 +12,8 @@ WHY QDRANT (from Evidence_Based_Decisions.md):
   - Reference: https://qdrant.tech/documentation/concepts/filtering/
 
 COLLECTION CONFIG (matches what you set in Qdrant dashboard):
-  - Collection: georgia_ev_chunks
-  - Dense vector: "dense" (768 dims, Cosine)
+  - Collection: model-specific collection derived from georgia_ev_chunks
+  - Dense vector: "dense" (configured dims, Cosine)
   - Sparse vector: "sparse" (BM25 with IDF enabled)
   - Mode: Hybrid Search + Global Search
 
@@ -82,6 +82,8 @@ def ensure_payload_indexes() -> None:
     index_fields = {
         "source_type": models.PayloadSchemaType.KEYWORD,
         "chunk_type": models.PayloadSchemaType.KEYWORD,
+        "chunk_view": models.PayloadSchemaType.KEYWORD,
+        "company_row_id": models.PayloadSchemaType.KEYWORD,
         "company_name": models.PayloadSchemaType.KEYWORD,
         "tier": models.PayloadSchemaType.KEYWORD,
         "location_county": models.PayloadSchemaType.KEYWORD,
@@ -138,9 +140,9 @@ def ensure_collection_exists() -> bool:
             "Please create it manually in Qdrant dashboard with:\n"
             "  - Mode: Global Search\n"
             "  - Search: Simple Hybrid Search\n"
-            "  - Dense vector: 'dense', 768 dims, Cosine\n"
+            "  - Dense vector: 'dense', %d dims, Cosine\n"
             "  - Sparse vector: 'sparse', IDF enabled",
-            collection_name, exc
+            collection_name, exc, Config.get().qdrant_dimensions
         )
         return False
 
@@ -352,7 +354,7 @@ def _build_metadata_filter(filters: dict[str, Any]) -> Filter | None:
         "company_name", "tier", "location_county", "location_city",
         "ev_battery_relevant", "source_type", "chunk_type",
         "document_type", "ev_supply_chain_role", "facility_type",
-        "industry_group",
+        "industry_group", "chunk_view", "company_row_id",
     ]
     for field in str_fields:
         if field in filters:

@@ -3,10 +3,10 @@ Phase 2 Smoke Test
 Tests the embedding pipeline end-to-end before running on all 205 companies.
 
 What this tests:
-  1. Ollama embed model works (nomic-embed-text → 768 dims)
+  1. Ollama embed model works (active embed model → configured dims)
   2. Qdrant collection is reachable and configured correctly
   3. Chunker splits one document correctly (parent + child chunks)
-  4. Upload 1 company (ACM Georgia LLC) to Qdrant — verify it landed
+  4. Upload 1 company's multi-view chunks to Qdrant — verify they landed
   5. Search for 5 EV queries — verify relevant chunks come back
 
 Run:
@@ -32,6 +32,7 @@ from phase2_embedding.vector_store import (
 )
 from phase1_extraction.kb_loader import build_document_text, get_all_companies_from_db
 from phase2_embedding.embedder import embed_chunks
+from shared.config import Config
 
 SEP = "=" * 60
 PASS = "✅ PASS"
@@ -59,7 +60,8 @@ def run_test(name: str, fn):
 def test_ollama_embed():
     result = verify_ollama_embed()
     assert result["ok"], f"Embed failed: {result['error']}"
-    assert result["dimensions"] == 768, f"Expected 768 dims, got {result['dimensions']}"
+    expected_dims = Config.get().qdrant_dimensions
+    assert result["dimensions"] == expected_dims, f"Expected {expected_dims} dims, got {result['dimensions']}"
     print(f"         → {result['model']}, {result['dimensions']} dims")
 
 
@@ -138,21 +140,24 @@ def test_upload_company_chunk():
     doc_text = build_document_text(test_company)
     company_chunks = chunk_company_record(test_company, doc_text)
 
-    assert len(company_chunks) == 1, f"Expected 1 company chunk, got {len(company_chunks)}"
-    assert company_chunks[0].chunk_type == "company"
+    assert len(company_chunks) >= 1, f"Expected at least 1 company chunk, got {len(company_chunks)}"
+    assert all(chunk.chunk_type == "company" for chunk in company_chunks)
+    view_names = {chunk.metadata.get('chunk_view') for chunk in company_chunks}
+    assert "master" in view_names, "Expected a master company chunk"
 
     # Embed
     vectors = embed_chunks(company_chunks)
-    assert len(vectors) == 1, f"Expected 1 vector, got {len(vectors)}"
+    assert len(vectors) == len(company_chunks), f"Expected {len(company_chunks)} vectors, got {len(vectors)}"
     vec = list(vectors.values())[0]
-    assert len(vec) == 768, f"Expected 768-dim vector, got {len(vec)}"
+    expected_dims = Config.get().qdrant_dimensions
+    assert len(vec) == expected_dims, f"Expected {expected_dims}-dim vector, got {len(vec)}"
 
     # Upload
     uploaded = upload_chunks(company_chunks, vectors)
-    assert uploaded == 1, f"Expected 1 uploaded, got {uploaded}"
+    assert uploaded == len(company_chunks), f"Expected {len(company_chunks)} uploaded, got {uploaded}"
 
     company_name = test_company["company_name"]
-    print(f"         → uploaded '{company_name}' → Qdrant (1 chunk, 768 dims)")
+    print(f"         → uploaded '{company_name}' → Qdrant ({len(company_chunks)} chunks, {len(vec)} dims)")
 
 
 # ─── Test 5: Search returns relevant results ──────────────────────────────────
@@ -203,7 +208,7 @@ def main():
     print(f"\n  {'Test':<45} {'Status'}")
     print(f"  {'-'*45} {'-'*10}")
 
-    run_test("1. Ollama embed (nomic-embed-text → 768 dims)",  test_ollama_embed)
+    run_test("1. Ollama embed (active model → configured dims)", test_ollama_embed)
     run_test("2. Qdrant collection reachable",                  test_qdrant_connection)
     run_test("3. Chunker: parent-child split correct",          test_chunker)
     run_test("4. Upload 1 company chunk → Qdrant",             test_upload_company_chunk)

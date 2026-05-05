@@ -168,7 +168,7 @@ class Config:
     def reranker_model(self) -> str:
         return os.environ.get(
             "CROSS_ENCODER_RERANKER_MODEL",
-            "cross-encoder/ms-marco-MiniLM-L6-v2",
+            "cross-encoder/ms-marco-MiniLM-L12-v2",
         )
 
     @property

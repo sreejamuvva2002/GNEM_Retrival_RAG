@@ -1,14 +1,12 @@
 """
 Phase 2 — Embedder
 
-Converts text chunks → 768-dimensional vectors using nomic-embed-text via Ollama.
+Converts text chunks → configured-dimension vectors using the active Ollama embed model.
 
-WHY nomic-embed-text:
-  - First open-source model to beat OpenAI ada-002 on MTEB benchmark
-  - 768 dimensions (vs ada-002's 1536) — half the storage, same or better quality
+WHY THIS MODULE:
+  - Uses whichever embedding model is configured in `.env`
   - Runs 100% locally via Ollama — zero cost, zero latency to external API
-  - Already installed on your machine
-  - Reference: https://blog.nomic.ai/posts/nomic-embed-text-v1
+  - Keeps query and document embeddings aligned by using the same model
 
 BATCHING STRATEGY:
   - Batch size 32 (optimal for Ollama local inference on CPU+GPU)
@@ -29,7 +27,7 @@ from shared.logger import get_logger
 logger = get_logger("phase2.embedder")
 
 # Batch size for Ollama embedding calls
-# 32 = safe for nomic-embed-text on most hardware
+# 32 is a conservative default for local Ollama embedding
 EMBED_BATCH_SIZE = 32
 
 # Ollama embedding endpoint
@@ -52,13 +50,13 @@ def _get_embed_model() -> str:
 
 def embed_texts(texts: list[str]) -> list[list[float]]:
     """
-    Embed a list of texts using nomic-embed-text via Ollama.
+    Embed a list of texts using the active Ollama embedding model.
 
     Args:
         texts: List of text strings to embed
 
     Returns:
-        List of 768-dimensional float vectors, one per input text
+        List of float vectors, one per input text
 
     Raises:
         RuntimeError: If Ollama is unreachable or returns invalid response
@@ -81,7 +79,7 @@ def embed_texts(texts: list[str]) -> list[list[float]]:
                 response = httpx.post(
                     url,
                     json={"model": model, "input": batch},
-                    timeout=120.0,  # nomic-embed-text is fast; 120s is generous
+                    timeout=120.0,
                 )
                 response.raise_for_status()
                 data = response.json()
@@ -138,7 +136,7 @@ def embed_chunks(chunks: list[Chunk]) -> dict[str, list[float]]:
     Embed a list of Chunk objects.
 
     Returns:
-        Dict mapping chunk_id → embedding vector (768-dim)
+        Dict mapping chunk_id → embedding vector
     """
     if not chunks:
         return {}
@@ -168,7 +166,7 @@ def embed_single(text: str) -> list[float]:
         text: Query or document text
 
     Returns:
-        768-dimensional embedding vector
+        Embedding vector for the configured model
     """
     result = embed_texts([text])
     if not result:
@@ -178,7 +176,7 @@ def embed_single(text: str) -> list[float]:
 
 def verify_ollama_embed() -> dict[str, Any]:
     """
-    Verify that Ollama is running and nomic-embed-text is available.
+    Verify that Ollama is running and the configured embed model is available.
 
     Returns:
         Dict with: ok (bool), model (str), dimensions (int), error (str or None)

@@ -12469,3 +12469,1104 @@ Jones County has the highest total employment with 120.
 **Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
 
 ---
+
+## Q1 [Supply Chain Mapping & Visibility] — 32.1s
+**Q**: Show all "Tier 1/2" suppliers in Georgia, list their EV Supply Chain Role and Product / Service.
+
+**Golden**: There are 18 Tier 1/2 companies in Georgia (using Updated Location).
+F&P Georgia Manufacturing [Tier 1/2] | Role: Battery Pack | Product: Lithium-ion battery recycler and raw materials provider
+Fouts Brothers Fire Equipment [Tier 1/2] | Role: General Automotive | Product: Automotive body parts and electronics Cylinder-head and specialty gaskets, housing modules and shielding systems for engines, transmissions, exhaust systems and auxiliary units
+Hitachi Astemo [Tier 1/2] | Role: General Automotive | Product: Car audio systems
+Hitachi Astemo Americas Inc. [Tier 1/2] | Role: Battery Cell | Product: Battery cells for electric mobility
+Hollingsworth & Vose Co. [Tier 1/2] | Role: Battery Pack | Product: Lithium-ion battery materials
+Honda Development & Manufacturing [Tier 1/2] | Role: Battery Cell | Product: Battery cells for electric mobility
+Hwashin [Tier 1/2] | Role: General Automotive | Product: Modules and storage systems
+Hyundai & LG Energy Solution (LGES) [Tier 1/2] | Role: General Automotive | Product: Storage batteries
+Hyundai Industrial Co. [Tier 1/2] | Role: General Automotive | Product: Automotive batteries
+Hyundai MOBIS (Georgia) [Tier 1/2] | Role: General Automotive | Product: Capacitors, electronic automotive components
+Hyundai Motor Group [Tier 1/2] | Role: Battery Pack | Product: Battery parts for electric vehicles
+Hyundai Transys Georgia Powertrain [Tier 1/2] | Role: Thermal Management | Product: Electrical heaters, control units, and actuators
+Hyundai Transys Georgia Seating Systems [Tier 1/2] | Role: General Automotive | Product: Automotive electronics, resonators, capacitors, resistors, electronics and electronic parts
+IMMI [Tier 1/2] | Role: Battery Pack | Product: Battery electrolyte
+IMS Gear Georgia Inc. [Tier 1/2] | Role: General Automotive | Product: Car audio systems
+Inalfa Roof Systems Inc. [Tier 1/2] | Role: General Automotive | Product: Automotive electronic safety systems
+JAC Products Inc. [Tier 1/2] | Role: General Automotive | Product: Switches, resistors and related products
+Jefferson Southern Corp. [Tier 1/2] | Role: General Automotive | Product: High current switches and resistors for automotive HVAC systems
+
+**Generated**: Here's a list of Tier 1/2 suppliers in Georgia, based on the provided data:
+
+1. **Hitachi Astemo Americas Inc.**
+   * Tier: Tier 1/2
+   * Role: Battery Cell
+   * County: Harris County
+   * Employment: 723
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery cells for electric mobility
+
+2. **IMMI**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Laurens County
+   * Employment: 100
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery electrolyte
+
+3. **Hyundai Transys Georgia Powertrain**
+   * Tier: Tier 1/2
+   * Role: Thermal Management
+   * County: Troup County
+   * Employment: 130
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Facility: Manufacturing Plant
+   * Products: Electrical heaters, control units, and actuators
+
+4. **Hollingsworth & Vose Co.**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Pulaski County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery materials
+
+5. **Hyundai Motor Group**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Bryan County
+   * Employment: 164
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery parts for electric vehicles
+
+6. **Honda Development & Manufacturing**
+   * Tier: Tier 1/2
+   * Role: Battery Cell
+   * County: Cherokee County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery cells for electric mobility
+
+**Highest Total Employment by County:**
+
+Cherokee County and Pulaski County are tied with 400 employees each.
+
+
+**Scores**: faithfulness=1.000 | relevancy=0.800 | precision=1.000 | recall=1.000 | correctness=0.700 | **final=0.915**
+
+---
+
+## Q2 [Supply Chain Mapping & Visibility] — 21.1s
+**Q**: Which Georgia companies are classified under Battery Cell or Battery Pack roles, and what tier is each assigned?
+
+**Golden**: There are 6 companies found with Battery Cell or Battery Pack roles.    
+
+F&P Georgia Manufacturing [Tier 1/2] | Role: Battery Pack 
+Hitachi Astemo Americas Inc. [Tier 1/2] | Role: Battery Cell 
+Hollingsworth & Vose Co. [Tier 1/2] | Role: Battery Pack 
+Honda Development & Manufacturing [Tier 1/2] | Role: Battery Cell 
+Hyundai Motor Group [Tier 1/2] | Role: Battery Pack 
+IMMI [Tier 1/2] | Role: Battery Pack
+
+**Generated**: Here's a list of Georgia companies classified under Battery Cell or Battery Pack roles, along with their assigned tier, based on the provided data:
+
+1. **F&P Georgia Manufacturing**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Floyd County
+   * Employment: 104
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Primary Metal Industries
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery recycler and raw materials provider
+
+2. **Hitachi Astemo Americas Inc.**
+   * Tier: Tier 1/2
+   * Role: Battery Cell
+   * County: Harris County
+   * Employment: 723
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * Facility: Manufacturing Plant
+   * Products: Battery cells for electric mobility
+
+3. **Hollingsworth & Vose Co.**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Pulaski County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery materials
+
+4. **IMMI**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Laurens County
+   * Employment: 100
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * Facility: Manufacturing Plant
+   * Products: Battery electrolyte
+
+5. **Honda Development & Manufacturing**
+   * Tier: Tier 1/2
+   * Role: Battery Cell
+   * County: Cherokee County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * Facility: Manufacturing Plant
+   * Products: Battery cells for electric mobility
+
+6. **Hyundai Motor Group**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Bryan County
+   * Employment: 164
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * Facility: Manufacturing Plant
+   
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q3 [Supply Chain Mapping & Visibility] — 16.3s
+**Q**: Map all Thermal Management suppliers in Georgia and show which Primary OEMs they are linked to.
+
+**Golden**: There are 5 Thermal Management companies in Georgia.
+ZF Gainesville LLC | OEMs: Multiple OEMs
+Freudenberg-NOK | OEMs: Multiple OEMs
+Hyundai Transys Georgia Powertrain | OEMs: Hyundai Kia Rivian
+Novelis Inc. | OEMs: Multiple OEMs
+Peerless-Winsmith Inc. | OEMs: Multiple OEMs
+
+**Generated**: Here's a mapping of Thermal Management suppliers in Georgia, linked to their Primary OEMs, based on the provided data:
+
+1. **Freudenberg-NOK**
+   * Tier: Tier 2/3
+   * Role: Thermal Management
+   * County: Troup County
+   * Employment: 160
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Stamped blanks Flexible metal hoses for exhaust systems, the
+
+2. **Novelis Inc.**
+   * Tier: Tier 1
+   * Role: Thermal Management
+   * County: Fulton County
+   * Employment: 200
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Acoustic and thermally effective automotive components
+
+3. **Peerless-Winsmith Inc.**
+   * Tier: Tier 1
+   * Role: Thermal Management
+   * County: Hall County
+   * Employment: 160
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Thermal solutions
+
+4. **Hyundai Transys Georgia Powertrain**
+   * Tier: Tier 1/2
+   * Role: Thermal Management
+   * County: Troup County
+   * Employment: 130
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Facility: Manufacturing Plant
+   * Products: Electrical heaters, control units, and actuators
+
+**Highest Total Employment by County:**
+
+Fulton County (200) has the highest total employment among the listed companies.
+
+
+
+
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q4 [Supply Chain Mapping & Visibility] — 8.7s
+**Q**: List every Georgia company classified under Power Electronics or Charging Infrastructure, along with their Employment size.
+
+**Golden**: There are 4 companies strictly classified under Power Electronics or Charging Infrastructure:
+GSC Steel Stamping LLC | Role: Power Electronics | Employment: 350
+Morgan Corp. | Role: Charging Infrastructure | Employment: 320
+Yazaki North America | Role: Power electronics, sensors, and EV systems | Employment: 230000
+ZF Gainesville LLC has a combined role (EV thermal management and power electronics) | Employment: 17500
+
+**Generated**: Morgan Corp.
+Tier: Tier 1
+Role: Charging Infrastructure
+Employment: 320
+Primary_OEMs: Multiple OEMs
+Facility: Manufacturing Plant
+Products: Engine components, turbochargers, exhaust parts and other au
+
+GSC Steel Stamping LLC
+Tier: Tier 2/3
+Role: Power Electronics
+County: Bartow County
+Employment: 350
+Primary_OEMs: Hyundai Kia Rivian
+Facility: Manufacturing Plant
+Products: Deep grove ball bearings Toyota Industries Electric Systems
+
+**Scores**: faithfulness=1.000 | relevancy=0.600 | precision=1.000 | recall=0.600 | correctness=0.750 | **final=0.802**
+
+---
+
+## Q5 [Supply Chain Mapping & Visibility] — 25.1s
+**Q**: Which companies are classified as Direct Manufacturer, and what EV Supply Chain Roles do they cover?
+
+**Golden**: Original Equipment Manufacturer companies (11):
+Kia Georgia Inc. | EV Supply Chain Role: Vehicle Assembly
+Minebea AccessSolutions USA Inc. | EV Supply Chain Role: General Automotive
+Superior Essex Inc. | EV Supply Chain Role: Vehicle Assembly
+Suzuki Manufacturing of America Corp. | EV Supply Chain Role: Vehicle Assembly
+TCI Powder Coatings | EV Supply Chain Role: Vehicle Assembly
+TDK Components USA Inc. | EV Supply Chain Role: Vehicle Assembly
+TE Connectivity | EV Supply Chain Role: Vehicle Assembly
+Teklas USA | EV Supply Chain Role: Vehicle Assembly
+Textron Specialized Vehicles | EV Supply Chain Role: Vehicle Assembly
+Thermal Ceramics Inc. | EV Supply Chain Role: Vehicle Assembly
+Thomson Plastics Inc. | EV Supply Chain Role: Vehicle Assembly
+
+**Generated**: Here are the companies classified as Direct Manufacturer (OEM) and their EV Supply Chain Roles, based on the provided data:
+
+1. **Thomson Plastics Inc.**
+   * Tier: OEM
+   * Role: Vehicle Assembly
+   * County: Walton County
+   * Employment: 1000
+   * Primary_OEMs: Archer Aviation Inc.
+   * Industry: Transportation Equipment
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Electric vertical takeoff and landing (eVTOL) aircraft manuf
+
+2. **Superior Essex Inc.**
+   * Tier: OEM
+   * Role: Vehicle Assembly
+   * County: Cobb County
+   * Employment: 8100
+   * Primary_OEMs: Hyundai Motor Group
+   * Industry: Transportation Equipment
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Electric vehicles and batteries
+
+3. **Suzuki Manufacturing of America Corp.**
+   * Tier: OEM
+   * Role: Vehicle Assembly
+   * County: Douglas County
+   * Employment: 7500
+   * Primary_OEMs: Rivian Automotive
+   * Industry: Transportation Equipment
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Electric vehicle assembly plant
+
+4. **Thermal Ceramics Inc.**
+   * Tier: OEM
+   * Role: Vehicle Assembly
+   * County: Richmond County
+   * Employment: 3000
+   * Primary_OEMs: SK Battery America
+   * Industry: Transportation Equipment
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Electric vehicle batteries
+
+5. **Kia Georgia Inc.**
+   * Tier: OEM
+   * Role: Vehicle Assembly
+   * County: Troup County
+   * Employment: 777
+   * Primary_OEMs: Club Car LLC
+   * Industry: Transportation Equipment
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Golf carts, various off-road vehicles, electric on-road vehi
+
+The highest-
+
+**Scores**: faithfulness=1.000 | relevancy=0.900 | precision=1.000 | recall=0.800 | correctness=0.800 | **final=0.910**
+
+---
+
+## Q6 [Supply Chain Mapping & Visibility] — 13.1s
+**Q**: What locations does Novelis Inc. operate in, and what primary facility types are associated with each location?
+
+**Golden**: Novelis Inc. has three operating entries in Georgia, and all three are located in Atlanta, Fulton County, with each one classified as a Manufacturing Plant as its primary facility type.
+
+**Generated**: Here's a breakdown of Novelis Inc.'s locations and facility types, based on the provided data:
+
+1. **Novelis Inc.**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Fulton County
+   * Employment: 260
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Motor vehicle transmissions
+
+2. **Novelis Inc.**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Fulton County
+   * Employment: 205
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Seat, interior, and precision metal stamping
+
+3. **Novelis Inc.**
+   * Tier: Tier 1
+   * Role: Thermal Management
+   * County: Fulton County
+   * Employment: 200
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Acoustic and thermally effective automotive components
+
+The highest-total county employment for Novelis Inc. is Fulton County, with a combined employment of 665.
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q7 [Supply Chain Mapping & Visibility] — 32.1s
+**Q**: In Gwinnett County, which company has the highest Employment and what is its EV Supply Chain Role?
+
+**Golden**: WIKA USA has the highest employment in Gwinnett County (Employment: 250000; Role: HV and LV wiring harnesses for EVs and ICE vehicles).
+
+**Generated**: Here's the analysis of companies in Gwinnett County with the highest employment, based on the provided data:
+
+1. **Arising Industries Inc.** 
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 582
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Rubber and Miscellaneous Plast
+   * EV_Relevant: Indirect
+   * Facility: Manufacturing Plant
+   * Products: Automotive and aircraft tires
+
+2. **MAT Heavy Duty**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 400
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Transportation Equipment
+   * EV_Relevant: Indirect
+   * Facility: Manufacturing Plant
+   * Products: Vehicle protection and interior comfort products
+
+3. **Arising Industries Inc.**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 70
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Chemicals and Allied Products
+   * EV_Relevant: No
+   * Facility: Manufacturing Plant
+   * Products: Rubber powders for tires
+
+4. **Big Tex Trailer Manufacturing Inc.**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 280
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Rubber and Miscellaneous Plast
+   * EV_Relevant: Indirect
+   * Facility: Manufacturing Plant
+   * Products: Tires for light trucks, SUVs and commercial vehicles
+
+5. **Carcoustics USA**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 225
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Rubber and Miscellaneous Plast
+   * EV_Relevant: Indirect
+   * Facility: Manufacturing Plant
+   * Products: Tires for light trucks, SUVs and commercial vehicles
+
+6. **Pak-Lite Inc.**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 180
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Transportation Equipment
+   * EV_Relevant: No
+   * Facility: Manufacturing Plant
+   * Products: Tires, wheels and rubber tracks
+
+7. **Robert Bosch LLC**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Gwinnett County
+   * Employment: 100
+   * Primary_OEMs: Multiple OEMs
+   * Industry: Transportation Equipment
+   * EV_Relevant: Indirect
+   * Facility: Manufacturing Plant
+   * Products: Automotive powertrain systems
+
+8. **IMS Gear Georgia Inc.**
+   * Tier: Tier 1
+
+**Scores**: faithfulness=0.000 | relevancy=0.100 | precision=0.100 | recall=0.000 | correctness=0.000 | **final=0.040**
+
+---
+
+## Q8 [Supply Chain Mapping & Visibility] — 14.7s
+**Q**: Which county have the highest total Employment among Tier 1 suppliers only?
+
+**Golden**: Troup County has the highest total Employment among Tier 1 suppliers with a total of 2,435 employees
+
+**Generated**: 1. Troup County | Tier 1 |  | Troup County | 2,435
+2. Forsyth County | Tier 1 |  | Forsyth County | 1,720
+3. Fulton County | Tier 1 |  | Fulton County | 1,295
+4. Laurens County | Tier 1 |  | Laurens County | 1,215
+5. Meriwether County | Tier 1 |  | Meriwether County | 1,200
+6. Morgan County | Tier 1 |  | Morgan County | 1,000
+7. Dawson County | Tier 1 |  | Dawson County | 1,000
+8. Jackson County | Tier 1 |  | Jackson County | 950
+9. Chattahoochee County | Tier 1 |  | Chattahoochee County | 900
+10. Rabun County | Tier 1 |  | Rabun County | 800
+11. Clayton County | Tier 1 |  | Clayton County | 795
+12. Bibb County | Tier 1 |  | Bibb County | 730
+13. Unknown County | Tier 1 |  | Unknown County | 720
+14. Gwinnett County | Tier 1 |  | Gwinnett
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q9 [Supply Chain Mapping & Visibility] — 15.0s
+**Q**: Which county has the highest total employment across all companies, and what is the combined employment in that county?
+
+**Golden**: Gwinnett County has the highest total employment across all companies: 253022.
+
+**Generated**: 1. Gwinnett County |  |  | Gwinnett County | 253,022
+2. Unknown County |  |  | Unknown County | 232,192
+3. Cobb County |  |  | Cobb County | 200,829
+4. Coweta County |  |  | Coweta County | 190,266
+5. Hall County |  |  | Hall County | 189,307
+6. Carroll County |  |  | Carroll County | 174,260
+7. Laurens County |  |  | Laurens County | 88,943
+8. Bartow County |  |  | Bartow County | 23,030
+9. Forsyth County |  |  | Forsyth County | 21,680
+10. Jackson County |  |  | Jackson County | 19,723
+11. Douglas County |  |  | Douglas County | 7,800
+12. Richmond County |  |  | Richmond County | 4,550
+13. Troup County |  |  | Troup County | 4,157
+14. Fulton County |  |  | Fulton County | 4,065
+1
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q10 [Supply Chain Mapping & Visibility] — 16.4s
+**Q**: Identify all Vehicle Assembly facilities in Georgia and list the corresponding Primary OEM associated with each facility.
+
+**Golden**: There are 10 Vehicle Assembly OEMs along with their Primary OEMs are:
+Kia Georgia Inc. | Primary OEMs: Club Car LLC
+Superior Essex Inc. | Primary OEMs: Hyundai Motor Group
+Suzuki Manufacturing of America Corp. | Primary OEMs: Rivian Automotive
+TCI Powder Coatings | Primary OEMs: Kia Georgia Inc.
+TDK Components USA Inc. | Primary OEMs: Mercedes-Benz USA LLC
+TE Connectivity | Primary OEMs: Blue Bird Corp.
+Teklas USA | Primary OEMs: Yamaha Motor Manufacturing Corp.
+Textron Specialized Vehicles | Primary OEMs: Textron Specialized Vehicles
+Thermal Ceramics Inc. | Primary OEMs: SK Battery America
+Thomson Plastics Inc. | Primary OEMs: Archer Aviation Inc.
+
+**Generated**: 1. Kia Georgia Inc. | OEM | Vehicle Assembly | Troup County | 777 | Club Car LLC | Manufacturing Plant | Golf carts, various off-road vehicles, electric on-road vehi
+2. Suzuki Manufacturing of America Corp. | OEM | Vehicle Assembly | Douglas County | 7500 | Rivian Automotive | Manufacturing Plant | Electric vehicle assembly plant
+3. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100 |  | Corporate operations | Commercial trucks (Freightliner/Western Star) & zero-emissio
+
+Highest total employment county: Jackson County (18100)
+
+**Scores**: faithfulness=0.700 | relevancy=0.600 | precision=0.700 | recall=0.600 | correctness=0.300 | **final=0.600**
+
+---
+
+## Q11 [Supply Chain Mapping & Visibility] — 14.0s
+**Q**: Identify the primary products and services associated with Sewon America Inc. across its different operational sites in Georgia.
+
+**Golden**: Sewon America Inc. has three operating entries in Georgia and all three are located in LaGrange, Troup County, Georgia.
+Sewon America Inc. | Product: Motor vehicle engines and parts
+Sewon America Inc. | Product: Fire truck bodies
+Sewon America Inc. | Product: Automotive aftermarket parts
+
+**Generated**: Here's a breakdown of the primary products and services associated with Sewon America Inc. across its operational sites in Georgia, based on the provided data:
+
+1. **Sewon America Inc.**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Troup County
+   * Employment: 75
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Motor vehicle engines and parts
+
+2. **Sewon America Inc.**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Troup County
+   * Employment: 80
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Automotive aftermarket parts
+
+3. **Sewon America Inc.**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Troup County
+   * Employment: 75
+   * Primary_OEMs: Multiple OEMs
+   * Facility: Manufacturing Plant
+   * Products: Fire truck bodies
+
+The highest-total county employment for Sewon America Inc. is Troup County, with a combined employment of 230 (75 + 80 + 75).
+
+
+
+
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q12 [Supply Chain Mapping & Visibility] — 15.1s
+**Q**: List all Tier 2/3 companies in Georgia with primary involvement in the electric vehicle or battery supply chain and specify their respective roles.
+
+**Golden**: There are 3 companies with primary involvement in the electric vehicle or battery supply chain. 
+
+Duckyang | Role: General Automotive 
+GSC Steel Stamping LLC | Role: Power Electronics 
+Enchem America Inc. | Role: General Automotive
+
+**Generated**: Here's a list of Tier 2/3 companies in Georgia with primary involvement in the electric vehicle or battery supply chain, based on the provided data:
+
+1. **Enchem America Inc.**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Jackson County
+   * Employment: 155
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Primary Metal Industries
+   * Facility: Manufacturing Plant
+   * Products: Electric wiring components
+
+2. **Duckyang**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Jackson County
+   * Employment: 250
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Primary Metal Industries
+   * Facility: Manufacturing Plant
+   * Products: High-quality electrodeposited (ED) copper foil for electric 
+
+3. **GSC Steel Stamping LLC**
+   * Tier: Tier 2/3
+   * Role: Power Electronics
+   * County: Bartow County
+   * Employment: 350
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Machinery Except Electrical
+   * Facility: Manufacturing Plant
+   * Products: Deep grove ball bearings Toyota Industries Electric Systems
+
+Jackson County has the highest total employment with a combined 405 employees from Enchem America Inc. and Duckyang.
+
+
+
+
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q13 [Supply Chain Mapping & Visibility] — 21.2s
+**Q**: Show the full supplier network linked to Rivian Automotive in Georgia, broken down by tier and EV Supply Chain Role.
+
+**Golden**: Rivian-linked suppliers in GA (by Primary OEMs column):
+Duckyang [Tier 2/3] | Role: General Automotive | Primary OEMs: Hyundai Kia Rivian
+Enchem America Inc. [Tier 2/3] | Role: General Automotive | Primary OEMs: Hyundai Kia Rivian
+GSC Steel Stamping LLC [Tier 2/3] | Role: Power Electronics | Primary OEMs: Hyundai Kia Rivian
+Hyundai Transys Georgia Powertrain [Tier 1/2] | Role: Thermal Management | Primary OEMs: Hyundai Kia Rivian
+Racemark International LLC [Tier 1] | Role: General Automotive | Primary OEMs: Hyundai Kia Rivian
+Suzuki Manufacturing of America Corp. [OEM] | Role: Vehicle Assembly | Primary OEMs: Rivian Automotive
+
+**Generated**: Here is the supplier network linked to Rivian Automotive in Georgia, broken down by tier and EV Supply Chain Role, based on the provided data:
+
+1. **Racemark International LLC**
+   * Tier: Tier 1
+   * Role: General Automotive
+   * County: Jones County
+   * Employment: 120
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Transportation Equipment
+   * EV_Relevant: Yes
+   * Facility: R&D
+   * Products: Manufacturing and R&D engine parts for EV
+
+2. **Duckyang**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Jackson County
+   * Employment: 250
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Primary Metal Industries
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: High-quality electrodeposited (ED) copper foil for electric 
+
+3. **Enchem America Inc.**
+   * Tier: Tier 2/3
+   * Role: General Automotive
+   * County: Jackson County
+   * Employment: 155
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Primary Metal Industries
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Electric wiring components
+
+4. **Hyundai Transys Georgia Powertrain**
+   * Tier: Tier 1/2
+   * Role: Thermal Management
+   * County: Troup County
+   * Employment: 130
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Electronic and Other Electrica
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Electrical heaters, control units, and actuators
+
+5. **GSC Steel Stamping LLC**
+   * Tier: Tier 2/3
+   * Role: Power Electronics
+   * County: Bartow County
+   * Employment: 350
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Industry: Machinery Except Electrical
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Deep grove ball bearings Toyota Industries Electric Systems 
+
+6. **Suzuki Manufacturing of America Corp.**
+   *
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q14 [Supply Chain Mapping & Visibility] — 27.8s
+**Q**: Which Georgia companies produce battery materials such as anodes, cathodes, electrolytes, or copper foil, and what tier are they classified as?
+
+**Golden**: There are 4 Georgia companies producing battery materials such as anodes, cathodes, electrolytes, or copper foil. 
+Duckyang [Tier 2/3] | Produce: High-quality electrodeposited (ED) copper foil for electric vehicles
+F&P Georgia Manufacturing [Tier 1/2] | Produce: Lithium-ion battery recycler and raw materials provider
+Hollingsworth & Vose Co. [Tier 1/2] | Produce: Lithium-ion battery materials
+IMMI [Tier 1/2]  | Produce: Battery electrolyte
+
+**Generated**: 1. Duckyang | Tier 2/3 | General Automotive | Jackson County | 250 | Hyundai Kia Rivian | Manufacturing Plant | High-quality electrodeposited (ED) copper foil for electric 
+2. F&P Georgia Manufacturing | Tier 1/2 | Battery Pack | Floyd County | 104 | Hyundai Kia | Manufacturing Plant | Lithium-ion battery recycler and raw materials provider
+3. IMMI | Tier 1/2 | Battery Pack | Laurens County | 100 | Hyundai Kia | Manufacturing Plant | Battery electrolyte
+4. Hollingsworth & Vose Co. | Tier 1/2 | Battery Pack | Pulaski County | 400 | Hyundai Kia | Manufacturing Plant | Lithium-ion battery materials
+5. EVCO Plastics | Tier 2/3 | Materials | Gordon County | 125 | Multiple OEMs | Manufacturing Plant | Recycler of copper, precious metals, and non-ferrous materia
+6. GLOVIS Georgia LLC | Tier 2/3 | General Automotive | Chatham County | 90 | Multiple OEMs | Manufacturing Plant | Metal parts and subassemblies for the automotive industry
+7. First American Resources | Tier 2/3 | Materials | Cobb County | 60 | Multiple OEMs | Manufacturing Plant | Honeycomb material
+8. Hyundai Transys Georgia Seating Systems | Tier 1/2 | General Automotive | Troup County | 110 | Multiple OEMs | Manufacturing Plant | Automotive electronics, resonators, capacitors, resistors, e
+9. Hyundai MOBIS (Georgia) | Tier 1/2 | General Automotive | Troup County | 170 | Multiple OEMs | Manufacturing Plant | Capacitors, electronic automotive components
+10. Hyundai Industrial Co. | Tier 1/2 | General Automotive | Chatham County | 182 | Multiple OEMs | Manufacturing Plant | Automotive batteries
+11. JAC Products Inc. | Tier 1/2 | General Automotive | Jackson County | 63 | Multiple OEMs | Manufacturing Plant | Switches, resistors and related products
+12. Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723 | Hyundai Kia | Manufacturing Plant | Battery cells for electric mobility
+
+Highest total employment county: Harris County (723)
+
+**Scores**: faithfulness=0.700 | relevancy=0.900 | precision=0.800 | recall=1.000 | correctness=0.800 | **final=0.835**
+
+---
+
+## Q15 [Supply Chain Mapping & Visibility] — 20.2s
+**Q**: Identify all Georgia companies with an EV Supply Chain Role related to wiring harnesses and show their Primary OEMs.
+
+**Golden**: There are 2 Georgia companies with an EV Supply Chain Role related to wiring harnesses:
+WIKA USA | Primary OEMs: n/a
+Woodbridge Foam Corp. | Primary OEMs: n/a
+
+**Generated**: 1. Woodbridge Foam Corp. | OEM Supply Chain | EV wiring harnesses and power distr | DeKalb County | 1657 |  | Manufacturing | Automotive wiring harnesses & electrical distribution system
+2. WIKA USA | OEM Supply Chain | HV and LV wiring harnesses for EVs | Gwinnett County | 250000 |  | Manufacturing / Engineering | Vehicle power & data solutions; wiring harnesses and connect
+3. Solvay Specialty Polymers USA LLC | Tier 1 | General Automotive | Elbert County | 70 | Multiple OEMs | Manufacturing Plant | Automotive wire harnesses
+4. Enchem America Inc. | Tier 2/3 | General Automotive | Jackson County | 155 | Hyundai Kia Rivian | Manufacturing Plant | Electric wiring components
+5. Woory Industrial Co. | OEM Supply Chain | High‑voltage EV connectors and elec | Laurens County | 87000 |  | Manufacturing / Engineering | Automotive connectors, terminals, sensors, and power/data co
+6. Yachiyo Manufacturing of America LLC | OEM Supply Chain | EV electrical distribution and inte | Carroll County | 173700 |  | Manufacturing | Automotive seating and E-Systems (electrical distribution) 
+
+Highest total employment county: Gwinnett County (250000)
+
+**Scores**: faithfulness=0.700 | relevancy=0.800 | precision=0.800 | recall=1.000 | correctness=0.600 | **final=0.785**
+
+---
+
+## Q16 [Supplier Discovery & Matchmaking] — 20.9s
+**Q**: Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery electrolytes or lithium-ion battery materials with existing OEM contracts.
+
+**Golden**: The Georgia-based suppliers that match battery electrolytes or lithium-ion battery materials and also have existing OEM contracts are:
+Hollingsworth & Vose Co. [Tier 1/2] | OEMs: Hyundai Kia | Produces: Lithium-ion battery materials
+IMMI [Tier 1/2] | OEMs: Hyundai Kia | Produces: Battery electrolyte
+
+**Generated**: Here are the Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery electrolytes or lithium-ion battery materials with existing OEM contracts, based on the provided data:
+
+1. **Hollingsworth & Vose Co.**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Pulaski County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrical
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery materials
+
+2. **IMMI**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Laurens County
+   * Employment: 100
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrical
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Battery electrolyte
+
+3. **Hyundai Motor Group**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Bryan County
+   * Employment: 164
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrical
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Battery parts for electric vehicles
+
+The highest-total county employment among these companies is Pulaski County with 400 employees.
+
+
+
+
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---
+
+## Q17 [Supplier Discovery & Matchmaking] — 18.7s
+**Q**: Which Georgia companies manufacture high-voltage wiring harnesses or EV electrical distribution components suitable for BEV platforms?
+
+**Golden**: There are 2 Georgia companies manufacturing high-voltage wiring harnesses or EV electrical distribution components suitable for BEV platforms
+
+WIKA USA | Role: HV and LV wiring harnesses for EVs and ICE vehicles | Product: Vehicle power & data solutions; wiring harnesses and connectors | Ev Relevant: Yes
+Woodbridge Foam Corp. | Role: EV wiring harnesses and power distribution | Product: Automotive wiring harnesses & electrical distribution systems | Ev Relevant: Yes
+
+**Generated**: 1. Woodbridge Foam Corp. | OEM Supply Chain | EV wiring harnesses and power distr | DeKalb County | 1657 |  | Manufacturing | Automotive wiring harnesses & electrical distribution system
+2. WIKA USA | OEM Supply Chain | HV and LV wiring harnesses for EVs | Gwinnett County | 250000 |  | Manufacturing / Engineering | Vehicle power & data solutions; wiring harnesses and connect
+3. Woory Industrial Co. | OEM Supply Chain | High‑voltage EV connectors and elec | Laurens County | 87000 |  | Manufacturing / Engineering | Automotive connectors, terminals, sensors, and power/data co
+4. Yachiyo Manufacturing of America LLC | OEM Supply Chain | EV electrical distribution and inte | Carroll County | 173700 |  | Manufacturing | Automotive seating and E-Systems (electrical distribution)
+5. Enchem America Inc. | Tier 2/3 | General Automotive | Jackson County | 155 | Hyundai Kia Rivian | Manufacturing Plant | Electric wiring components
+
+**Scores**: faithfulness=0.800 | relevancy=1.000 | precision=0.800 | recall=1.000 | correctness=1.000 | **final=0.910**
+
+---
+
+## Q18 [Supplier Discovery & Matchmaking] — 5.3s
+**Q**: Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment industry group that could be upgraded to supply EV power electronics.
+
+**Golden**: There are no Georgia Tier 2/3 companies listed under the Electronic and Other Electrical Equipment and Components industry group. So none can be upgraded to supply EV power electronics based on the provided evidence.
+
+**Generated**: No companies found.
+
+**Scores**: faithfulness=1.000 | relevancy=0.800 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=0.960**
+
+---
+
+## Q19 [Supplier Discovery & Matchmaking] — 27.5s
+**Q**: Find Georgia-based companies that manufacture copper foil or electrodeposited materials suitable for EV battery current collectors.
+
+**Golden**: There is 1 company in Georgia specifically identified for the manufacture of materials suitable for EV battery current collectors:
+Duckyang | Produce: High-quality electrodeposited (ED) copper foil for electric vehicles
+
+**Generated**: 1. Duckyang | Tier 2/3 | General Automotive | Jackson County | 250 | Hyundai Kia Rivian | Manufacturing Plant | High-quality electrodeposited (ED) copper foil for electric 
+2. EVCO Plastics | Tier 2/3 | Materials | Gordon County | 125 | Multiple OEMs | Manufacturing Plant | Recycler of copper, precious metals, and non-ferrous materia
+3. F&P Georgia Manufacturing | Tier 1/2 | Battery Pack | Floyd County | 104 | Hyundai Kia | Manufacturing Plant | Lithium-ion battery recycler and raw materials provider
+4. Hollingsworth & Vose Co. | Tier 1/2 | Battery Pack | Pulaski County | 400 | Hyundai Kia | Manufacturing Plant | Lithium-ion battery materials
+5. Enplas USA Inc. | Tier 2/3 | General Automotive | Cobb County | 150 | Multiple OEMs | Manufacturing Plant | Recycler of lithium ion batteries
+6. Global Powertrain Systems LLC | Tier 2/3 | General Automotive | Jackson County | 100 | Multiple OEMs | Manufacturing Plant | Motor vehicle brake systems and parts Fabricates metal produ
+7. Jefferson Southern Corp. | Tier 1/2 | General Automotive | Forsyth County | 50 | Multiple OEMs | Manufacturing Plant | High current switches and resistors for automotive HVAC syst
+8. Great Dane LP | Tier 2/3 | General Automotive | Chatham County | 65 | Multiple OEMs | Manufacturing Plant | Precision metal stamping
+9. DAEHAN Solution Georgia LLC | Tier 2/3 | Materials | Henry County | 130 | Multiple OEMs | Manufacturing Plant | Chemically treated industrial yarns Rubber compounds for tir
+10. Thermal Ceramics Inc. | OEM | Vehicle Assembly | Richmond County | 3000 | SK Battery America | Manufacturing Plant | Electric vehicle batteries
+11. HEXPOL Compounding Corp. | Tier 2/3 | General Automotive | Spalding County | 50 | Multiple OEMs | Manufacturing Plant | Automotive and commercial stampings; metalworking dies
+12. Blue Ridge Manufacturing | Tier 2/3 | Materials | Union County | 270 | Multiple OEMs | Manufacturing Plant | Plastic and metal fasteners and precision strings for automo
+
+Highest total employment county: Richmond County (3000)
+
+**Scores**: faithfulness=0.300 | relevancy=0.600 | precision=0.600 | recall=1.000 | correctness=1.000 | **final=0.665**
+
+---
+
+## Q20 [Supplier Discovery & Matchmaking] — 18.3s
+**Q**: Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or composite materials applicable to EV structural or thermal components?
+
+**Golden**: No Georgia Tier 1/2 companies are explicitly identified as producing engineered plastics, polymers, or composite materials applicable to EV structural or thermal components.
+
+**Generated**: Hyundai Transys Georgia Powertrain
+Tier: Tier 1/2
+Role: Thermal Management
+County: Troup County
+Employment: 130
+Primary_OEMs: Hyundai Kia Rivian
+Facility: Manufacturing Plant
+Products: Electrical heaters, control units, and actuators
+
+Hollingsworth & Vose Co.
+Tier: Tier 1/2
+Role: Battery Pack
+County: Pulaski County
+Employment: 400
+Primary_OEMs: Hyundai Kia
+Facility: Manufacturing Plant
+Products: Lithium-ion battery materials
+
+IMMI
+Tier: Tier 1/2
+Role: Battery Pack
+County: Laurens County
+Employment: 100
+Primary_OEMs: Hyundai Kia
+Facility: Manufacturing Plant
+Products: Battery electrolyte
+
+Hyundai Motor Group
+Tier: Tier 1/2
+Role: Battery Pack
+County: Bryan County
+Employment: 164
+Primary_OEMs: Hyundai Kia
+Facility: Manufacturing Plant
+Products: Battery parts for electric vehicles
+
+Highest-total employment county: Pulaski County (400)
+
+**Scores**: faithfulness=1.000 | relevancy=0.000 | precision=0.800 | recall=0.000 | correctness=0.000 | **final=0.410**
+
+---
+
+## Q21 [Supplier Discovery & Matchmaking] — 23.4s
+**Q**: Find Georgia suppliers with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's EV battery production ramp-up.
+
+**Golden**: There are 11 companies with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's EV battery production ramp-up.  
+
+F&P Georgia Manufacturing 
+Duckyang 
+GSC Steel Stamping LLC 
+Hitachi Astemo Americas Inc. 
+Hollingsworth & Vose Co. 
+Honda Development & Manufacturing 
+Hyundai Motor Group 
+Hyundai Transys Georgia Powertrain 
+IMMI 
+Enchem America Inc. 
+Racemark International LLC
+
+**Generated**: Here are the Georgia suppliers with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's EV battery production ramp-up, based on the provided data:
+
+1. **F&P Georgia Manufacturing**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Floyd County
+   * Employment: 104
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Primary Metal Industries
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery recycler and raw materials provider
+
+2. **Hyundai Motor Group**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Bryan County
+   * Employment: 164
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Battery parts for electric vehicles
+
+3. **Hollingsworth & Vose Co.**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Pulaski County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery materials
+
+4. **IMMI**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Laurens County
+   * Employment: 100
+   * Primary_OEMs: Hyundai Kia
+   * Industry: Electronic and Other Electrica
+   * EV_Relevant: Yes
+   * Facility: Manufacturing Plant
+   * Products: Battery electrolyte
+
+The highest-total county employment among these suppliers is **Pulaski
+
+**Scores**: faithfulness=1.000 | relevancy=0.900 | precision=1.000 | recall=1.000 | correctness=0.600 | **final=0.920**
+
+---
+
+## Q22 [Supplier Discovery & Matchmaking] — 29.3s
+**Q**: Identify Georgia companies producing DC-to-DC converters, capacitors, or power electronics components relevant to EV drivetrains and what tier is each assigned?
+
+**Golden**: There are 3 Georgia companies producing DC-to-DC converters, capacitors, or power electronics components relevant to EV drivetrains. 
+
+GSC Steel Stamping LLC [Tier 2/3] 
+Hyundai MOBIS (Georgia) [Tier 1/2] 
+Hyundai Transys Georgia Seating Systems [Tier 1/2]
+
+**Generated**: 1. GSC Steel Stamping LLC | Tier 2/3 | Power Electronics | Bartow County | 350 | Hyundai Kia Rivian | Manufacturing Plant | Deep grove ball bearings Toyota Industries Electric Systems 
+2. Hyundai Transys Georgia Seating Systems | Tier 1/2 | General Automotive | Troup County | 110 | Multiple OEMs | Manufacturing Plant | Automotive electronics, resonators, capacitors, resistors, e
+3. Hyundai Transys Georgia Powertrain | Tier 1/2 | Thermal Management | Troup County | 130 | Hyundai Kia Rivian | Manufacturing Plant | Electrical heaters, control units, and actuators
+4. Hyundai MOBIS (Georgia) | Tier 1/2 | General Automotive | Troup County | 170 | Multiple OEMs | Manufacturing Plant | Capacitors, electronic automotive components
+5. ZF Gainesville LLC | OEM Supply Chain | EV thermal management and power ele | Hall County | 17500 |  | Manufacturing | Automotive supplier footprint (electrification, thermal, pow
+6. Jefferson Southern Corp. | Tier 1/2 | General Automotive | Forsyth County | 50 | Multiple OEMs | Manufacturing Plant | High current switches and resistors for automotive HVAC syst
+7. JAC Products Inc. | Tier 1/2 | General Automotive | Jackson County | 63 | Multiple OEMs | Manufacturing Plant | Switches, resistors and related products
+8. ZF Gainesville LLC | OEM Supply Chain | EV body, powertrain, and thermal co | Hall County | 170000 |  | Manufacturing | Contract manufacturing & automotive systems (body, chassis, 
+9. Woory Industrial Co. | OEM Supply Chain | High‑voltage EV connectors and elec | Laurens County | 87000 |  | Manufacturing / Engineering | Automotive connectors, terminals, sensors, and power/data co
+10. Global Powertrain Systems LLC | Tier 2/3 | General Automotive | Jackson County | 100 | Multiple OEMs | Manufacturing Plant | Motor vehicle brake systems and parts Fabricates metal produ
+11. Voestalpine Automotive Body Parts Inc. | OEM Supply Chain | EV and ICE powertrain and HVAC comp | Bartow County | 1300 |  | Manufacturing plant | Automotive components manufacturing group (compressors/autom
+12. Vista Metals Corp. | OEM Supply Chain | EV and ICE component manufacturing | Bartow County | 1500 |  | Manufacturing plant | Automotive modules/powertrain components; parts supply
+
+Highest total employment county: Hall County (187,500)
+
+**Scores**: faithfulness=0.700 | relevancy=0.800 | precision=0.800 | recall=1.000 | correctness=0.800 | **final=0.815**
+
+---
+
+## Q23 [Supplier Discovery & Matchmaking] — 12.0s
+**Q**: Which Georgia companies provide powder coating-related products or services, and what tier are they classified under?
+
+**Golden**: There is only 1 Georgia company that provides Powder coating-related products/services:
+Archer Aviation Inc. [Tier 2/3] | Produces: Powder coatings for automotive and other industries
+
+**Generated**: No matching companies found.
+
+**Scores**: faithfulness=1.000 | relevancy=0.000 | precision=0.000 | recall=0.000 | correctness=0.000 | **final=0.250**
+
+---
+
+## Q24 [Supplier Discovery & Matchmaking] — 26.6s
+**Q**: Which Georgia companies manufacture battery parts or enclosure systems and are classified as Tier 1/2, making them ready for direct OEM engagement and show which Primary OEMs they are linked to.
+
+**Golden**: There are 6 Georgia companies manufacturing battery parts or enclosure systems and are classified as Tier 1/2, making them ready for direct OEM engagement. 
+
+F&P Georgia Manufacturing | OEMs: Hyundai Kia 
+Hitachi Astemo Americas Inc. | OEMs: Hyundai Kia 
+Hollingsworth & Vose Co. | OEMs: Hyundai Kia 
+Honda Development & Manufacturing | OEMs: Hyundai Kia 
+Hyundai Motor Group | OEMs: Hyundai Kia 
+IMMI | OEMs: Hyundai Kia
+
+**Generated**: Here are the Georgia companies that manufacture battery parts or enclosure systems and are classified as Tier 1/2, ready for direct OEM engagement, along with their linked Primary OEMs, based on the provided data:
+
+1. **Hollingsworth & Vose Co.**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Pulaski County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Lithium-ion battery materials
+
+2. **Hyundai Motor Group**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Bryan County
+   * Employment: 164
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery parts for electric vehicles
+
+3. **IMMI**
+   * Tier: Tier 1/2
+   * Role: Battery Pack
+   * County: Laurens County
+   * Employment: 100
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery electrolyte
+
+4. **Hitachi Astemo Americas Inc.**
+   * Tier: Tier 1/2
+   * Role: Battery Cell
+   * County: Harris County
+   * Employment: 723
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery cells for electric mobility
+
+5. **Honda Development & Manufacturing**
+   * Tier: Tier 1/2
+   * Role: Battery Cell
+   * County: Cherokee County
+   * Employment: 400
+   * Primary_OEMs: Hyundai Kia
+   * Facility: Manufacturing Plant
+   * Products: Battery cells for electric mobility
+
+6. **Hyundai Transys Georgia Powertrain**
+   * Tier: Tier 1/2
+   * Role: Thermal Management
+   * County: Troup County
+   * Employment: 130
+   * Primary_OEMs: Hyundai Kia Rivian
+   * Facility: Manufacturing Plant
+   * Products: Electrical heaters, control units, and actuators
+
+The highest-total county employment among these companies is **Harris County** with 723 employees at Hitachi Astemo Americas Inc.
+
+
+
+
+
+**Scores**: faithfulness=1.000 | relevancy=1.000 | precision=1.000 | recall=1.000 | correctness=1.000 | **final=1.000**
+
+---

@@ -132,6 +132,7 @@ _STOP_WORDS = {
     "that", "this", "these", "those", "what", "which", "who", "how", "where",
     "when", "why", "all", "any", "each", "some", "their", "its", "not",
     "only", "also", "than", "from", "but", "as", "at", "on", "up", "out",
+    "will", "would", "could", "should", "may", "might", "shall",
     # Question-framing verbs (structural, not product terms)
     "list", "show", "find", "identify", "describe", "provide", "detail",
     "give", "tell", "name", "explain", "suggest", "indicate", "reflect",
@@ -147,6 +148,10 @@ _STOP_WORDS = {
     "currently", "primary", "existing", "associated", "involved",
     "looking", "seeking", "based", "having", "using", "under",
     "focused", "related", "relevant", "specific",
+    "classified", "role", "roles", "tier", "tiers", "employment",
+    "facility", "facilities", "type", "types", "location", "locations",
+    "oem", "oems", "map", "every", "along", "assigned", "cover",
+    "industry", "group",
 }
 
 
@@ -167,6 +172,157 @@ _TIER_SYNONYMS: dict[str, str] = {
 }
 
 
+def _phrase_pattern(phrase: str) -> str:
+    """Return a boundary-aware regex for a KB value or natural-language phrase."""
+    parts = [re.escape(part) for part in phrase.strip().split()]
+    body = r"\s+".join(parts)
+    return rf"(?<![A-Za-z0-9]){body}(?![A-Za-z0-9])"
+
+
+def _phrase_spans(text: str, phrase: str, flags: int = re.IGNORECASE) -> list[tuple[int, int]]:
+    return [(m.start(), m.end()) for m in re.finditer(_phrase_pattern(phrase), text, flags)]
+
+
+def _contains_phrase(text: str, phrase: str) -> bool:
+    return bool(_phrase_spans(text, phrase))
+
+
+def _overlaps(span: tuple[int, int], spans: list[tuple[int, int]]) -> bool:
+    return any(span[0] < existing[1] and existing[0] < span[1] for existing in spans)
+
+
+def _window(text: str, start: int, end: int, before: int = 60, after: int = 60) -> tuple[str, str]:
+    return text[max(0, start - before):start].lower(), text[end:end + after].lower()
+
+
+def _dedupe_preserve(values: list[str]) -> list[str]:
+    seen: set[str] = set()
+    result: list[str] = []
+    for value in values:
+        key = value.lower()
+        if key not in seen:
+            seen.add(key)
+            result.append(value)
+    return result
+
+
+def _is_hypothetical_company_filter(question: str, start: int, end: int) -> bool:
+    before, after = _window(question, start, end, before=35, after=90)
+    return (
+        "new" in before
+        and "company" in after
+        and any(signal in after for signal in ("looking", "seeking", "locat", "site"))
+    )
+
+
+def _has_oem_tier_intent(q_lower: str) -> bool:
+    return any(
+        signal in q_lower
+        for signal in (
+            "classified as oem",
+            "classified under oem",
+            "oem companies",
+            "oem manufacturers",
+            "oem vehicle assemblers",
+        )
+    )
+
+
+def _company_is_relationship_target(question: str, start: int, end: int) -> bool:
+    before, _ = _window(question, start, end, before=75, after=20)
+    return any(
+        signal in before
+        for signal in (
+            "linked to",
+            "serving",
+            "serve ",
+            "serves ",
+            "suppliers to",
+            "supplier network linked to",
+            "contracts with",
+            "contract with",
+            "customer of",
+            "customers of",
+            "support ",
+        )
+    )
+
+
+def _facility_has_intent(question: str, start: int, end: int, facility_type: str) -> bool:
+    before, after = _window(question, start, end, before=45, after=55)
+    nearby = before + after
+    f_norm = facility_type.lower()
+    if "facility" in nearby or "facilities" in nearby or "facility type" in nearby:
+        return True
+    if f_norm == "r&d" and any(signal in nearby for signal in ("research", "development", "innovation")):
+        return True
+    return False
+
+
+def _classification_has_intent(q_lower: str, method: str) -> bool:
+    method_lower = method.lower()
+    if method_lower == "direct manufacturer":
+        return _contains_phrase(q_lower, method_lower)
+    if method_lower == "supplier":
+        return any(
+            signal in q_lower
+            for signal in (
+                "classified as supplier",
+                "classified under supplier",
+                "supplier classification",
+                "classification method supplier",
+            )
+        )
+    return _contains_phrase(q_lower, method_lower)
+
+
+def _role_is_excluded(question: str, start: int) -> bool:
+    before = question[max(0, start - 55):start].lower()
+    return any(
+        signal in before
+        for signal in (
+            "lack",
+            "lacks",
+            "without",
+            "absence of",
+            "no ",
+            "not ",
+            "currently lack",
+            "currently lacks",
+        )
+    )
+
+
+def _role_is_relationship_target(question: str, start: int) -> bool:
+    before = question[max(0, start - 35):start].lower()
+    return any(signal in before for signal in (" to ", " for ", "support "))
+
+
+def _role_has_candidate_intent(question: str, start: int, end: int, role: str) -> bool:
+    before, after = _window(question, start, end, before=55, after=65)
+    role_lower = role.lower()
+    if _role_is_relationship_target(question, start):
+        return False
+    if any(signal in before for signal in ("classified as", "classified under", "listed under", "under ")):
+        return True
+    if any(signal in after for signal in ("role", "roles", "supplier", "suppliers", "companies", "category")):
+        return True
+    if role_lower == "general automotive" and "infrastructure" in after:
+        return True
+    if any(signal in before for signal in ("in ev ", "in the ")):
+        return True
+    return False
+
+
+def _significant_tokens(text: str) -> set[str]:
+    local_stop = _STOP_WORDS | {"industry", "group", "other", "components", "component"}
+    return {
+        token.lower()
+        for token in re.findall(r"[A-Za-z][A-Za-z0-9]+", text)
+        if token.lower() not in local_stop and len(token) >= 3
+    }
+
+
 # ── Industry group loader ─────────────────────────────────────────────────────
 @lru_cache(maxsize=1)
 def _industry_groups() -> list[str]:
@@ -182,12 +338,14 @@ def _industry_groups() -> list[str]:
 class Entities:
     """Structured entities extracted from a question."""
     tier:              str | None  = None   # e.g. "Tier 1/2"
+    tier_list:         list[str]   = field(default_factory=list)
     county:            str | None  = None   # e.g. "Gwinnett"
     oem:               str | None  = None   # PRIMARY oem (first matched) — backward-compat
     oem_list:          list[str]   = field(default_factory=list)  # ALL oems in question
     company_name:      str | None  = None   # e.g. "SungEel Recycling Park Georgia"
     ev_role:           str | None  = None   # e.g. "Thermal Management"
     ev_role_list:      list[str]   = field(default_factory=list)
+    exclude_ev_role_list: list[str] = field(default_factory=list)
     facility_type:     str | None  = None   # e.g. "R&D", "Manufacturing Plant"
     industry_group:    str | None  = None   # e.g. "Chemicals and Allied Products"
     classification_method: str | None = None   # e.g. "Supplier", "Direct Manufacturer"
@@ -275,20 +433,30 @@ def extract(question: str) -> Entities:
     ev_filter_signals = ["ev relevant", "ev-relevant", "ev specific", "ev-specific"]
     e.ev_relevant_filter = any(sig in q_lower for sig in ev_filter_signals)
 
-    # ── 3. Tier extraction — from real DB values + synonym mapping ────────────
-    # First try synonym mapping ("Direct Manufacturer" → "OEM" etc.)
-    # Then fall back to exact DB tier matching.
-    for phrase, mapped_tier in _TIER_SYNONYMS.items():
-        if phrase in q_lower:
-            e.tier = mapped_tier
-            break
+    # ── 3. Tier extraction — boundary-aware with intent guards ────────────────
+    tier_matches: list[tuple[int, str]] = []
+    occupied_tier_spans: list[tuple[int, int]] = []
 
-    if not e.tier:
-        tiers = sorted(_tier_names(), key=len, reverse=True)  # longest first
-        for t in tiers:
-            if t.lower() in q_lower:
-                e.tier = t
-                break
+    for phrase, mapped_tier in sorted(_TIER_SYNONYMS.items(), key=lambda item: len(item[0]), reverse=True):
+        for span in _phrase_spans(question, phrase):
+            if _overlaps(span, occupied_tier_spans) or _is_hypothetical_company_filter(question, *span):
+                continue
+            tier_matches.append((span[0], mapped_tier))
+            occupied_tier_spans.append(span)
+
+    for tier_name in sorted(_tier_names(), key=len, reverse=True):
+        if tier_name == "OEM" and not _has_oem_tier_intent(q_lower):
+            continue
+        for span in _phrase_spans(question, tier_name):
+            if _overlaps(span, occupied_tier_spans) or _is_hypothetical_company_filter(question, *span):
+                continue
+            tier_matches.append((span[0], tier_name))
+            occupied_tier_spans.append(span)
+
+    matched_tiers = _dedupe_preserve([tier for _, tier in sorted(tier_matches, key=lambda item: item[0])])
+    if matched_tiers:
+        e.tier = matched_tiers[0]
+        e.tier_list = matched_tiers
 
     # ── 4. County extraction — regex + real DB values ─────────────────────────
     _county_skip = {
@@ -329,10 +497,12 @@ def extract(question: str) -> Entities:
     # Sorted longest-first so "Hyundai Motor Group" matches before "Hyundai".
     all_companies = sorted(_company_names(), key=len, reverse=True)
     for name in all_companies:
-        # Use word-boundary-aware matching: company name must appear as a phrase
-        # in the question (case-insensitive). Skip very short names (< 5 chars)
-        # to avoid false positives.
-        if len(name) >= 5 and name.lower() in q_lower:
+        if len(name) < 5:
+            continue
+        spans = _phrase_spans(question, name)
+        if not spans:
+            continue
+        if any(not _company_is_relationship_target(question, *span) for span in spans):
             e.company_name = name
             break
 
@@ -342,51 +512,53 @@ def extract(question: str) -> Entities:
     # No hardcoding — if a new facility type is added to DB, it is auto-detected.
     facility_types = sorted(_facility_types(), key=len, reverse=True)  # longest first
     for ftype in facility_types:
-        if ftype.lower() in q_lower:
-            e.facility_type = ftype
+        for span in _phrase_spans(question, ftype):
+            if _facility_has_intent(question, *span, ftype):
+                e.facility_type = ftype
+                break
+        if e.facility_type:
             break
 
     # ── 4d. Classification method / supplier affiliation direct matches ──────
     for method in sorted(_classification_methods(), key=len, reverse=True):
-        if method.lower() in q_lower:
+        if _classification_has_intent(q_lower, method):
             e.classification_method = method
             break
 
     for affiliation in sorted(_supplier_affiliation_types(), key=len, reverse=True):
-        if affiliation.lower() in q_lower:
+        if _contains_phrase(q_lower, affiliation.lower()):
             e.supplier_affiliation_type = affiliation
             break
 
     # ── 5. EV role extraction (BEFORE OEM — so role words don't pollute OEM matching) ──
     roles = sorted(_ev_roles(), key=len, reverse=True)  # longest match first
     matched_roles = []
+    excluded_roles = []
     for role in roles:
-        role_lower = role.lower()
-        if role_lower not in q_lower:
-            continue
-        # Single-word roles (e.g. "Materials", "Assembly") are common English words
-        # that appear frequently in product descriptions without being a role reference.
-        # Require the role to appear CAPITALIZED in the original question, which signals
-        # it is being used as a classification label (not part of a product description).
-        # e.g. "Battery Cell" → capitalized in "Battery Cell roles" → ✓ matched
-        #      "materials"  → lowercase in "electrodeposited materials" → ✗ not matched
-        if " " not in role:  # single-word role
-            if not re.search(r'\b' + re.escape(role) + r'\b', question):
-                continue  # appears only as lowercase common word — skip
-        matched_roles.append(role)
+        for span in _phrase_spans(question, role):
+            if " " not in role and not re.search(r'\b' + re.escape(role) + r'\b', question):
+                continue
+            if _role_is_excluded(question, span[0]):
+                excluded_roles.append(role)
+                continue
+            if _role_has_candidate_intent(question, *span, role):
+                matched_roles.append(role)
 
+    matched_roles = _dedupe_preserve(matched_roles)
+    excluded_roles = _dedupe_preserve(excluded_roles)
     if len(matched_roles) == 1:
         e.ev_role = matched_roles[0]
     elif len(matched_roles) > 1:
         e.ev_role_list = matched_roles
+    e.exclude_ev_role_list = excluded_roles
 
     # Words already captured as tier/role — OEM extractor must skip these
     # e.g. 'battery' is in 'Battery Cell' role → must not match 'SK Battery' OEM
     role_words: set[str] = set()
     for role in (e.ev_role_list or ([e.ev_role] if e.ev_role else [])):
         role_words.update(role.lower().split())
-    if e.tier:
-        role_words.update(e.tier.lower().split())
+    for tier in (e.tier_list or ([e.tier] if e.tier else [])):
+        role_words.update(tier.lower().split())
 
     # ── 6. OEM extraction — word-level match against real Neo4j OEM nodes ─────
     oem_names = _oem_names()
@@ -403,12 +575,15 @@ def extract(question: str) -> Entities:
         # Generic company-type nouns
         "company", "manufacturing", "industries", "services", "solutions",
         "systems", "technologies", "motors", "motor", "automotive",
+        "oem", "oems", "primary",
+        # Domain words that occur in OEM names but are too generic in questions
+        "battery", "vehicle", "vehicles", "car", "cars", "specialized",
     }
     oem_word_map: dict[str, str] = {}
     for name in oem_names:
         for part in re.split(r"[,\s]+", name):
             part_clean = part.strip().lower()
-            if (len(part_clean) > 3
+            if (len(part_clean) >= 2
                     and part_clean not in oem_stop
                     and part_clean not in role_words):
                 oem_word_map[part_clean] = part_clean
@@ -419,7 +594,7 @@ def extract(question: str) -> Entities:
     # Now extracts all, sets e.oem = first for backward-compat with single-OEM code paths.
     matched_oems: list[str] = []
     for word in oem_word_map:
-        if re.search(r'\b' + re.escape(word[0].upper() + word[1:]) + r'\b', question):
+        if re.search(r'\b' + re.escape(word) + r'\b', question, re.IGNORECASE):
             matched_oems.append(word)
 
     if matched_oems:
@@ -432,9 +607,22 @@ def extract(question: str) -> Entities:
     # in the question. Sorted longest-first for greedy match.
     industry_groups = sorted(_industry_groups(), key=len, reverse=True)
     for ig in industry_groups:
-        if ig.lower() in q_lower:
+        if _contains_phrase(q_lower, ig.lower()):
             e.industry_group = ig
             break
+    if not e.industry_group and "industry group" in q_lower:
+        industry_match = re.search(
+            r"([A-Za-z][A-Za-z\s&/-]{3,80}?)\s+industry\s+group",
+            question,
+            re.IGNORECASE,
+        )
+        requested_tokens = _significant_tokens(industry_match.group(1)) if industry_match else set()
+        if requested_tokens:
+            for ig in industry_groups:
+                value_tokens = _significant_tokens(ig)
+                if requested_tokens and requested_tokens.issubset(value_tokens):
+                    e.industry_group = ig
+                    break
 
     # ── 7. Employment range extraction — regex ─────────────────────────────────
     over_match = re.search(r"(?:over|more than|above|greater than)\s+(\d[\d,]*)", q_lower)
@@ -447,15 +635,26 @@ def extract(question: str) -> Entities:
 
     # ── 8. Product keyword extraction ─────────────────────────────────────────
     known_extracted = set(_STOP_WORDS)
-    if e.tier:
-        known_extracted.update(e.tier.lower().split())
+    for tier in (e.tier_list or ([e.tier] if e.tier else [])):
+        known_extracted.update(tier.lower().split())
     if e.county:
         known_extracted.update(e.county.lower().split())
     if e.oem:
         known_extracted.update(e.oem.lower().split())
+    for oem in e.oem_list:
+        known_extracted.update(oem.lower().split())
+    if e.company_name:
+        known_extracted.update(re.findall(r"[a-z0-9]+", e.company_name.lower()))
+    if e.facility_type:
+        known_extracted.update(re.findall(r"[a-z0-9]+", e.facility_type.lower()))
+        known_extracted.add(e.facility_type.lower())
+    if e.classification_method:
+        known_extracted.update(re.findall(r"[a-z0-9]+", e.classification_method.lower()))
+    if e.supplier_affiliation_type:
+        known_extracted.update(re.findall(r"[a-z0-9]+", e.supplier_affiliation_type.lower()))
     if e.industry_group:
         known_extracted.update(e.industry_group.lower().split())
-    for role in (e.ev_role_list or ([e.ev_role] if e.ev_role else [])):
+    for role in (e.ev_role_list or ([e.ev_role] if e.ev_role else [])) + e.exclude_ev_role_list:
         known_extracted.update(role.lower().split())
 
 
@@ -495,8 +694,8 @@ def extract(question: str) -> Entities:
     e.product_keywords = unique_terms[:10]
 
     logger.info(
-        "Extracted: tier=%s county=%s company=%s oem=%s role=%s keywords=%s aggregate=%s",
-        e.tier, e.county, e.company_name, e.oem, e.ev_role or e.ev_role_list,
-        e.product_keywords, e.is_aggregate,
+        "Extracted: tier=%s tiers=%s county=%s company=%s oem=%s role=%s exclude_roles=%s keywords=%s aggregate=%s",
+        e.tier, e.tier_list, e.county, e.company_name, e.oem, e.ev_role or e.ev_role_list,
+        e.exclude_ev_role_list, e.product_keywords, e.is_aggregate,
     )
     return e

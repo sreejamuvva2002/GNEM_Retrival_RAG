@@ -22,7 +22,6 @@ from phase2_embedding.chunker import (
     get_child_chunks,
     get_parent_chunk,
     _estimate_tokens,
-    _build_sparse_vector,
     CHILD_CHAR_TARGET,
     PARENT_CHAR_TARGET,
 )
@@ -87,19 +86,26 @@ class TestChunker(unittest.TestCase):
         est = _estimate_tokens(text)
         self.assertAlmostEqual(est, 100, delta=5)
 
-    def test_company_chunk_creates_one_chunk(self):
-        """Each company produces exactly 1 chunk."""
+    def test_company_chunk_creates_multi_view_chunks(self):
+        """Each company produces a master chunk plus focused semantic views."""
         doc_text = build_document_text(SAMPLE_COMPANY)
         chunks = chunk_company_record(SAMPLE_COMPANY, doc_text)
-        self.assertEqual(len(chunks), 1)
-        self.assertEqual(chunks[0].chunk_type, "company")
-        self.assertIsNone(chunks[0].parent_id)
+        self.assertGreaterEqual(len(chunks), 3)
+        self.assertTrue(all(chunk.chunk_type == "company" for chunk in chunks))
+        self.assertTrue(all(chunk.parent_id is None for chunk in chunks))
+        view_names = {chunk.metadata.get("chunk_view") for chunk in chunks}
+        self.assertIn("master", view_names)
+        self.assertIn("role", view_names)
+        self.assertIn("product", view_names)
+        self.assertIn("oem", view_names)
+        self.assertIn("location", view_names)
 
     def test_company_chunk_metadata_complete(self):
-        """Company chunk metadata must include all key fields."""
+        """Master company chunk metadata must include all key fields."""
         doc_text = build_document_text(SAMPLE_COMPANY)
         chunks = chunk_company_record(SAMPLE_COMPANY, doc_text)
-        meta = chunks[0].metadata
+        master = next(chunk for chunk in chunks if chunk.metadata.get("chunk_view") == "master")
+        meta = master.metadata
         required_fields = [
             "company_name", "tier", "ev_supply_chain_role",
             "location_county", "employment", "ev_battery_relevant",
@@ -109,12 +115,15 @@ class TestChunker(unittest.TestCase):
             self.assertIn(field, meta, f"Missing metadata field: {field}")
         self.assertEqual(meta["source_type"], "gnem_excel")
         self.assertEqual(meta["company_name"], "Test EV Battery LLC")
+        self.assertTrue(meta["company_row_id"])
+        self.assertEqual(meta["chunk_view"], "master")
 
     def test_company_chunk_contains_all_text(self):
-        """Company chunk text must include company name, tier, location."""
+        """Master company chunk text must include company name, tier, location."""
         doc_text = build_document_text(SAMPLE_COMPANY)
         chunks = chunk_company_record(SAMPLE_COMPANY, doc_text)
-        text = chunks[0].text
+        master = next(chunk for chunk in chunks if chunk.metadata.get("chunk_view") == "master")
+        text = master.text
         self.assertIn("Test EV Battery LLC", text)
         self.assertIn("Tier 1", text)
         self.assertIn("Chatham County", text)
@@ -259,9 +268,9 @@ class TestEmbedder(unittest.TestCase):
         cls.embed_dims = result["dimensions"]
 
     def test_embed_single_returns_correct_dimensions(self):
-        """Single text embedding should return 768-dim vector."""
+        """Single text embedding should match the configured vector dimensions."""
         vector = embed_single("Georgia EV supply chain battery manufacturer")
-        self.assertEqual(len(vector), 768)
+        self.assertEqual(len(vector), self.embed_dims)
 
     def test_embed_single_returns_floats(self):
         """Embedding vector should contain floats."""
@@ -278,7 +287,7 @@ class TestEmbedder(unittest.TestCase):
         vectors = embed_texts(texts)
         self.assertEqual(len(vectors), len(texts))
         for v in vectors:
-            self.assertEqual(len(v), 768)
+            self.assertEqual(len(v), self.embed_dims)
 
     def test_embed_chunks_returns_dict(self):
         """embed_chunks should return dict mapping chunk_id → vector."""
@@ -288,7 +297,7 @@ class TestEmbedder(unittest.TestCase):
         vectors = embed_chunks(chunks)
         self.assertEqual(len(vectors), len(chunks))
         for chunk_id, vec in vectors.items():
-            self.assertEqual(len(vec), 768)
+            self.assertEqual(len(vec), self.embed_dims)
 
     def test_same_text_similar_embeddings(self):
         """Same text should produce very similar embeddings (cosine ≈ 1.0)."""

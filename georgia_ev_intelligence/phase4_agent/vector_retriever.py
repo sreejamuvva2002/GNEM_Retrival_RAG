@@ -24,6 +24,10 @@ _BASE_COMPANY_FILTERS = {
     "chunk_type": "company",
     "source_type": "gnem_excel",
 }
+_MASTER_COMPANY_FILTERS = {
+    **_BASE_COMPANY_FILTERS,
+    "chunk_view": "master",
+}
 _SEMANTIC_TOP_K = 120
 _DEFAULT_LIMIT = 18
 _BROAD_LIMIT = 30
@@ -67,8 +71,19 @@ def _tier_matches(company_tier: str, requested_tier: str) -> bool:
     return False
 
 
+def _entity_tier_filters(entities: Entities) -> list[str]:
+    values = []
+    for tier in [entities.tier, *getattr(entities, "tier_list", [])]:
+        if tier and not _is_oem_reference(tier):
+            norm = _normalize(tier)
+            if norm and norm not in {_normalize(v) for v in values}:
+                values.append(tier)
+    return values
+
+
 def _company_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
     return {
+        "company_row_id": payload.get("company_row_id", ""),
         "company_name": payload.get("company_name", ""),
         "tier": payload.get("tier", ""),
         "ev_supply_chain_role": payload.get("ev_supply_chain_role", ""),
@@ -85,11 +100,15 @@ def _company_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "supplier_affiliation_type": payload.get("supplier_affiliation_type", ""),
         "latitude": payload.get("latitude"),
         "longitude": payload.get("longitude"),
-        "text": payload.get("text", ""),
+        "chunk_view": payload.get("chunk_view", "legacy"),
+        "matched_view": payload.get("chunk_view", "legacy"),
+        "text": payload.get("master_text", payload.get("text", "")),
     }
 
 
 def _row_key(company: dict[str, Any]) -> tuple[Any, ...]:
+    if company.get("company_row_id"):
+        return (company.get("company_row_id"),)
     return (
         company.get("company_name"),
         company.get("tier"),
@@ -119,7 +138,10 @@ def _dedupe_exact_rows(companies: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 @lru_cache(maxsize=1)
 def _load_all_companies() -> list[dict[str, Any]]:
-    records = scroll_points(filters=_BASE_COMPANY_FILTERS, limit=600)
+    records = scroll_points(filters=_MASTER_COMPANY_FILTERS, limit=600)
+    if not records:
+        logger.info("No master-view chunks found; falling back to legacy company chunks")
+        records = scroll_points(filters=_BASE_COMPANY_FILTERS, limit=600)
     companies = [_company_from_payload(r["payload"]) for r in records]
     companies = [c for c in companies if c.get("company_name")]
     companies = _dedupe_exact_rows(companies)
@@ -132,8 +154,9 @@ def _matches_entities(company: dict[str, Any], entities: Entities) -> bool:
         return False
     if entities.county and _normalize(company.get("location_county")) != _normalize(entities.county):
         return False
-    if entities.tier and not _is_oem_reference(entities.tier):
-        if not _tier_matches(company.get("tier", ""), entities.tier):
+    tier_filters = _entity_tier_filters(entities)
+    if tier_filters:
+        if not any(_tier_matches(company.get("tier", ""), tier) for tier in tier_filters):
             return False
     if entities.industry_group and _normalize(company.get("industry_group")) != _normalize(entities.industry_group):
         return False
@@ -142,6 +165,9 @@ def _matches_entities(company: dict[str, Any], entities: Entities) -> bool:
     if entities.classification_method and _normalize(company.get("classification_method")) != _normalize(entities.classification_method):
         return False
     if entities.supplier_affiliation_type and _normalize(company.get("supplier_affiliation_type")) != _normalize(entities.supplier_affiliation_type):
+        return False
+    excluded_roles = {_normalize(role) for role in getattr(entities, "exclude_ev_role_list", [])}
+    if excluded_roles and _normalize(company.get("ev_supply_chain_role")) in excluded_roles:
         return False
     if entities.ev_role and _normalize(company.get("ev_supply_chain_role")) != _normalize(entities.ev_role):
         return False
@@ -268,13 +294,14 @@ def _has_structured_filters(entities: Entities) -> bool:
     return any([
         entities.company_name,
         entities.county,
-        entities.tier,
+        _entity_tier_filters(entities),
         entities.industry_group,
         entities.facility_type,
         entities.classification_method,
         entities.supplier_affiliation_type,
         entities.ev_role,
         entities.ev_role_list,
+        getattr(entities, "exclude_ev_role_list", []),
         entities.oem,
         entities.oem_list,
         entities.min_employment is not None,
@@ -301,6 +328,10 @@ def _refine_matches(question: str, entities: Entities, matches: list[dict[str, A
     return matches
 
 
+def _company_rank_key(company: dict[str, Any]) -> str:
+    return str(company.get("company_row_id") or company.get("company_name") or "")
+
+
 def _semantic_rank(question: str) -> tuple[dict[str, int], list[dict[str, Any]]]:
     vector = embed_single(question)
     results = search_dense(
@@ -309,21 +340,21 @@ def _semantic_rank(question: str) -> tuple[dict[str, int], list[dict[str, Any]]]
         filters=_BASE_COMPANY_FILTERS,
     )
 
-    rank_by_name: dict[str, int] = {}
+    rank_by_company_id: dict[str, int] = {}
     ranked_companies: list[dict[str, Any]] = []
     seen_rows: set[tuple[Any, ...]] = set()
     for result in results:
         metadata = result.get("metadata", {})
         company = _company_from_payload(metadata)
-        name = result.get("company_name") or metadata.get("company_name")
         row_key = _row_key(company)
-        if not name or row_key in seen_rows:
+        company_rank_key = _company_rank_key(company)
+        if not company_rank_key or row_key in seen_rows:
             continue
         seen_rows.add(row_key)
-        rank_by_name.setdefault(name, len(rank_by_name))
+        rank_by_company_id.setdefault(company_rank_key, len(rank_by_company_id))
         ranked_companies.append(company)
 
-    return rank_by_name, ranked_companies
+    return rank_by_company_id, ranked_companies
 
 
 def _is_broad_listing(question: str, entities: Entities) -> bool:
@@ -349,7 +380,7 @@ def _sort_matches(
     question: str,
     entities: Entities,
     matches: list[dict[str, Any]],
-    rank_by_name: dict[str, int],
+    rank_by_company_id: dict[str, int],
 ) -> list[dict[str, Any]]:
     if entities.is_top_n:
         return sorted(matches, key=lambda c: _employment(c), reverse=True)
@@ -360,7 +391,10 @@ def _sort_matches(
     limit = _limit_for_question(question, entities)
     dense_ranked = sorted(
         matches,
-        key=lambda c: (rank_by_name.get(c.get("company_name", ""), 10_000), c.get("company_name", "")),
+        key=lambda c: (
+            rank_by_company_id.get(_company_rank_key(c), 10_000),
+            c.get("company_name", ""),
+        ),
     )
     rerank_cap = _rerank_cap(question, entities)
     preselected = dense_ranked[:rerank_cap]
@@ -425,9 +459,9 @@ def retrieve_companies(question: str, entities: Entities) -> list[dict[str, Any]
     filtered = [company for company in companies if _matches_entities(company, entities)]
     filtered = _refine_matches(question, entities, filtered)
 
-    rank_by_name, ranked_companies = _semantic_rank(question)
+    rank_by_company_id, ranked_companies = _semantic_rank(question)
     if filtered:
-        return _sort_matches(question, entities, filtered, rank_by_name)
+        return _sort_matches(question, entities, filtered, rank_by_company_id)
 
     if _has_structured_filters(entities):
         logger.info("Strict retrieval: structured filters produced 0 matches")
@@ -454,9 +488,9 @@ def retrieve_context(question: str, entities: Entities) -> list[dict[str, Any]] 
         return _format_aggregate_context(scope, label)
 
     matches = filtered
-    rank_by_name, ranked_companies = _semantic_rank(question)
+    rank_by_company_id, ranked_companies = _semantic_rank(question)
     if matches:
-        matches = _sort_matches(question, entities, matches, rank_by_name)
+        matches = _sort_matches(question, entities, matches, rank_by_company_id)
     elif _has_structured_filters(entities):
         logger.info("Strict retrieval: structured filters produced 0 matches")
         return "No matching companies found."
