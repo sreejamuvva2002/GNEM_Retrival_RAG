@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import re
 import sys
 import time
@@ -33,6 +34,8 @@ logger = get_logger("ragas_eval")
 
 PROGRESS_FILE = ROOT / "outputs" / "progress" / "phase4_eval_progress.jsonl"
 ANSWERS_MD    = ROOT / "outputs" / "progress" / "phase4_eval_answers.md"
+GENERATED_FILE = ROOT / "outputs" / "progress" / "phase4_generated_answers.jsonl"
+GENERATED_MD = ROOT / "outputs" / "progress" / "phase4_generated_answers.md"
 
 
 def _sanitize_model_name(name: str) -> str:
@@ -275,11 +278,11 @@ async def evaluate_row(row: dict, url: str, model: str) -> dict:
 
 # ── Checkpoint helpers ─────────────────────────────────────────────────────────
 
-def load_checkpoint() -> dict[str, dict]:
-    """Load previously completed questions from progress file. Returns {id: row}."""
+def load_jsonl(path: Path) -> dict[str, dict]:
+    """Load rows from a JSONL file. Returns {id: row}."""
     done: dict[str, dict] = {}
-    if PROGRESS_FILE.exists():
-        for line in PROGRESS_FILE.read_text(encoding="utf-8").splitlines():
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if line:
                 try:
@@ -290,11 +293,26 @@ def load_checkpoint() -> dict[str, dict]:
     return done
 
 
+def load_checkpoint() -> dict[str, dict]:
+    """Load previously completed scored questions from progress file."""
+    return load_jsonl(PROGRESS_FILE)
+
+
+def append_jsonl(row: dict, path: Path) -> None:
+    """Append one row to a JSONL file."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8") as f:
+        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+
+
 def save_checkpoint(row: dict) -> None:
     """Append one completed+scored row to the progress file."""
-    PROGRESS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    with PROGRESS_FILE.open("a", encoding="utf-8") as f:
-        f.write(json.dumps(row, ensure_ascii=False) + "\n")
+    append_jsonl(row, PROGRESS_FILE)
+
+
+def save_generated(row: dict, path: Path = GENERATED_FILE) -> None:
+    """Append one generated, unscored answer row to the generated answers file."""
+    append_jsonl(row, path)
 
 
 def append_answers_md(row: dict) -> None:
@@ -314,6 +332,17 @@ def append_answers_md(row: dict) -> None:
             f"**final={row.get('final_score',0):.3f}**\n\n"
             "---\n"
         )
+
+
+def append_generated_md(row: dict) -> None:
+    """Append human-readable generated answer without scores."""
+    GENERATED_MD.parent.mkdir(parents=True, exist_ok=True)
+    with GENERATED_MD.open("a", encoding="utf-8") as f:
+        f.write(f"\n## {row['id']} [{row['category']}] — {row['elapsed_s']}s\n")
+        f.write(f"**Q**: {row['question']}\n\n")
+        f.write(f"**Golden**: {row['golden']}\n\n")
+        f.write(f"**Generated**: {row['answer']}\n\n")
+        f.write("---\n")
 
 
 # ── Pipeline runner ────────────────────────────────────────────────────────────
@@ -441,11 +470,11 @@ def build_report(results: list[dict], out: Path) -> None:
 
 # ── Console summary ────────────────────────────────────────────────────────────
 
-def print_summary(results: list[dict]) -> None:
+def print_summary(results: list[dict], judge_model: str) -> None:
     print(f"\n{'='*68}")
     print("  RAGAS EVALUATION SUMMARY — Phase 4 Georgia EV Intelligence")
     print(f"{'='*68}")
-    print(f"  Questions : {len(results)}  |  Judge: qwen2.5:7b (local Ollama)")
+    print(f"  Questions : {len(results)}  |  Judge: {judge_model} (local Ollama)")
     print(f"{'-'*68}")
     for mk in list(DEFINITIONS) + ["final_score"]:
         vals = [float(r.get(mk,0) or 0) for r in results]
@@ -470,17 +499,99 @@ def print_summary(results: list[dict]) -> None:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
-async def main(questions: list[dict], out_path: Path, resume: bool) -> None:
+def generate_answers(questions: list[dict], generated_path: Path, resume: bool) -> None:
+    done = load_jsonl(generated_path) if resume else {}
+    if not resume:
+        if generated_path.exists():
+            generated_path.unlink()
+        if GENERATED_MD.exists():
+            GENERATED_MD.unlink()
+    elif done:
+        print(f"  Resuming generation — {len(done)} questions already generated.")
+
+    agent = EVAgent()
+    total = len(questions)
+    generated: list[dict] = list(done.values())
+
+    for i, q in enumerate(questions, 1):
+        if q["id"] in done:
+            print(f"  [{i}/{total}] {q['id']} — skipped (generated checkpoint)")
+            continue
+
+        print(f"\n  [{i}/{total}] {q['id']} [{q['category']}]")
+        print(f"  Q: {q['question'][:80]}")
+        row = run_one(agent, q)
+        print(f"  -> Answer ({row['elapsed_s']}s, {row['path']}): {row['answer'][:80]}")
+        save_generated(row, generated_path)
+        append_generated_md(row)
+        generated.append(row)
+
+    print(f"\n  Generated answers: {len(generated)}")
+    print(f"  JSONL : {generated_path}")
+    print(f"  MD    : {GENERATED_MD}\n")
+
+
+async def evaluate_generated(generated_path: Path, out_path: Path, resume: bool,
+                             judge_model: str) -> None:
+    cfg = Config.get()
+    judge_url = f"{cfg.ollama_base_url}/api/generate"
+    generated = list(load_jsonl(generated_path).values())
+    if not generated:
+        raise FileNotFoundError(
+            f"No generated answers found at {generated_path}. "
+            "Run with --generate-only first."
+        )
+
+    done = load_checkpoint() if resume else {}
+    if not resume:
+        if PROGRESS_FILE.exists():
+            PROGRESS_FILE.unlink()
+        if ANSWERS_MD.exists():
+            ANSWERS_MD.unlink()
+    elif done:
+        print(f"  Resuming evaluation — {len(done)} questions already scored.")
+
+    total = len(generated)
+    scored: list[dict] = list(done.values())
+    for i, row in enumerate(generated, 1):
+        if row["id"] in done:
+            print(f"  [{i}/{total}] {row['id']} — skipped (scored checkpoint)")
+            continue
+
+        print(f"\n  [{i}/{total}] {row['id']} [{row['category']}]")
+        print(f"  -> Scoring 5 metrics with {judge_model}...")
+        scored_row = await evaluate_row(row, judge_url, judge_model)
+        answer_correctness = float(scored_row.get("answer_correctness", 0) or 0)
+        flag = (
+            "OK" if answer_correctness >= 0.7
+            else ("WARN" if answer_correctness >= 0.5 else "LOW")
+        )
+        print(f"  -> Answer correctness: {answer_correctness:.3f} {flag}")
+        save_checkpoint(scored_row)
+        append_answers_md(scored_row)
+        scored.append(scored_row)
+
+    print_summary(scored, judge_model)
+    build_report(scored, out_path)
+    print(f"  Excel : {out_path}")
+    print(f"  MD    : {ANSWERS_MD}")
+    print(f"  JSONL : {PROGRESS_FILE}\n")
+
+
+async def main(questions: list[dict], out_path: Path, resume: bool,
+               judge_model: str) -> None:
     cfg       = Config.get()
     judge_url = f"{cfg.ollama_base_url}/api/generate"
-    model     = cfg.ollama_llm_model   # qwen2.5:7b — no extra RAM
 
     # Load checkpoint
     done = load_checkpoint() if resume else {}
-    if done:
+    if not resume:
+        if PROGRESS_FILE.exists():
+            PROGRESS_FILE.unlink()
+        if ANSWERS_MD.exists():
+            ANSWERS_MD.unlink()
+    elif done:
         print(f"  Resuming — {len(done)} questions already done, skipping them.")
-        if not resume and PROGRESS_FILE.exists():
-            PROGRESS_FILE.unlink()  # fresh run: clear checkpoint
 
     agent  = EVAgent()
     total  = len(questions)
@@ -500,8 +611,8 @@ async def main(questions: list[dict], out_path: Path, resume: bool) -> None:
         print(f"  → Answer ({row['elapsed_s']}s, {row['path']}): {row['answer'][:80]}")
 
         # Step 2: RAGAS scoring
-        print(f"  → Scoring 5 metrics...")
-        scored_row = await evaluate_row(row, judge_url, model)
+        print(f"  → Scoring 5 metrics with {judge_model}...")
+        scored_row = await evaluate_row(row, judge_url, judge_model)
         answer_correctness = float(scored_row.get("answer_correctness", 0) or 0)
         flag = (
             "✅" if answer_correctness >= 0.7
@@ -515,7 +626,7 @@ async def main(questions: list[dict], out_path: Path, resume: bool) -> None:
         scored.append(scored_row)
 
     # Build report
-    print_summary(scored)
+    print_summary(scored, judge_model)
     build_report(scored, out_path)
     print(f"  📄 Excel : {out_path}")
     print(f"  📝 MD    : {ANSWERS_MD}")
@@ -527,9 +638,30 @@ if __name__ == "__main__":
     parser.add_argument("--questions", type=int, default=7)
     parser.add_argument("--resume",    action="store_true",
                         help="Resume from checkpoint (skip already-scored questions)")
+    parser.add_argument("--generate-only", action="store_true",
+                        help="Only generate answers and store them; skip RAGAS scoring")
+    parser.add_argument("--evaluate-only", action="store_true",
+                        help="Only score previously generated answers")
+    parser.add_argument("--generated", type=str, default=str(GENERATED_FILE),
+                        help="JSONL path for generated answers")
+    parser.add_argument("--judge-model", type=str,
+                        default=os.environ.get("RAGAS_JUDGE_MODEL"),
+                        help="Ollama judge model; defaults to OLLAMA_LLM_MODEL")
     parser.add_argument("--out", type=str,
                         default=str(_default_report_path()))
     args = parser.parse_args()
 
+    if args.generate_only and args.evaluate_only:
+        parser.error("--generate-only and --evaluate-only cannot be used together")
+
     qs = FIFTY_QUESTIONS[:args.questions]
-    asyncio.run(main(qs, Path(args.out), args.resume))
+    cfg = Config.get()
+    judge_model = args.judge_model or cfg.ollama_llm_model
+    generated_path = Path(args.generated)
+
+    if args.generate_only:
+        generate_answers(qs, generated_path, args.resume)
+    elif args.evaluate_only:
+        asyncio.run(evaluate_generated(generated_path, Path(args.out), args.resume, judge_model))
+    else:
+        asyncio.run(main(qs, Path(args.out), args.resume, judge_model))
