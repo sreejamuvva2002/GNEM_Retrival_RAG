@@ -85,9 +85,9 @@
   <div class="tab-content active" id="tab-overview">
     <div class="section-title">Summary Metrics</div>
     <div class="cards">
-      <div class="card"><div class="value">50</div><div class="label">Total Answers</div></div>
-      <div class="card"><div class="value">1</div><div class="label">Formats Tested</div></div>
-      <div class="card"><div class="value">1</div><div class="label">Models Tested</div></div>
+      <div class="card"><div class="value">250</div><div class="label">Total Answers</div></div>
+      <div class="card"><div class="value">4</div><div class="label">Formats Tested</div></div>
+      <div class="card"><div class="value">2</div><div class="label">Models Tested</div></div>
       <div class="card"><div class="value">50</div><div class="label">Questions / Run</div></div>
     </div>
 
@@ -114,12 +114,48 @@
       </thead>
       <tbody>
         <tr>
+          <td><span class="badge-fmt">F4</span></td>
+          <td><code>qwen2.5:14b</code></td>
+          <td class="num">0.82</td><td class="num">0.92</td>
+          <td class="num">0.93</td><td class="num">1.00</td>
+          <td class="num">0.84</td>
+          <td class="num bold">0.902</td>
+          <td class="num">50</td>
+        </tr>
+        <tr>
+          <td><span class="badge-fmt">F1</span></td>
+          <td><code>qwen2.5:14b</code></td>
+          <td class="num">0.79</td><td class="num">0.90</td>
+          <td class="num">0.88</td><td class="num">1.00</td>
+          <td class="num">0.73</td>
+          <td class="num bold">0.859</td>
+          <td class="num">50</td>
+        </tr>
+        <tr>
+          <td><span class="badge-fmt">F3</span></td>
+          <td><code>qwen2.5:14b</code></td>
+          <td class="num">0.75</td><td class="num">0.90</td>
+          <td class="num">0.85</td><td class="num">0.97</td>
+          <td class="num">0.80</td>
+          <td class="num bold">0.853</td>
+          <td class="num">50</td>
+        </tr>
+        <tr>
           <td><span class="badge-fmt">F3</span></td>
           <td><code>qwen2.5:7b</code></td>
           <td class="num">0.76</td><td class="num">0.90</td>
           <td class="num">0.82</td><td class="num">0.94</td>
           <td class="num">0.78</td>
           <td class="num bold">0.841</td>
+          <td class="num">50</td>
+        </tr>
+        <tr>
+          <td><span class="badge-fmt">F2</span></td>
+          <td><code>qwen2.5:14b</code></td>
+          <td class="num">—</td><td class="num">0.92</td>
+          <td class="num">—</td><td class="num">—</td>
+          <td class="num">0.76</td>
+          <td class="num bold">0.838</td>
           <td class="num">50</td>
         </tr></tbody>
     </table>
@@ -162,11 +198,11 @@
     <div class="filters">
       <select id="filterFormat" onchange="filterTable()">
         <option value="">All Formats</option>
-        <option value="F3">F3</option>
+        <option value="F1">F1</option><option value="F2">F2</option><option value="F3">F3</option><option value="F4">F4</option>
       </select>
       <select id="filterModel" onchange="filterTable()">
         <option value="">All Models</option>
-        <option value="qwen2.5:7b">qwen2.5:7b</option>
+        <option value="qwen2.5:14b">qwen2.5:14b</option><option value="qwen2.5:7b">qwen2.5:7b</option>
       </select>
     </div>
     <table id="qTable">
@@ -175,6 +211,1618 @@
         <th>Correctness</th><th class="num">Rows</th><th class="num">Time</th><th>Answer</th></tr>
       </thead>
       <tbody>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>1</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show all "Tier 1/2" suppliers in Georgia, list their EV Supply Chain Role and Pr</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">11.2</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Car audio systems
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Batte…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>2</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are classified under Battery Cell or Battery Pack roles,</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">2.4</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County
+Hollingsworth & Vose Co. | Tier 1/2 | Battery Pac…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>3</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Map all Thermal Management suppliers in Georgia and show which Primary OEMs they</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">1</td>
+          <td class="num">1.2</td>
+          <td class="ans-cell">ZF Gainesville LLC | OEM Supply Chain | Automotive supplier footprint (electrification, thermal, power) | Hall County | …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>4</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List every Georgia company classified under Power Electronics or Charging Infras</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">1.6</td>
+          <td class="ans-cell">Yazaki North America | Power electronics, sensors, and EV | 2000
+ZF Gainesville LLC | EV thermal management and power el…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>5</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are classified as Direct Manufacturer, and what EV Supply Chain </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">6.2</td>
+          <td class="ans-cell">Based on the provided data and the criteria for Direct Manufacturer (which seems to be implied by the roles listed as cl…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>6</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">What locations does Novelis Inc. operate in, and what primary facility types are</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">1</td>
+          <td class="num">1.8</td>
+          <td class="ans-cell">Novelis Inc. operates in Fulton County with a primary facility type of Manufacturing Plant. The facility is associated w…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>7</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">In Gwinnett County, which company has the highest Employment and what is its EV </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">11</td>
+          <td class="num">1.5</td>
+          <td class="ans-cell">The company with the highest employment in Gwinnett County is SungEel Recycling Park Georgia with 650 employees. Its EV …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>8</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county have the highest total Employment among Tier 1 suppliers only?</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">1.0</td>
+          <td class="ans-cell">Troup County has the highest total Employment among Tier 1 suppliers with 2,285 employees (7 companies).…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>9</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county has the highest total employment across all companies, and what is </td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">0</td>
+          <td class="num">10.1</td>
+          <td class="ans-cell">Based on the provided data:
+
+The county with the highest total employment across all companies is Jackson County, with a…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>10</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Vehicle Assembly facilities in Georgia and list the corresponding P</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">10</td>
+          <td class="num">3.9</td>
+          <td class="ans-cell">Based on the provided data and the strict instruction to list only Vehicle Assembly facilities with their corresponding …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>11</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify the primary products and services associated with Sewon America Inc. ac</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">1</td>
+          <td class="num">1.9</td>
+          <td class="ans-cell">Sewon America Inc. | Motor vehicle engines and parts | Fire truck bodies…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>12</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List all Tier 2/3 companies in Georgia with primary involvement in the electric </td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">15</td>
+          <td class="num">6.1</td>
+          <td class="ans-cell">Here is the list of Tier 2/3 companies in Georgia with primary involvement in the electric vehicle or battery supply cha…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>13</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show the full supplier network linked to Rivian Automotive in Georgia, broken do</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">6</td>
+          <td class="num">7.1</td>
+          <td class="ans-cell">### Supplier Network Linked to Rivian Automotive in Georgia
+
+| Company                      | Tier    | Role            …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>14</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies produce battery materials such as anodes, cathodes, elec</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">2</td>
+          <td class="num">3.6</td>
+          <td class="ans-cell">Based on the provided data:
+
+1. **Hollingsworth & Vose Co.** - Tier 1/2 - Products: Lithium-ion battery materials
+2. **F…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>15</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia companies with an EV Supply Chain Role related to wiring ha</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">1.8</td>
+          <td class="ans-cell">Woodbridge Foam Corp. | OEM Supply Chain | EV wiring harnesses and power distribution | DeKalb County | 1657 | Automotiv…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>16</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery ele</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">15</td>
+          <td class="num">3.7</td>
+          <td class="ans-cell">Based on the provided data:
+
+Hollingsworth & Vose Co. | Tier 1/2 | Battery Pack | Pulaski County | 400 | Electronic and …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>17</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture high-voltage wiring harnesses or EV electric</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">4</td>
+          <td class="num">3.2</td>
+          <td class="ans-cell">Based on the provided data:
+
+1. Woodbridge Foam Corp.
+2. WIKA USA
+3. Enchem America Inc.
+4. Solvay Specialty Polymers US…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>18</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment i</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">1</td>
+          <td class="num">0.5</td>
+          <td class="ans-cell">GSC Steel Stamping LLC…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>19</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based companies that manufacture copper foil or electrodeposited ma</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">1.2</td>
+          <td class="ans-cell">Duckyang | Tier 2/3 | General Automotive | Jackson County | 250 | Primary Metal Industries | Yes | Manufacturing Plant |…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>20</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or compo</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">1.3</td>
+          <td class="ans-cell">Insufficient data in retrieved context. None of the provided entries specify that these companies produce engineered pla…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>21</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia suppliers with existing Hyundai Kia contracts that could be expande</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">12</td>
+          <td class="num">1.8</td>
+          <td class="ans-cell">Superior Essex Inc.
+Hitachi Astemo Americas Inc.
+Honda Development & Manufacturing
+Hollingsworth & Vose Co.
+GSC Steel St…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>22</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies producing DC-to-DC converters, capacitors, or power e</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">3</td>
+          <td class="num">4.5</td>
+          <td class="ans-cell">Based on the provided data:
+
+1. Yazaki North America | Tier: OEM Footprint | Role: Power electronics, sensors, and EV | …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>23</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies provide powder coating-related products or services, and</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">16</td>
+          <td class="num">12.8</td>
+          <td class="ans-cell">TCI Powder Coatings | Tier 2/3 | Vehicle Assembly | Schley County | 3000 | Transportation Equipment | Indirect | Manufac…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>24</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture battery parts or enclosure systems and are c</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">15</td>
+          <td class="num">5.2</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723 | Electronic and Other Electrica | Yes | Ma…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>25</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classifi</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">9</td>
+          <td class="num">3.1</td>
+          <td class="ans-cell">Based on the provided data and the criteria specified (Tier 2/3 suppliers with employment over 300 classified as General…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>26</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industr</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">0.8</td>
+          <td class="ans-cell">Archer Aviation Inc. | Powder coatings for automotive and other industries  
+Arising Industries Inc. | Rubber powders fo…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>27</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which EV Supply Chain Roles in Georgia are served by only a single company, crea</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">0.1</td>
+          <td class="ans-cell">Georgia has 25 EV supply chain roles served by only ONE company (single points of failure):
+
+• GSC Steel Stamping LLC [T…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>28</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a speci</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">1.1</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc.
+Hollingsworth & Vose Co.
+Honda Development & Manufacturing
+Hyundai Motor Group
+F&P Georgia …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>29</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">1.9</td>
+          <td class="ans-cell">Hyundai Motor Group | 164  
+Enchem America Inc. | 155  
+Hyundai Transys Georgia Powertrain | 130  
+Remark International …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>30</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General </td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">3</td>
+          <td class="num">3.8</td>
+          <td class="ans-cell">GSC Steel Stamping LLC | Tier 2/3 | General Automotive | Bartow County | 350 | Machinery Except Electrical | Yes | Manuf…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>31</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversi</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">11</td>
+          <td class="num">1.9</td>
+          <td class="ans-cell">Hitachi Astemo  
+Fouts Brothers Fire Equipment  
+Hwashin  
+Hyundai & LG Energy Solution (LGES)  
+Hyundai Industrial Co. …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>32</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies in the Thermal Management or Power Electronics role w</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">4</td>
+          <td class="num">0.8</td>
+          <td class="ans-cell">Peerless-Winsmith Inc.
+Freudenberg-NOK
+Hyundai Transys Georgia Powertrain…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>33</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Su</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">0.9</td>
+          <td class="ans-cell">Toyota Industries Group (TACG-TICA)
+Tie Down Engineering
+TN Americas Holding Inc.
+Trenton Pressing…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>34</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Top 10 Georgia companies based on employment size that supply both General Autom</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">10</td>
+          <td class="num">1.7</td>
+          <td class="ans-cell">Toyota Industries Group (TACG-TICA)  
+Superior Essex Inc.  
+Suzuki Manufacturing of America Corp.  
+TCI Powder Coatings …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>35</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia companies are now producing lithium-ion battery materials, cell</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">2</td>
+          <td class="num">5.5</td>
+          <td class="ans-cell">Based on the provided data:
+
+Hollingsworth & Vose Co. is producing lithium-ion battery materials in Pulaski County.
+F&P …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>36</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or compo</td>
+          <td><span class="badge badge-warn">0.60</span></td>
+          <td class="num">15</td>
+          <td class="num">3.3</td>
+          <td class="ans-cell">Insufficient data in retrieved context.
+
+None of the provided entries explicitly state that they produce lightweight alu…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>37</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies whose product descriptions include 'high-voltage', 'D</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">13</td>
+          <td class="num">1.9</td>
+          <td class="ans-cell">Insufficient data in retrieved context. 
+
+None of the provided product descriptions include 'high-voltage', 'DC-to-DC', …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>38</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia automotive companies employ over 1,000 workers but are currently c</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">15</td>
+          <td class="num">2.5</td>
+          <td class="ans-cell">TCI Powder Coatings | OEM | Vehicle Assembly | Schley County | 3000 | Transportation Equipment | Indirect | Manufacturin…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>39</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which three Georgia companies have the largest employment in EV thermal manageme</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">2.4</td>
+          <td class="ans-cell">Based on the provided data, the three Georgia companies with the largest employment in EV thermal management are:
+
+1. ZF…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>40</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are involved in thermal-related products or services, and what r</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">13</td>
+          <td class="num">2.9</td>
+          <td class="ans-cell">Insufficient data in retrieved context. 
+
+None of the provided entries specify thermal-related products or services dire…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>41</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradu</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">11</td>
+          <td class="num">3.4</td>
+          <td class="ans-cell">Hitachi Astemo | No
+Fouts Brothers Fire Equipment | Indirect
+Hwashin | No
+Hyundai & LG Energy Solution (LGES) | No
+Hyund…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>42</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How is demand for thermal management solutions reflected in the number and emplo</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">5.7</td>
+          <td class="ans-cell">Based on the provided data:
+
+1. ZF Gainesville LLC | Hall County | Employment: 1200 | EV_Relevant: Yes | Facility: Manuf…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>43</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are involved in battery recycling or second-life battery</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">9</td>
+          <td class="num">3.7</td>
+          <td class="ans-cell">Based on the provided data, only one company is directly involved in battery recycling or second-life battery processing…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>44</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers appear to play innovation-stage roles through research, </td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">1</td>
+          <td class="num">11.3</td>
+          <td class="ans-cell">Insufficient data in retrieved context. 
+
+The provided data does not specify any companies playing innovation-stage role…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>45</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers currently serving traditional OEMs are also linked to EV</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">2.4</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia suppliers that currently serve traditional OEMs and are also linked to …</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>46</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia areas that currently lack Battery Cell or Battery Pack supplier</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">5.3</td>
+          <td class="ans-cell">Based on the provided data, here are the Tier 1 general automotive suppliers that do not have Battery Cell or Battery Pa…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>47</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For a new Tier 1 battery thermal management company looking to locate in Georgia</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">2.8</td>
+          <td class="ans-cell">Based on the provided data, there are no Tier 1 Materials-category suppliers listed under Fulton County, Hall County, an…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>48</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia areas have concentrated Manufacturing Plant facilities but no E</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">15</td>
+          <td class="num">1.7</td>
+          <td class="ans-cell">Based on the provided data, there are no companies listed that have a Manufacturing Plant facility but do not have any E…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>49</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For an international battery materials company seeking a Georgia location, which</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">1.8</td>
+          <td class="ans-cell">Insufficient data in retrieved context.
+
+The provided list includes various companies involved in vehicle assembly and a…</td>
+        </tr>
+        <tr class="q-row" data-format="F1" data-model="qwen2.5:14b">
+          <td>50</td>
+          <td>F1</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia areas have R&D facility types in the automotive sector, suggesting</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">1.0</td>
+          <td class="ans-cell">Racemark International LLC | Tier 1 | General Automotive | Jones County | 120 | Transportation Equipment | Yes | R&D | M…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>1</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show all "Tier 1/2" suppliers in Georgia, list their EV Supply Chain Role and Pr</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">7.1</td>
+          <td class="ans-cell">Based on my pre-existing knowledge, I can provide a list of Tier 1 and Tier 2 EV supply chain companies in Georgia. Howe…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>2</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are classified under Battery Cell or Battery Pack roles,</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">6.0</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem as of recent updates, I can provide informat…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>3</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Map all Thermal Management suppliers in Georgia and show which Primary OEMs they</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">7.8</td>
+          <td class="ans-cell">Based on my current knowledge, I can provide a general overview of the thermal management suppliers in Georgia that are …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>4</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List every Georgia company classified under Power Electronics or Charging Infras</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.1</td>
+          <td class="ans-cell">Based on my current knowledge, I can provide information on some companies in Georgia that are involved in the EV supply…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>5</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are classified as Direct Manufacturer, and what EV Supply Chain </td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">8.2</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem as of recent updates, there are a few key co…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>6</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">What locations does Novelis Inc. operate in, and what primary facility types are</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">6.0</td>
+          <td class="ans-cell">Novelis Inc. is a global leader in aluminum rolled products, with significant operations in the United States, including…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>7</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">In Gwinnett County, which company has the highest Employment and what is its EV </td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">4.8</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the automotive industry in Gwinnett County, Georgia, one of the largest employers …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>8</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county have the highest total Employment among Tier 1 suppliers only?</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">3.6</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I do not have precise data that directly co…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>9</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county has the highest total employment across all companies, and what is </td>
+          <td><span class="badge badge-warn">0.60</span></td>
+          <td class="num">0</td>
+          <td class="num">5.2</td>
+          <td class="ans-cell">Based on my pre-trained knowledge of the Georgia EV supply chain ecosystem, automotive manufacturing, battery suppliers,…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>10</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Vehicle Assembly facilities in Georgia and list the corresponding P</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.2</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the automotive industry in Georgia, I can provide information on vehicle assembly …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>11</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify the primary products and services associated with Sewon America Inc. ac</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">4.9</td>
+          <td class="ans-cell">Based on my training data, Sewon America Inc. is not specifically detailed in the context of Georgia's EV supply chain e…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>12</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List all Tier 2/3 companies in Georgia with primary involvement in the electric </td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">9.0</td>
+          <td class="ans-cell">Based on my current knowledge, I can provide a list of Tier 2/3 companies in Georgia that have primary involvement in th…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>13</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show the full supplier network linked to Rivian Automotive in Georgia, broken do</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.7</td>
+          <td class="ans-cell">Based on my current knowledge, Rivian Automotive has a significant presence in Georgia with its manufacturing facility l…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>14</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies produce battery materials such as anodes, cathodes, elec</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">4.2</td>
+          <td class="ans-cell">Based on my current knowledge as of 2023, there is no publicly available information indicating that Georgia-based compa…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>15</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia companies with an EV Supply Chain Role related to wiring ha</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">6.5</td>
+          <td class="ans-cell">Based on my current knowledge, I don't have specific information regarding Georgia-based companies that specialize in wi…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>16</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery ele</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">4.0</td>
+          <td class="ans-cell">Based on my current knowledge of the Georgia-based electric vehicle (EV) supply chain ecosystem, I do not have definitiv…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>17</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture high-voltage wiring harnesses or EV electric</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">4.0</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I do not have definitive information regard…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>18</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment i</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">9.1</td>
+          <td class="ans-cell">Based on my training data up to 2021, I can provide some insights into the Georgia EV supply chain ecosystem, particular…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>19</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based companies that manufacture copper foil or electrodeposited ma</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">3.4</td>
+          <td class="ans-cell">Based on my current knowledge of the Georgia-based companies involved in the electric vehicle (EV) supply chain ecosyste…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>20</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or compo</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">6.3</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can provide information on a few companie…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>21</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia suppliers with existing Hyundai Kia contracts that could be expande</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.6</td>
+          <td class="ans-cell">Based on my current knowledge of the Georgia EV supply chain ecosystem, I don't have definitive information about specif…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>22</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies producing DC-to-DC converters, capacitors, or power e</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">0</td>
+          <td class="num">2.2</td>
+          <td class="ans-cell">Based on my current knowledge, I don't have specific information regarding Georgia companies that produce DC-to-DC conve…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>23</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies provide powder coating-related products or services, and</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">5.1</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can provide some information regarding co…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>24</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture battery parts or enclosure systems and are c</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">9.1</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem as of recent updates, I can provide informat…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>25</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classifi</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">6.0</td>
+          <td class="ans-cell">Based on my training data, I can provide some information regarding Tier 2/3 Georgia-based suppliers that fall under the…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>26</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industr</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">8.8</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can provide information on some Tier 2/3 …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>27</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which EV Supply Chain Roles in Georgia are served by only a single company, crea</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">6.6</td>
+          <td class="ans-cell">Based on my current knowledge of the Electric Vehicle (EV) supply chain in Georgia, I do not have definitive information…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>28</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a speci</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">4.1</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem as of recent updates, there isn't a single d…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>29</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">3.9</td>
+          <td class="ans-cell">Based on my current knowledge of the Georgia EV supply chain ecosystem, I do not have precise data on the number of EV c…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>30</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General </td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">5.1</td>
+          <td class="ans-cell">Based on my current knowledge, I don't have precise information regarding specific Tier 2/3 suppliers in Georgia that ar…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>31</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversi</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">9.0</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the automotive industry in Georgia, I can provide information on some key Tier 1 a…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>32</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies in the Thermal Management or Power Electronics role w</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">5.4</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can identify a few companies that fit you…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>33</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Su</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">5.3</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem as of recent updates:
+
+1. **OEM Footprint (A…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>34</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Top 10 Georgia companies based on employment size that supply both General Autom</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">9.0</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia automotive industry and its transition towards electric vehicles (EVs)…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>35</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia companies are now producing lithium-ion battery materials, cell</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">7.3</td>
+          <td class="ans-cell">Based on my current knowledge as of the latest updates, there are a few notable companies in Georgia that are involved i…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>36</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or compo</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">8.9</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can provide some information on Tier 2/3 …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>37</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies whose product descriptions include 'high-voltage', 'D</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.3</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can identify a few companies that fit you…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>38</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia automotive companies employ over 1,000 workers but are currently c</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">9.1</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia automotive industry, there are a few companies that employ over 1,000 …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>39</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which three Georgia companies have the largest employment in EV thermal manageme</td>
+          <td><span class="badge badge-warn">0.60</span></td>
+          <td class="num">0</td>
+          <td class="num">6.4</td>
+          <td class="ans-cell">Based on my current knowledge as of the last update in 2023, I don't have precise data on the exact number of employees …</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>40</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are involved in thermal-related products or services, and what r</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">8.9</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can provide some information regarding co…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>41</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradu</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">8.0</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia automotive industry and its gradual shift towards electric vehicles (E…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>42</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How is demand for thermal management solutions reflected in the number and emplo</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">0</td>
+          <td class="num">7.4</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, I can provide some insights into how demand…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>43</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are involved in battery recycling or second-life battery</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.1</td>
+          <td class="ans-cell">Based on my current knowledge, there is limited information available specifically regarding companies in Georgia that a…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>44</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers appear to play innovation-stage roles through research, </td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">8.3</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, there are a few companies that stand out fo…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>45</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers currently serving traditional OEMs are also linked to EV</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">6.9</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia automotive industry and its transition towards electric vehicles (EVs)…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>46</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia areas that currently lack Battery Cell or Battery Pack supplier</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">7.8</td>
+          <td class="ans-cell">Based on my current knowledge of the Georgia EV supply chain ecosystem, there are a few areas that currently lack Batter…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>47</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For a new Tier 1 battery thermal management company looking to locate in Georgia</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">0</td>
+          <td class="num">7.9</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, there isn't a single area in Georgia that i…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>48</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia areas have concentrated Manufacturing Plant facilities but no E</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">0</td>
+          <td class="num">7.5</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia automotive industry and its current state regarding electric vehicle (…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>49</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For an international battery materials company seeking a Georgia location, which</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">7.9</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the Georgia EV supply chain ecosystem, there are several areas in Georgia that hav…</td>
+        </tr>
+        <tr class="q-row" data-format="F2" data-model="qwen2.5:14b">
+          <td>50</td>
+          <td>F2</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia areas have R&D facility types in the automotive sector, suggesting</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">0</td>
+          <td class="num">7.3</td>
+          <td class="ans-cell">Based on my pre-existing knowledge of the automotive sector in Georgia, there are a few notable areas that house R&D fac…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>1</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show all "Tier 1/2" suppliers in Georgia, list their EV Supply Chain Role and Pr</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">12.0</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>2</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are classified under Battery Cell or Battery Pack roles,</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">3.0</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723  
+Hollingsworth & Vose Co. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>3</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Map all Thermal Management suppliers in Georgia and show which Primary OEMs they</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">0.9</td>
+          <td class="ans-cell">ZF Gainesville LLC | OEM Supply Chain | EV thermal management and power ele | Hall County | 1200…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>4</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List every Georgia company classified under Power Electronics or Charging Infras</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">2.2</td>
+          <td class="ans-cell">Yazaki North America | OEM Footprint | Power electronics, sensors, and EV |  | 2000
+ZF Gainesville LLC | OEM Supply Chai…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>5</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are classified as Direct Manufacturer, and what EV Supply Chain </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">8.2</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>6</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">What locations does Novelis Inc. operate in, and what primary facility types are</td>
+          <td><span class="badge badge-bad">0.30</span></td>
+          <td class="num">1</td>
+          <td class="num">1.2</td>
+          <td class="ans-cell">Novelis Inc. | Tier 1 | General Automotive | Fulton County | 260…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>7</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">In Gwinnett County, which company has the highest Employment and what is its EV </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">11</td>
+          <td class="num">6.0</td>
+          <td class="ans-cell">1. SungEel Recycling Park Georgia | Tier 2/3 | Materials | Gwinnett County | 650
+2. WIKA USA | OEM Supply Chain | HV and…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>8</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county have the highest total Employment among Tier 1 suppliers only?</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">1.1</td>
+          <td class="ans-cell">1. Troup County | Tier 1 | Not specified | Troup County | 2,285 employees…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>9</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county has the highest total employment across all companies, and what is </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">10.1</td>
+          <td class="ans-cell">Jackson County has the highest total employment across all companies, with a combined employment of 19,723 employees.
+
+[…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>10</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Vehicle Assembly facilities in Georgia and list the corresponding P</td>
+          <td><span class="badge badge-warn">0.60</span></td>
+          <td class="num">10</td>
+          <td class="num">4.1</td>
+          <td class="ans-cell">Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+Suzuki Manufacturing of America Corp. | OEM | Vehicle …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>11</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify the primary products and services associated with Sewon America Inc. ac</td>
+          <td><span class="badge badge-warn">0.60</span></td>
+          <td class="num">1</td>
+          <td class="num">2.1</td>
+          <td class="ans-cell">Sewon America Inc. | Tier 1 | General Automotive | Troup County | 75…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>12</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List all Tier 2/3 companies in Georgia with primary involvement in the electric </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">7.5</td>
+          <td class="ans-cell">1. Grudem | Tier 2/3 | General Automotive | Hall County | 807
+2. Flambeau Inc. | Tier 2/3 | General Automotive | Morgan …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>13</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show the full supplier network linked to Rivian Automotive in Georgia, broken do</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">3.6</td>
+          <td class="ans-cell">Suzuki Manufacturing of America Corp. | OEM | Vehicle Assembly | Douglas County | 7500
+GSC Steel Stamping LLC | Tier 2/3…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>14</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies produce battery materials such as anodes, cathodes, elec</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">2.6</td>
+          <td class="ans-cell">Hollingsworth & Vose Co. | Tier 1/2 | Battery Pack | Pulaski County | 400
+F&P Georgia Manufacturing | Tier 1/2 | Battery…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>15</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia companies with an EV Supply Chain Role related to wiring ha</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">1.3</td>
+          <td class="ans-cell">1. Woodbridge Foam Corp. | OEM Supply Chain | EV wiring harnesses and power distr | DeKalb County | 1657…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>16</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery ele</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">7.9</td>
+          <td class="ans-cell">1. Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723
+2. Hollingsworth & Vose Co. | Tier 1/2 |…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>17</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture high-voltage wiring harnesses or EV electric</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">3.8</td>
+          <td class="ans-cell">Woodbridge Foam Corp. | OEM Supply Chain | EV wiring harnesses and power distr | DeKalb County | 1657  
+WIKA USA | OEM S…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>18</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment i</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">1</td>
+          <td class="num">0.9</td>
+          <td class="ans-cell">GSC Steel Stamping LLC | Tier 2/3 | Power Electronics | Bartow County | 350…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>19</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based companies that manufacture copper foil or electrodeposited ma</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">0.9</td>
+          <td class="ans-cell">Duckyang | Tier 2/3 | General Automotive | Jackson County | 250…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>20</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or compo</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">15</td>
+          <td class="num">7.8</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Bat…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>21</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia suppliers with existing Hyundai Kia contracts that could be expande</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">12</td>
+          <td class="num">6.0</td>
+          <td class="ans-cell">1. Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+2. Hitachi Astemo Americas Inc. | Tier 1/2 | Batter…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>22</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies producing DC-to-DC converters, capacitors, or power e</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">3</td>
+          <td class="num">1.5</td>
+          <td class="ans-cell">Yazaki North America | OEM Footprint |  | 2000  
+ZF Gainesville LLC | OEM Supply Chain | Hall County | 1200  
+GSC Steel …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>23</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies provide powder coating-related products or services, and</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">16</td>
+          <td class="num">9.4</td>
+          <td class="ans-cell">1. TCI Powder Coatings | OEM | Vehicle Assembly | Schley County | 3000
+2. Arising Industries Inc. | Tier 2/3 | General A…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>24</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture battery parts or enclosure systems and are c</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">15</td>
+          <td class="num">7.9</td>
+          <td class="ans-cell">1. Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723
+2. Hollingsworth & Vose Co. | Tier 1/2 |…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>25</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classifi</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">9</td>
+          <td class="num">4.4</td>
+          <td class="ans-cell">Grudem | Tier 2/3 | General Automotive | Hall County | 807
+Flambeau Inc. | Tier 2/3 | General Automotive | Morgan County…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>26</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industr</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">1.2</td>
+          <td class="ans-cell">Archer Aviation Inc. | Tier 2/3 | General Automotive | Morgan County | 200
+Arising Industries Inc. | Tier 2/3 | General …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>27</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which EV Supply Chain Roles in Georgia are served by only a single company, crea</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">0.1</td>
+          <td class="ans-cell">Georgia has 25 EV supply chain roles served by only ONE company (single points of failure):
+
+• GSC Steel Stamping LLC [T…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>28</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a speci</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">3.0</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723
+Hollingsworth & Vose Co. | Tier 1/2 | Batte…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>29</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">2.9</td>
+          <td class="ans-cell">Hyundai Motor Group | Tier 1/2 | Battery Pack | Bryan County | 164
+Enchem America Inc. | Tier 2/3 | General Automotive |…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>30</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">3</td>
+          <td class="num">1.3</td>
+          <td class="ans-cell">Duckyang | Tier 2/3 | General Automotive | Jackson County | 250
+Enchem America Inc. | Tier 2/3 | General Automotive | Ja…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>31</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversi</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">11</td>
+          <td class="num">5.8</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Fouts Brothers Fire Equipment | Tier 1/2 | Ge…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>32</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies in the Thermal Management or Power Electronics role w</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">2.1</td>
+          <td class="ans-cell">Peerless-Winsmith Inc. | Tier 1 | Thermal Management | Hall County | 160
+Freudenberg-NOK | Tier 2/3 | Thermal Management…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>33</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Su</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">2.6</td>
+          <td class="ans-cell">Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100  
+T…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>34</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Top 10 Georgia companies based on employment size that supply both General Autom</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">10</td>
+          <td class="num">4.8</td>
+          <td class="ans-cell">Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri) | Jackson County | 18100  
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>35</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia companies are now producing lithium-ion battery materials, cell</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">2.8</td>
+          <td class="ans-cell">Hollingsworth & Vose Co. | Tier 1/2 | Battery Pack | Pulaski County | 400  
+F&P Georgia Manufacturing | Tier 1/2 | Batte…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>36</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or compo</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">15</td>
+          <td class="num">7.6</td>
+          <td class="ans-cell">1. Grudem | Tier 2/3 | General Automotive | Hall County | 807
+2. Flambeau Inc. | Tier 2/3 | General Automotive | Morgan …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>37</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies whose product descriptions include 'high-voltage', 'D</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">13</td>
+          <td class="num">8.0</td>
+          <td class="ans-cell">1. MAT Heavy Duty | Tier 1 | General Automotive | Gwinnett County | 400
+2. Mobis Alabama LLC | Tier 1 | General Automoti…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>38</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia automotive companies employ over 1,000 workers but are currently c</td>
+          <td><span class="badge badge-warn">0.40</span></td>
+          <td class="num">15</td>
+          <td class="num">8.0</td>
+          <td class="ans-cell">1. TCI Powder Coatings | OEM | Vehicle Assembly | Schley County | 3000
+2. Teklas USA | OEM | Vehicle Assembly | Gordon C…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>39</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which three Georgia companies have the largest employment in EV thermal manageme</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">5</td>
+          <td class="num">2.6</td>
+          <td class="ans-cell">ZF Gainesville LLC | Tier 1/2 | EV thermal management and power ele | Hall County | 1200
+Novelis Inc. | Tier 1 | Thermal…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>40</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are involved in thermal-related products or services, and what r</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">13</td>
+          <td class="num">8.0</td>
+          <td class="ans-cell">1. MAT Heavy Duty | Tier 1 | General Automotive | Gwinnett County | 400
+2. Mobis Alabama LLC | Tier 1 | General Automoti…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>41</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradu</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">11</td>
+          <td class="num">5.8</td>
+          <td class="ans-cell">1. Hitachi Astemo | Tier 1/2 | General Automotive | Harris County | 800
+2. Fouts Brothers Fire Equipment | Tier 1/2 | Ge…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>42</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How is demand for thermal management solutions reflected in the number and emplo</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">3.1</td>
+          <td class="ans-cell">ZF Gainesville LLC | Tier | OEM Supply Chain | Hall County | 1200  
+Novelis Inc. | Tier 1 | Thermal Management | Fulton …</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>43</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are involved in battery recycling or second-life battery</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">9</td>
+          <td class="num">5.7</td>
+          <td class="ans-cell">Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723
+SungEel Recycling Park Georgia | Tier 2/3 |…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>44</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers appear to play innovation-stage roles through research, </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">11.2</td>
+          <td class="ans-cell">Honda Development & Manufacturing | Tier 1/2 | Battery Cell | Cherokee County | 400…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>45</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers currently serving traditional OEMs are also linked to EV</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">15</td>
+          <td class="num">8.3</td>
+          <td class="ans-cell">1. Toyota Industries Group (TACG-TICA) | OEM (Footprint) | OEM parent group footprint (electri | Jackson County | 18100
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>46</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia areas that currently lack Battery Cell or Battery Pack supplier</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">15</td>
+          <td class="num">7.2</td>
+          <td class="ans-cell">1. Joon Georgia, Inc. | Tier 1 | General Automotive | Chattahoochee County | 900
+2. Jefferson Southern Corporation | Tie…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>47</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For a new Tier 1 battery thermal management company looking to locate in Georgia</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">2.9</td>
+          <td class="ans-cell">Panasonic Automotive Systems Co. | Tier 1 | Materials | Fayette County | 175  
+PHA Body Systems LLC | Tier 1 | Materials…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>48</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia areas have concentrated Manufacturing Plant facilities but no E</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">2.4</td>
+          <td class="ans-cell">1. TE Connectivity | OEM | Vehicle Assembly | Cobb County | 1900
+2. Jefferson Southern Corporation | Tier 1 | General Au…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>49</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For an international battery materials company seeking a Georgia location, which</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">7.5</td>
+          <td class="ans-cell">1. Superior Essex Inc. | OEM | Vehicle Assembly | Cobb County | 8100
+2. Suzuki Manufacturing of America Corp. | OEM | Ve…</td>
+        </tr>
+        <tr class="q-row" data-format="F3" data-model="qwen2.5:14b">
+          <td>50</td>
+          <td>F3</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia areas have R&D facility types in the automotive sector, suggesting</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">0.8</td>
+          <td class="ans-cell">Remark International LLC | Tier 1 | General Automotive | Jones County | 120…</td>
+        </tr>
         <tr class="q-row" data-format="F3" data-model="qwen2.5:7b">
           <td>1</td>
           <td>F3</td>
@@ -719,6 +2367,521 @@ Panasonic Automotive Systems Co., Tier 1, Materials, Fayett…</td>
           <td class="num">1</td>
           <td class="num">6.8</td>
           <td class="ans-cell">Racemark International LLC | Tier 1 | General Automotive | Jones County | 120 | Transportation Equipment | Yes | R&D | M…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>1</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show all "Tier 1/2" suppliers in Georgia, list their EV Supply Chain Role and Pr</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">15</td>
+          <td class="num">18.1</td>
+          <td class="ans-cell">Here is a list of Tier 1/2 suppliers in Georgia, along with their EV Supply Chain Role and Product/Service:
+
+| Company |…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>2</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are classified under Battery Cell or Battery Pack roles,</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">9.6</td>
+          <td class="ans-cell">Here is a list of Georgia companies classified under Battery Cell or Battery Pack roles, along with their assigned tiers…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>3</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Map all Thermal Management suppliers in Georgia and show which Primary OEMs they</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">3.7</td>
+          <td class="ans-cell">Based on the provided data, here is a summary of Thermal Management suppliers in Georgia:
+
+### ZF Gainesville LLC
+
+- **C…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>4</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List every Georgia company classified under Power Electronics or Charging Infras</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">6.3</td>
+          <td class="ans-cell">Here is a list of Georgia companies classified under Power Electronics or Charging Infrastructure, along with their empl…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>5</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are classified as Direct Manufacturer, and what EV Supply Chain </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">12.9</td>
+          <td class="ans-cell">Based on the provided data, here are the companies classified as Direct Manufacturer (OEM) in Georgia's EV Supply Chain …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>6</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">What locations does Novelis Inc. operate in, and what primary facility types are</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">2.2</td>
+          <td class="ans-cell">Based on the provided data, Novelis Inc. operates in one primary location:
+
+- **Fulton County**: This is where Novelis I…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>7</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">In Gwinnett County, which company has the highest Employment and what is its EV </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">11</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">In Gwinnett County, the company with the highest employment is SungEel Recycling Park Georgia, with 650 employees. Its r…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>8</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county have the highest total Employment among Tier 1 suppliers only?</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">1.4</td>
+          <td class="ans-cell">The county with the highest total employment among Tier 1 suppliers is Troup County, with 2,285 employees across 7 compa…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>9</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which county has the highest total employment across all companies, and what is </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">9.1</td>
+          <td class="ans-cell">Based on the provided data, Jackson County has the highest total employment across all companies with 19,723 employees.
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>10</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Vehicle Assembly facilities in Georgia and list the corresponding P</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">10</td>
+          <td class="num">11.5</td>
+          <td class="ans-cell">Based on the provided data, here is a list of Vehicle Assembly facilities in Georgia along with their corresponding Prim…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>11</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify the primary products and services associated with Sewon America Inc. ac</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">4.9</td>
+          <td class="ans-cell">Based on the provided data, Sewon America Inc.'s primary products and services associated with its operational sites in …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>12</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">List all Tier 2/3 companies in Georgia with primary involvement in the electric </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Here is a list of Tier 2/3 companies in Georgia with primary involvement in the electric vehicle or battery supply chain…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>13</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Show the full supplier network linked to Rivian Automotive in Georgia, broken do</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">6</td>
+          <td class="num">8.1</td>
+          <td class="ans-cell">Here is the full supplier network linked to Rivian Automotive in Georgia, broken down by tier and EV Supply Chain Role:
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>14</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies produce battery materials such as anodes, cathodes, elec</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">6.1</td>
+          <td class="ans-cell">Based on the retrieved data from the internal database, here are the Georgia companies that produce battery materials su…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>15</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia companies with an EV Supply Chain Role related to wiring ha</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">7.8</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia companies with an EV Supply Chain Role related to wiring harnesses and …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>16</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery ele</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">12.0</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery electro…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>17</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture high-voltage wiring harnesses or EV electric</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">9.3</td>
+          <td class="ans-cell">Based on the Georgia EV Supply Chain Intelligence System database, here are the companies in Georgia that manufacture hi…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>18</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment i</td>
+          <td><span class="badge badge-good">0.80</span></td>
+          <td class="num">1</td>
+          <td class="num">6.1</td>
+          <td class="ans-cell">Based on the provided data, there is one company in Georgia that could potentially be upgraded to supply EV power electr…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>19</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia-based companies that manufacture copper foil or electrodeposited ma</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">5.8</td>
+          <td class="ans-cell">Based on the provided data, there is one Georgia-based company that manufactures copper foil suitable for EV battery cur…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>20</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or compo</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia Tier 1/2 companies that produce engineered plastics, polymers, or compo…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>21</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Georgia suppliers with existing Hyundai Kia contracts that could be expande</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">12</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Here are the Georgia suppliers with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>22</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies producing DC-to-DC converters, capacitors, or power e</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">3</td>
+          <td class="num">6.4</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia companies producing DC-to-DC converters, capacitors, or power electroni…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>23</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies provide powder coating-related products or services, and</td>
+          <td><span class="badge badge-bad">0.20</span></td>
+          <td class="num">16</td>
+          <td class="num">14.8</td>
+          <td class="ans-cell">Here is a list of Georgia companies providing powder coating-related products or services, along with their tier classif…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>24</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies manufacture battery parts or enclosure systems and are c</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia companies that manufacture battery parts or enclosure systems classifie…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>25</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classifi</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">9</td>
+          <td class="num">13.3</td>
+          <td class="ans-cell">Based on the provided data, here are the Tier 2/3 Georgia-based suppliers with employment over 300 that are classified a…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>26</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industr</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">4.6</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia Tier 2/3 companies in the Chemicals and Allied Products industry group …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>27</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which EV Supply Chain Roles in Georgia are served by only a single company, crea</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">0</td>
+          <td class="num">0.2</td>
+          <td class="ans-cell">Georgia has 25 EV supply chain roles served by only ONE company (single points of failure):
+
+• GSC Steel Stamping LLC [T…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>28</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a speci</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">11.1</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia Battery Cell or Battery Pack suppliers that are sole-sourced by a speci…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>29</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">6</td>
+          <td class="num">8.1</td>
+          <td class="ans-cell">For Hyundai Metaplant, there are 6 Georgia-based EV component suppliers with fewer than 200 employees, potentially indic…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>30</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General </td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">3</td>
+          <td class="num">13.0</td>
+          <td class="ans-cell">Based on the provided data, here are the three Georgia Tier 2/3 suppliers that are EV Relevant, classified as General Au…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>31</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversi</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">11</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Here is a list of Georgia-based Tier 1/2 automotive suppliers that maintain a diversified customer base (serving 'Multip…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>32</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies in the Thermal Management or Power Electronics role w</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">6.0</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia companies in the Thermal Management or Power Electronics role with fewe…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>33</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Su</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">4</td>
+          <td class="num">7.9</td>
+          <td class="ans-cell">Based on the provided data, here are the EV-relevant Georgia companies classified as OEM Footprint or OEM Supply Chain:
+…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>34</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Top 10 Georgia companies based on employment size that supply both General Autom</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">10</td>
+          <td class="num">13.3</td>
+          <td class="ans-cell">Based on the provided data, here are the top 10 Georgia companies by employment size that supply both General Automotive…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>35</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia companies are now producing lithium-ion battery materials, cell</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">2</td>
+          <td class="num">6.1</td>
+          <td class="ans-cell">According to the Georgia EV Supply Chain Intelligence System's internal database, there are currently 2 companies in Geo…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>36</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or compo</td>
+          <td><span class="badge badge-warn">0.50</span></td>
+          <td class="num">15</td>
+          <td class="num">13.4</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia Tier 2/3 suppliers that produce lightweight aluminum or composite mater…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>37</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia companies whose product descriptions include 'high-voltage', 'D</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">13</td>
+          <td class="num">8.4</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia companies whose product descriptions include 'high-voltage', 'DC-to-DC'…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>38</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia automotive companies employ over 1,000 workers but are currently c</td>
+          <td><span class="badge badge-bad">0.00</span></td>
+          <td class="num">15</td>
+          <td class="num">4.6</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia automotive companies that employ over 1,000 workers but are currently c…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>39</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which three Georgia companies have the largest employment in EV thermal manageme</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">5</td>
+          <td class="num">7.4</td>
+          <td class="ans-cell">Based on the data retrieved from the Georgia EV Supply Chain Intelligence System's internal database, here are the three…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>40</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which companies are involved in thermal-related products or services, and what r</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">13</td>
+          <td class="num">15.0</td>
+          <td class="ans-cell">Based on the provided data, here are the details of the companies involved in thermal-related products or services:
+
+1. …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>41</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradu</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">11</td>
+          <td class="num">13.3</td>
+          <td class="ans-cell">Based on the provided data, here are the Tier 1/2 Georgia companies listed under General Automotive that suggest a gradu…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>42</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How is demand for thermal management solutions reflected in the number and emplo</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">13.0</td>
+          <td class="ans-cell">The demand for thermal management solutions in Georgia's EV supply chain is reflected through the number of suppliers an…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>43</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia companies are involved in battery recycling or second-life battery</td>
+          <td><span class="badge badge-good">0.70</span></td>
+          <td class="num">9</td>
+          <td class="num">6.6</td>
+          <td class="ans-cell">Based on the Georgia EV Supply Chain Intelligence System database, here are the companies involved in battery recycling …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>44</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers appear to play innovation-stage roles through research, </td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">13.1</td>
+          <td class="ans-cell">Based on the provided data, there is one Georgia supplier that appears to play an innovation-stage role through research…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>45</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia suppliers currently serving traditional OEMs are also linked to EV</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">15</td>
+          <td class="num">13.2</td>
+          <td class="ans-cell">Based on the provided data, here are the Georgia suppliers that currently serve traditional OEMs and also have links to …</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>46</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Identify Georgia areas that currently lack Battery Cell or Battery Pack supplier</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">15</td>
+          <td class="num">13.3</td>
+          <td class="ans-cell">Based on the provided data, here are the areas in Georgia that currently lack Battery Cell or Battery Pack suppliers but…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>47</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For a new Tier 1 battery thermal management company looking to locate in Georgia</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">5</td>
+          <td class="num">6.5</td>
+          <td class="ans-cell">For a new Tier 1 battery thermal management company looking to locate in Georgia, the areas with the highest concentrati…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>48</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">How many Georgia areas have concentrated Manufacturing Plant facilities but no E</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">13.3</td>
+          <td class="ans-cell">To determine how many Georgia areas have concentrated Manufacturing Plant facilities but no EV-specific production prese…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>49</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">For an international battery materials company seeking a Georgia location, which</td>
+          <td><span class="badge badge-good">0.90</span></td>
+          <td class="num">15</td>
+          <td class="num">10.0</td>
+          <td class="ans-cell">For an international battery materials company seeking a Georgia location with existing chemical manufacturing infrastru…</td>
+        </tr>
+        <tr class="q-row" data-format="F4" data-model="qwen2.5:14b">
+          <td>50</td>
+          <td>F4</td>
+          <td><code style="font-size:0.7rem">qwen2.5:14b</code></td>
+          <td class="q-text">Which Georgia areas have R&D facility types in the automotive sector, suggesting</td>
+          <td><span class="badge badge-good">1.00</span></td>
+          <td class="num">1</td>
+          <td class="num">3.5</td>
+          <td class="ans-cell">Based on the retrieved data, there is one company in Georgia with an R&D facility type relevant to the automotive sector…</td>
         </tr></tbody>
     </table>
   </div>
@@ -760,11 +2923,11 @@ const METRIC_LABELS = ["Faithfulness", "Answer Relevancy", "Context Precision", 
 new Chart(document.getElementById('barChart'), {
   type: 'bar',
   data: {
-    labels: ["F3\nqwen2.5:7b"],
+    labels: ["F4\nqwen2.5:14b", "F1\nqwen2.5:14b", "F3\nqwen2.5:14b", "F3\nqwen2.5:7b", "F2\nqwen2.5:14b"],
     datasets: [{
       label: 'Overall Score',
-      data: [0.841],
-      backgroundColor: ["#6366f1"],
+      data: [0.902, 0.859, 0.853, 0.841, 0.838],
+      backgroundColor: ["#6366f1", "#22d3ee", "#f59e0b", "#10b981", "#ef4444"],
       borderRadius: 6,
     }]
   },
@@ -782,7 +2945,7 @@ new Chart(document.getElementById('radarChart'), {
   type: 'radar',
   data: {
     labels: METRIC_LABELS,
-    datasets: [{"label": "F3 / qwen2.5:7b", "data": [0.758, 0.904, 0.82, 0.938, 0.782], "borderColor": "#6366f1", "backgroundColor": "#6366f133"}]
+    datasets: [{"label": "F1 / qwen2.5:14b", "data": [0.785, 0.902, 0.883, 1.0, 0.726], "borderColor": "#6366f1", "backgroundColor": "#6366f133"}, {"label": "F2 / qwen2.5:14b", "data": [0, 0.916, 0, 0, 0.76], "borderColor": "#22d3ee", "backgroundColor": "#22d3ee33"}, {"label": "F3 / qwen2.5:14b", "data": [0.752, 0.898, 0.849, 0.97, 0.796], "borderColor": "#f59e0b", "backgroundColor": "#f59e0b33"}, {"label": "F3 / qwen2.5:7b", "data": [0.758, 0.904, 0.82, 0.938, 0.782], "borderColor": "#10b981", "backgroundColor": "#10b98133"}, {"label": "F4 / qwen2.5:14b", "data": [0.824, 0.918, 0.927, 1.0, 0.84], "borderColor": "#ef4444", "backgroundColor": "#ef444433"}]
   },
   options: {
     responsive: true,
