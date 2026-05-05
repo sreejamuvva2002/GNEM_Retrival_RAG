@@ -58,7 +58,7 @@ STRICT INSTRUCTION: Answer ONLY using the data above.
 Answer:"""
 
 
-def run_format1(question: str, pipeline) -> dict[str, Any]:
+def run_format1(question: str, pipeline, model: str | None = None) -> dict[str, Any]:
     """
     Format 1: Pure RAG — retrieved context + strict synthesis.
     Few-shot: DISABLED (measures pure retrieval quality).
@@ -89,7 +89,7 @@ def run_format1(question: str, pipeline) -> dict[str, Any]:
             row_count=row_count if row_count > 0 else "unknown",
             row_noun=row_noun,
         )
-        answer = _call_llm(prompt, max_tokens=600)
+        answer = _call_llm(prompt, max_tokens=600, model=model)
         retrieved_count = row_count
 
     elapsed = time.monotonic() - t0
@@ -187,7 +187,7 @@ INSTRUCTIONS:
 Answer:"""
 
 
-def run_format4(question: str, pipeline) -> dict[str, Any]:
+def run_format4(question: str, pipeline, model: str | None = None) -> dict[str, Any]:
     """
     Format 4: RAG + Pre-trained + Web (Tavily enrichment).
     Few-shot: ENABLED.
@@ -224,7 +224,7 @@ def run_format4(question: str, pipeline) -> dict[str, Any]:
             row_count=row_count if row_count > 0 else "unknown",
             row_noun=row_noun,
         )
-        answer = _call_llm(prompt, max_tokens=700)
+        answer = _call_llm(prompt, max_tokens=700, model=model)
         retrieved_count = row_count
 
     elapsed = time.monotonic() - t0

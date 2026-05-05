@@ -86,6 +86,7 @@ def load_eval_questions() -> list[dict]:
 _JUDGE_PROMPT = """You are an expert evaluator for a Georgia EV Supply Chain Q&A system.
 
 Score the following answer on a scale of 0.0 to 1.0 for each metric.
+CRITICAL: Use precise decimal values (e.g., 0.84, 0.91, 0.65) instead of rounding to quartiles (do NOT just use 0.25, 0.5, 0.75, 1.0).
 Return ONLY a valid JSON object, nothing else.
 
 QUESTION: {question}
@@ -95,24 +96,28 @@ RETRIEVED CONTEXT (what the system found in the database):
 
 SYSTEM ANSWER: {answer}
 
-Score these 5 metrics:
-1. faithfulness: Does the answer use only information from the retrieved context? (1.0 = purely faithful, 0.0 = fabricated)
+GOLDEN ANSWER (the ground truth):
+{golden}
+
+Score these 5 metrics (0.00 to 1.00):
+1. faithfulness: Does the answer use only information from the retrieved context? (1.00 = purely faithful, 0.00 = fabricated)
    Note: For F2 (No RAG), context is empty — skip this, set to null.
-2. answer_relevancy: Does the answer actually address the question? (1.0 = perfectly relevant)
-3. context_precision: Are the retrieved rows relevant to the question? (1.0 = all relevant, null if no context)
-4. context_recall: Did retrieval capture all needed information? (1.0 = complete, null if no context)
-5. answer_correctness: Is the answer factually correct based on what you know about Georgia EV companies? (1.0 = correct)
+2. answer_relevancy: Does the answer actually address the question? (1.00 = perfectly relevant)
+3. context_precision: Are the retrieved rows relevant to the question? (1.00 = all relevant, null if no context)
+4. context_recall: Did the retrieval capture all the facts present in the GOLDEN ANSWER? (1.00 = complete, null if no context)
+5. answer_correctness: Is the SYSTEM ANSWER factually correct compared to the GOLDEN ANSWER? (1.00 = identical facts)
 
-Return exactly this JSON:
-{{"faithfulness": 0.0-1.0 or null, "answer_relevancy": 0.0-1.0, "context_precision": 0.0-1.0 or null, "context_recall": 0.0-1.0 or null, "answer_correctness": 0.0-1.0}}"""
+Return exactly this JSON format (use your own precise scores):
+{{"faithfulness": 0.84, "answer_relevancy": 0.92, "context_precision": 0.76, "context_recall": 0.88, "answer_correctness": 0.95}}"""
 
 
-def score_answer(question: str, context: str, answer: str, judge_model: str = "qwen2.5:7b") -> dict:
+def score_answer(question: str, context: str, answer: str, golden: str, judge_model: str = "gemma3:12b") -> dict:
     """Score an answer using LLM-as-judge. Returns dict of metric scores."""
     prompt = _JUDGE_PROMPT.format(
         question=question[:300],
         context=context[:1500] if context else "(No retrieved context — Format 2 No-RAG evaluation)",
         answer=answer[:800],
+        golden=golden[:800] if golden else "No golden answer provided.",
     )
     raw = _call_llm(prompt, max_tokens=200, model=judge_model)
 
@@ -178,13 +183,13 @@ def run_evaluation(
         try:
             # Run the appropriate format
             if format_num == 1:
-                result = run_format1(question, pipeline)
+                result = run_format1(question, pipeline, model=model)
             elif format_num == 2:
                 result = run_format2(question, model=model)
             elif format_num == 3:
                 result = run_format3(question, pipeline)
             elif format_num == 4:
-                result = run_format4(question, pipeline)
+                result = run_format4(question, pipeline, model=model)
             else:
                 raise ValueError(f"Unknown format: {format_num}")
 
@@ -193,6 +198,7 @@ def run_evaluation(
                 question=question,
                 context=result.get("retrieved_context", ""),
                 answer=result.get("answer", ""),
+                golden=q_item.get("golden", ""),
                 judge_model=judge_model,
             )
 
@@ -279,8 +285,8 @@ def main():
         help="Number of questions to evaluate (default: 50)"
     )
     parser.add_argument(
-        "--judge-model", default="qwen2.5:7b",
-        help="Model to use as LLM judge (default: qwen2.5:7b)"
+        "--judge-model", default="gemma3:12b",
+        help="Model to use as LLM judge (default: gemma3:12b)"
     )
     parser.add_argument(
         "--dashboard-only", action="store_true",
