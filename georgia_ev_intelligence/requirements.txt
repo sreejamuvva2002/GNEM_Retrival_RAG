@@ -32,6 +32,7 @@ neo4j-graphrag>=1.0.0     # VectorCypherRetriever (official)
 # ── Phase 4: LLM Agent ──────────────────────────────────────
 langgraph>=0.2.0          # Stateful agent orchestration
 langchain-ollama>=0.1.0   # Ollama integration
+sentence-transformers>=3.0.0  # Cross-encoder reranker
 
 # ── Phase 5: Chat UI ─────────────────────────────────────────
 fastapi>=0.115.0          # API backend

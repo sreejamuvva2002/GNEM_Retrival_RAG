@@ -14,6 +14,8 @@ from phase2_embedding.embedder import embed_single
 from phase2_embedding.vector_store import scroll_points, search_dense
 from phase4_agent.entity_extractor import Entities
 from phase4_agent.filter_interpreter import SoftFilterPlan, interpret_soft_filters
+from phase4_agent.reranker import rerank_companies
+from shared.config import Config
 from shared.logger import get_logger
 
 logger = get_logger("phase4.vector_retriever")
@@ -338,6 +340,11 @@ def _limit_for_question(question: str, entities: Entities) -> int:
     return _DEFAULT_LIMIT
 
 
+def _rerank_cap(question: str, entities: Entities) -> int:
+    limit = _limit_for_question(question, entities)
+    return max(limit, Config.get().reranker_max_candidates)
+
+
 def _sort_matches(
     question: str,
     entities: Entities,
@@ -351,13 +358,14 @@ def _sort_matches(
         return matches
 
     limit = _limit_for_question(question, entities)
-    ranked = sorted(
+    dense_ranked = sorted(
         matches,
         key=lambda c: (rank_by_name.get(c.get("company_name", ""), 10_000), c.get("company_name", "")),
     )
-    if not _is_broad_listing(question, entities):
-        return ranked[:limit]
-    return ranked[:limit]
+    rerank_cap = _rerank_cap(question, entities)
+    preselected = dense_ranked[:rerank_cap]
+    reranked = rerank_companies(question, preselected)
+    return reranked[:limit]
 
 
 def _format_aggregate_context(companies: list[dict[str, Any]], label: str) -> str:
@@ -426,7 +434,8 @@ def retrieve_companies(question: str, entities: Entities) -> list[dict[str, Any]
         return []
 
     if ranked_companies:
-        return ranked_companies[:_limit_for_question(question, entities)]
+        reranked = rerank_companies(question, ranked_companies[:_rerank_cap(question, entities)])
+        return reranked[:_limit_for_question(question, entities)]
 
     return []
 
@@ -452,7 +461,8 @@ def retrieve_context(question: str, entities: Entities) -> list[dict[str, Any]] 
         logger.info("Strict retrieval: structured filters produced 0 matches")
         return "No matching companies found."
     else:
-        matches = ranked_companies[:_limit_for_question(question, entities)]
+        reranked = rerank_companies(question, ranked_companies[:_rerank_cap(question, entities)])
+        matches = reranked[:_limit_for_question(question, entities)]
 
     if not matches:
         return "No matching companies found."

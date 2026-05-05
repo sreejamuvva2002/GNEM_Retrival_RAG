@@ -502,9 +502,12 @@ async def main(questions: list[dict], out_path: Path, resume: bool) -> None:
         # Step 2: RAGAS scoring
         print(f"  → Scoring 5 metrics...")
         scored_row = await evaluate_row(row, judge_url, model)
-        fs = scored_row.get("final_score", 0)
-        flag = "✅" if fs >= 0.7 else ("⚠️" if fs >= 0.5 else "❌")
-        print(f"  → Final score: {fs:.3f} {flag}")
+        answer_correctness = float(scored_row.get("answer_correctness", 0) or 0)
+        flag = (
+            "✅" if answer_correctness >= 0.7
+            else ("⚠️" if answer_correctness >= 0.5 else "❌")
+        )
+        print(f"  → Answer correctness: {answer_correctness:.3f} {flag}")
 
         # Checkpoint immediately
         save_checkpoint(scored_row)

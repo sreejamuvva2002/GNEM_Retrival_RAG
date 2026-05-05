@@ -164,6 +164,17 @@ class Config:
     def ollama_embed_model(self) -> str:
         return os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 
+    @property
+    def reranker_model(self) -> str:
+        return os.environ.get(
+            "CROSS_ENCODER_RERANKER_MODEL",
+            "cross-encoder/ms-marco-MiniLM-L6-v2",
+        )
+
+    @property
+    def reranker_max_candidates(self) -> int:
+        return int(os.environ.get("CROSS_ENCODER_RERANK_TOP_K", "48"))
+
 
     # ── Settings YAML ────────────────────────────────────────
     @property
