@@ -25,6 +25,7 @@ PARENT-CHILD PATTERN:
 """
 from __future__ import annotations
 
+import hashlib
 import time
 import uuid
 from typing import Any
@@ -49,6 +50,7 @@ logger = get_logger("phase2.vector_store")
 UPLOAD_BATCH_SIZE = 100
 
 _qdrant_client: QdrantClient | None = None
+_payload_indexes_ensured = False
 
 
 def get_qdrant_client() -> QdrantClient:
@@ -67,6 +69,44 @@ def get_qdrant_client() -> QdrantClient:
 
 def get_collection_name() -> str:
     return Config.get().qdrant_collection
+
+
+def ensure_payload_indexes() -> None:
+    """Create the payload indexes needed for GNEM-only filtering."""
+    global _payload_indexes_ensured
+    if _payload_indexes_ensured:
+        return
+
+    client = get_qdrant_client()
+    collection_name = get_collection_name()
+    index_fields = {
+        "source_type": models.PayloadSchemaType.KEYWORD,
+        "chunk_type": models.PayloadSchemaType.KEYWORD,
+        "company_name": models.PayloadSchemaType.KEYWORD,
+        "tier": models.PayloadSchemaType.KEYWORD,
+        "location_county": models.PayloadSchemaType.KEYWORD,
+        "location_city": models.PayloadSchemaType.KEYWORD,
+        "industry_group": models.PayloadSchemaType.KEYWORD,
+        "facility_type": models.PayloadSchemaType.KEYWORD,
+        "document_type": models.PayloadSchemaType.KEYWORD,
+        "ev_supply_chain_role": models.PayloadSchemaType.KEYWORD,
+        "ev_battery_relevant": models.PayloadSchemaType.KEYWORD,
+        "employment": models.PayloadSchemaType.FLOAT,
+    }
+
+    for field_name, schema in index_fields.items():
+        try:
+            client.create_payload_index(
+                collection_name=collection_name,
+                field_name=field_name,
+                field_schema=schema,
+                wait=True,
+            )
+        except Exception as exc:
+            logger.warning("Payload index setup skipped for %s: %s", field_name, exc)
+
+    _payload_indexes_ensured = True
+    logger.info("Verified payload indexes for Qdrant collection '%s'", collection_name)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -170,9 +210,8 @@ def _build_sparse_vector(text: str) -> dict[str, Any]:
     seen_indices: set[int] = set()
 
     for token, count in tf.items():
-        idx = hash(token) % VOCAB_SIZE
-        if idx < 0:
-            idx += VOCAB_SIZE
+        digest = hashlib.blake2b(token.encode("utf-8"), digest_size=8).digest()
+        idx = int.from_bytes(digest, "big") % VOCAB_SIZE
         if idx not in seen_indices:
             seen_indices.add(idx)
             indices.append(idx)
@@ -312,7 +351,8 @@ def _build_metadata_filter(filters: dict[str, Any]) -> Filter | None:
     str_fields = [
         "company_name", "tier", "location_county", "location_city",
         "ev_battery_relevant", "source_type", "chunk_type",
-        "document_type", "ev_supply_chain_role",
+        "document_type", "ev_supply_chain_role", "facility_type",
+        "industry_group",
     ]
     for field in str_fields:
         if field in filters:
@@ -364,6 +404,7 @@ def search_hybrid(
     client = get_qdrant_client()
     collection_name = get_collection_name()
     cfg = Config.get()
+    ensure_payload_indexes()
 
     qdrant_filter = _build_metadata_filter(filters or {})
     sv = _build_sparse_vector(query_text)
@@ -449,6 +490,106 @@ def search_hybrid(
             return []
 
 
+def search_dense(
+    query_vector: list[float],
+    top_k: int = 12,
+    filters: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    """Dense-only search over the Qdrant collection."""
+    client = get_qdrant_client()
+    collection_name = get_collection_name()
+    cfg = Config.get()
+    ensure_payload_indexes()
+    qdrant_filter = _build_metadata_filter(filters or {})
+
+    try:
+        results = client.query_points(
+            collection_name=collection_name,
+            query=query_vector,
+            using=cfg.qdrant_dense_name,
+            limit=top_k,
+            with_payload=True,
+            **({"query_filter": qdrant_filter} if qdrant_filter else {}),
+        )
+    except Exception as exc:
+        logger.error("Qdrant dense search failed: %s", exc)
+        return []
+
+    search_results = []
+    for point in results.points:
+        payload = point.payload or {}
+        search_results.append({
+            "score": point.score,
+            "chunk_id": payload.get("chunk_id", str(point.id)),
+            "text": payload.get("text", ""),
+            "parent_text": payload.get("parent_text", payload.get("text", "")),
+            "company_name": payload.get("company_name", ""),
+            "source_url": payload.get("source_url", ""),
+            "document_type": payload.get("document_type", ""),
+            "chunk_type": payload.get("chunk_type", ""),
+            "tier": payload.get("tier", ""),
+            "location_county": payload.get("location_county", ""),
+            "ev_battery_relevant": payload.get("ev_battery_relevant", ""),
+            "metadata": payload,
+        })
+
+    logger.info("Dense search returned %d results", len(search_results))
+    return search_results
+
+
+def scroll_points(
+    filters: dict[str, Any] | None = None,
+    limit: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Scroll payload-bearing records from Qdrant without vector ranking.
+
+    Useful when we want exhaustive retrieval from the vector DB itself,
+    then do filtering/aggregation in Python.
+    """
+    client = get_qdrant_client()
+    collection_name = get_collection_name()
+    ensure_payload_indexes()
+    qdrant_filter = _build_metadata_filter(filters or {})
+
+    records: list[dict[str, Any]] = []
+    next_offset = None
+    remaining = limit
+
+    while True:
+        batch_limit = 128
+        if remaining is not None:
+            batch_limit = max(1, min(batch_limit, remaining))
+
+        points, next_offset = client.scroll(
+            collection_name=collection_name,
+            scroll_filter=qdrant_filter,
+            limit=batch_limit,
+            offset=next_offset,
+            with_payload=True,
+            with_vectors=False,
+        )
+
+        for point in points:
+            records.append({
+                "id": str(point.id),
+                "payload": point.payload or {},
+            })
+
+        if remaining is not None:
+            remaining -= len(points)
+            if remaining <= 0:
+                break
+        if not next_offset or not points:
+            break
+
+    logger.info(
+        "Scrolled %d points from Qdrant (filter=%s)",
+        len(records), bool(filters)
+    )
+    return records
+
+
 def delete_company_chunks(company_name: str) -> int:
     """Delete all chunks for a specific company (for re-embedding)."""
     client = get_qdrant_client()
@@ -473,6 +614,7 @@ def verify_qdrant_connection() -> dict[str, Any]:
         stats = get_collection_stats()
         if "error" in stats:
             return {"ok": False, "error": stats["error"]}
+        ensure_payload_indexes()
         return {
             "ok": True,
             "collection": stats["collection"],

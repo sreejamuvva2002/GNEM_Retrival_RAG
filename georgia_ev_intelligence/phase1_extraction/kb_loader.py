@@ -75,24 +75,15 @@ _COL_MAP = {
 def _find_gnem_excel() -> Path:
     """
     Locate the GNEM Excel file.
-    Prefers the cleaned version (GNEM_Cleaned.xlsx) if it exists.
-    Falls back to the original if cleaned is not found.
-    Run scripts/clean_excel.py first to create the cleaned version.
+    This workbook is the single KB source of truth for retrieval.
     """
-    kb_dir = Path(__file__).resolve().parents[2] / "kb"
-    candidates = [
-        kb_dir / "GNEM_Cleaned.xlsx",                                  # ← cleaned first
-        kb_dir / "GNEM - Auto Landscape Lat Long Updated.xlsx",         # ← original fallback
-        Path(__file__).resolve().parents[2] / "ev_data_LLM_comparsions" / "GNEM - Auto Landscape Lat Long Updated.xlsx",
-        Path(__file__).resolve().parents[2] / "GNEM - Auto Landscape Lat Long Updated.xlsx",
-    ]
-    for path in candidates:
-        if path.exists():
-            logger.info("Found GNEM Excel at: %s", path)
-            return path
+    path = Path(__file__).resolve().parents[2] / "kb" / "GNEM - Auto Landscape Lat Long Updated.xlsx"
+    if path.exists():
+        logger.info("Found GNEM Excel at: %s", path)
+        return path
     raise FileNotFoundError(
-        "Cannot find GNEM Excel file. Run scripts/clean_excel.py first to create kb/GNEM_Cleaned.xlsx\n"
-        f"Searched: {[str(p) for p in candidates]}"
+        "Cannot find GNEM Excel file at "
+        f"{path}. This workbook is the required KB source."
     )
 
 
@@ -191,7 +182,7 @@ def _row_to_company_dict(row: pd.Series) -> dict[str, Any]:
     return result
 
 
-def load_companies_from_excel() -> list[dict[str, Any]]:
+def load_companies_from_excel(apply_overrides: bool = True) -> list[dict[str, Any]]:
     """
     Load all 205 companies from GNEM Excel as list of dicts.
     Handles known data quality issues:
@@ -241,18 +232,21 @@ def load_companies_from_excel() -> list[dict[str, Any]]:
         logger.warning("Skipped %d rows due to data quality issues (shifted columns in GNEM Excel)", skipped_dq)
     logger.info("Parsed %d companies from GNEM Excel (%d skipped for data quality)", len(companies), skipped_dq)
 
-    # Apply employment overrides from CSV (not hardcoded)
-    overrides = _load_employment_overrides()
-    capped = 0
-    for company in companies:
-        name = company.get("company_name", "")
-        if name in overrides:
-            original = company.get("employment")
-            company["employment"] = overrides[name]
-            logger.info("[OVERRIDE] %s: %s → %.0f (from CSV)", name, original, overrides[name])
-            capped += 1
-    if capped:
-        logger.info("Applied employment overrides to %d companies", capped)
+    if apply_overrides:
+        # Apply employment overrides from CSV (not hardcoded)
+        overrides = _load_employment_overrides()
+        capped = 0
+        for company in companies:
+            name = company.get("company_name", "")
+            if name in overrides:
+                original = company.get("employment")
+                company["employment"] = overrides[name]
+                logger.info("[OVERRIDE] %s: %s → %.0f (from CSV)", name, original, overrides[name])
+                capped += 1
+        if capped:
+            logger.info("Applied employment overrides to %d companies", capped)
+    else:
+        logger.info("Using raw GNEM workbook values only (employment overrides disabled)")
 
     return companies
 
@@ -348,11 +342,14 @@ def get_all_companies_from_db() -> list[dict[str, Any]]:
                 "primary_oems": c.primary_oems,
                 "ev_battery_relevant": c.ev_battery_relevant,
                 "industry_group": c.industry_group,
+                "facility_type": c.facility_type,
                 "location_city": c.location_city,
                 "location_county": c.location_county,
                 "location_state": c.location_state,
                 "employment": c.employment,
                 "products_services": c.products_services,
+                "classification_method": c.classification_method,
+                "supplier_affiliation_type": c.supplier_affiliation_type,
                 "latitude": c.latitude,
                 "longitude": c.longitude,
             }
@@ -378,6 +375,7 @@ def build_document_text(company: dict[str, Any]) -> str:
         f"Tier: {company.get('tier', '')} | "
         f"Industry: {company.get('industry_group', '')} | "
         f"Location: {location} | "
+        f"Facility Type: {company.get('facility_type', '')} | "
         f"EV Role: {company.get('ev_supply_chain_role', '')} | "
         f"OEMs: {company.get('primary_oems', '')} | "
         f"EV / Battery Relevant: {company.get('ev_battery_relevant', '')} | "

@@ -36,87 +36,56 @@ from shared.logger import get_logger
 logger = get_logger("phase4.entity_extractor")
 
 
-# ── Load real DB values (cached per session) ──────────────────────────────────
+# ── Load KB values from the GNEM workbook (cached per session) ───────────────
+
+@lru_cache(maxsize=1)
+def _kb_companies() -> list[dict]:
+    from phase1_extraction.kb_loader import load_companies_from_excel
+    companies = load_companies_from_excel(apply_overrides=False)
+    logger.info("Entity extractor loaded %d companies from GNEM workbook", len(companies))
+    return companies
 
 @lru_cache(maxsize=1)
 def _oem_names() -> list[str]:
-    try:
-        from phase3_graph.graph_loader import get_driver
-        driver = get_driver()
-        with driver.session() as s:
-            rows = s.run("MATCH (o:OEM) RETURN o.name AS name").data()
-        names = [r["name"] for r in rows if r["name"]]
-        logger.info("Entity extractor loaded %d OEM names", len(names))
-        return names
-    except Exception as exc:
-        logger.warning("OEM load failed: %s", exc)
-        return []
+    names = set()
+    for company in _kb_companies():
+        raw = str(company.get("primary_oems") or "")
+        for part in raw.replace("/", ",").split(","):
+            part = part.strip()
+            if part:
+                names.add(part)
+    names_list = sorted(names)
+    logger.info("Entity extractor loaded %d OEM names", len(names_list))
+    return names_list
 
 
 @lru_cache(maxsize=1)
 def _tier_names() -> list[str]:
-    try:
-        from phase3_graph.graph_loader import get_driver
-        driver = get_driver()
-        with driver.session() as s:
-            rows = s.run("MATCH (t:Tier) RETURN t.name AS name").data()
-        return [r["name"] for r in rows if r["name"]]
-    except Exception as exc:
-        logger.warning("Tier load failed: %s", exc)
-        return []
+    return sorted({company.get("tier") for company in _kb_companies() if company.get("tier")})
 
 
 @lru_cache(maxsize=1)
 def _county_names() -> list[str]:
-    try:
-        from shared.db import get_session, Company
-        session = get_session()
-        try:
-            rows = session.query(Company.location_county).filter(
-                Company.location_county.isnot(None)
-            ).distinct().all()
-            # Extract just the county name part (before comma)
-            return list({r.location_county.split(",")[0].strip() for r in rows if r.location_county})
-        finally:
-            session.close()
-    except Exception as exc:
-        logger.warning("County load failed: %s", exc)
-        return []
+    return sorted({
+        str(company.get("location_county")).split(",")[0].strip()
+        for company in _kb_companies()
+        if company.get("location_county")
+    })
 
 
 @lru_cache(maxsize=1)
 def _ev_roles() -> list[str]:
-    try:
-        from shared.db import get_session, Company
-        session = get_session()
-        try:
-            rows = session.query(Company.ev_supply_chain_role).filter(
-                Company.ev_supply_chain_role.isnot(None)
-            ).distinct().all()
-            return [r.ev_supply_chain_role for r in rows if r.ev_supply_chain_role]
-        finally:
-            session.close()
-    except Exception as exc:
-        logger.warning("EV roles load failed: %s", exc)
-        return []
+    return sorted({
+        company.get("ev_supply_chain_role")
+        for company in _kb_companies()
+        if company.get("ev_supply_chain_role")
+    })
 
 
 @lru_cache(maxsize=1)
 def _company_names() -> list[str]:
-    """Load all real company names from PostgreSQL for direct name lookup."""
-    try:
-        from shared.db import get_session, Company
-        session = get_session()
-        try:
-            rows = session.query(Company.company_name).filter(
-                Company.company_name.isnot(None)
-            ).all()
-            return [r.company_name for r in rows if r.company_name]
-        finally:
-            session.close()
-    except Exception as exc:
-        logger.warning("Company names load failed: %s", exc)
-        return []
+    """Load all real company names from the GNEM workbook for direct lookup."""
+    return [company["company_name"] for company in _kb_companies() if company.get("company_name")]
 
 
 @lru_cache(maxsize=1)
@@ -127,19 +96,29 @@ def _facility_types() -> list[str]:
     'Headquarters', 'Distribution Center', 'Assembly'
     These come from the actual database — no hardcoding.
     """
-    try:
-        from shared.db import get_session, Company
-        session = get_session()
-        try:
-            rows = session.query(Company.facility_type).filter(
-                Company.facility_type.isnot(None)
-            ).distinct().all()
-            return [r.facility_type for r in rows if r.facility_type]
-        finally:
-            session.close()
-    except Exception as exc:
-        logger.warning("Facility types load failed: %s", exc)
-        return []
+    return sorted({
+        company.get("facility_type")
+        for company in _kb_companies()
+        if company.get("facility_type")
+    })
+
+
+@lru_cache(maxsize=1)
+def _classification_methods() -> list[str]:
+    return sorted({
+        company.get("classification_method")
+        for company in _kb_companies()
+        if company.get("classification_method")
+    })
+
+
+@lru_cache(maxsize=1)
+def _supplier_affiliation_types() -> list[str]:
+    return sorted({
+        company.get("supplier_affiliation_type")
+        for company in _kb_companies()
+        if company.get("supplier_affiliation_type")
+    })
 
 
 # ── True stop words — ONLY English function/structure words ──────────────────
@@ -191,20 +170,12 @@ _TIER_SYNONYMS: dict[str, str] = {
 # ── Industry group loader ─────────────────────────────────────────────────────
 @lru_cache(maxsize=1)
 def _industry_groups() -> list[str]:
-    """Load all DISTINCT industry_group values from PostgreSQL."""
-    try:
-        from shared.db import get_session, Company
-        session = get_session()
-        try:
-            rows = session.query(Company.industry_group).filter(
-                Company.industry_group.isnot(None)
-            ).distinct().all()
-            return [r.industry_group for r in rows if r.industry_group]
-        finally:
-            session.close()
-    except Exception as exc:
-        logger.warning("Industry groups load failed: %s", exc)
-        return []
+    """Load all distinct industry groups from the GNEM workbook."""
+    return sorted({
+        company.get("industry_group")
+        for company in _kb_companies()
+        if company.get("industry_group")
+    })
 
 
 @dataclass
@@ -219,6 +190,8 @@ class Entities:
     ev_role_list:      list[str]   = field(default_factory=list)
     facility_type:     str | None  = None   # e.g. "R&D", "Manufacturing Plant"
     industry_group:    str | None  = None   # e.g. "Chemicals and Allied Products"
+    classification_method: str | None = None   # e.g. "Supplier", "Direct Manufacturer"
+    supplier_affiliation_type: str | None = None
     min_employment:    int | None  = None
     max_employment:    int | None  = None
     product_keywords:  list[str]   = field(default_factory=list)
@@ -373,6 +346,17 @@ def extract(question: str) -> Entities:
             e.facility_type = ftype
             break
 
+    # ── 4d. Classification method / supplier affiliation direct matches ──────
+    for method in sorted(_classification_methods(), key=len, reverse=True):
+        if method.lower() in q_lower:
+            e.classification_method = method
+            break
+
+    for affiliation in sorted(_supplier_affiliation_types(), key=len, reverse=True):
+        if affiliation.lower() in q_lower:
+            e.supplier_affiliation_type = affiliation
+            break
+
     # ── 5. EV role extraction (BEFORE OEM — so role words don't pollute OEM matching) ──
     roles = sorted(_ev_roles(), key=len, reverse=True)  # longest match first
     matched_roles = []
@@ -516,4 +500,3 @@ def extract(question: str) -> Entities:
         e.product_keywords, e.is_aggregate,
     )
     return e
-

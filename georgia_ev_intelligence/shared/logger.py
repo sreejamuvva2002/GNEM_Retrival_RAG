@@ -26,7 +26,7 @@ def _configure_root() -> None:
     root.setLevel(logging.DEBUG)
 
     # Console handler — INFO and above
-    console = logging.StreamHandler(sys.stdout)
+    console = logging.StreamHandler(sys.stderr)
     console.setLevel(logging.INFO)
     console.setFormatter(logging.Formatter(_FMT, _DATE_FMT))
     root.addHandler(console)

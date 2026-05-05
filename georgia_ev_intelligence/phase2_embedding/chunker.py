@@ -187,6 +187,7 @@ def chunk_company_record(
         "primary_oems": company.get("primary_oems", ""),
         "ev_battery_relevant": company.get("ev_battery_relevant", ""),
         "industry_group": company.get("industry_group", ""),
+        "facility_type": company.get("facility_type", ""),
         # Location (critical for geo queries)
         "location_city": company.get("location_city", ""),
         "location_county": company.get("location_county", ""),

@@ -43,6 +43,7 @@ from phase2_embedding.chunker import (
 )
 from phase2_embedding.embedder import embed_chunks, verify_ollama_embed
 from phase2_embedding.vector_store import (
+    delete_company_chunks,
     ensure_collection_exists,
     get_collection_stats,
     upload_chunks,
@@ -72,7 +73,7 @@ SEPARATOR = "=" * 60
 
 def embed_companies(company_filter: str | None = None, reembed: bool = False) -> dict[str, int]:
     """
-    Embed all 205 GNEM company records into Qdrant.
+    Embed GNEM company records from the source workbook into Qdrant.
 
     Each company → 1 "company" chunk with all metadata fields as payload.
     This gives the agent immediate access to all 205 companies without
@@ -87,7 +88,7 @@ def embed_companies(company_filter: str | None = None, reembed: bool = False) ->
     """
     logger.info("=== Pass 1: Embedding GNEM Company Records ===")
 
-    companies = get_all_companies_from_db()
+    companies = load_companies_from_excel(apply_overrides=False)
     if company_filter:
         companies = [c for c in companies if company_filter.lower() in c["company_name"].lower()]
 
@@ -96,6 +97,11 @@ def embed_companies(company_filter: str | None = None, reembed: bool = False) ->
         return {"embedded": 0, "skipped": 0, "failed": 0}
 
     logger.info("Processing %d companies...", len(companies))
+
+    if reembed:
+        logger.info("Re-embedding requested — deleting existing company chunks from Qdrant first")
+        for company in companies:
+            delete_company_chunks(company["company_name"])
 
     all_chunks: list[Chunk] = []
     parent_map: dict[str, Chunk] = {}  # parent_id → parent chunk

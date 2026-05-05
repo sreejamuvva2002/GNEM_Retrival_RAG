@@ -47,19 +47,21 @@ from shared.logger import get_logger
 
 logger = get_logger("phase4.streaming")
 
+_MAX_PROMPT_CONTEXT_CHARS = 12000
+
 _ANSWER_PROMPT_TEMPLATE = """You are an expert analyst for the Georgia EV Supply Chain Intelligence System.
 
 QUESTION: {question}
 
-RETRIEVED DATA (pre-filtered by SQL/graph queries — every row below matches the question):
+RETRIEVED DATA (retrieved from the vector knowledge base):
 {context}
 
 CRITICAL INSTRUCTIONS:
-1. The data above has ALREADY been filtered. Treat EVERY row as a valid result. Do NOT re-filter.
+1. The data above comes from the Georgia EV vector knowledge base. Use it as your source of truth.
 2. This table contains exactly {row_count} {row_noun}. You MUST list all {row_count}.
 3. List them one by one in order. Do not skip, omit, or combine any rows.
 4. Copy company names EXACTLY character-by-character from the table — do NOT paraphrase or shorten.
-5. For each entry include: exact name, tier, role, county, and employment number.
+5. For each entry include the fields that matter for the question, especially exact name, tier, role, county, employment, OEMs, facility type, and products when they are present.
 6. {format_instruction}
 7. If the table shows employment by county, identify the highest-total county.
 8. Do NOT say "not found" or "database does not contain" — the data IS the database.
@@ -69,6 +71,26 @@ Answer:"""
 
 _FORMAT_COMPACT  = "Use ONLY a numbered list: '1. Name | Tier | Role | County | N employees'. No extra sentences."
 _FORMAT_DETAILED = "Include tier, role, county, and employment for each entry."
+
+
+def prompt_context_for_model(context: str) -> str:
+    """Return the exact retrieved-context slice injected into the synthesis prompt."""
+    return context[:_MAX_PROMPT_CONTEXT_CHARS]
+
+
+def count_context_rows(context: str) -> int:
+    """Count visible rows in the exact context block sent to the model."""
+    row_count = sum(
+        1 for line in context.splitlines()
+        if " | " in line and not line.strip().startswith("Company")
+    )
+    if row_count == 0:
+        row_count = sum(
+            1 for line in context.splitlines()
+            if line.strip() and not line.startswith("[") and ":" in line
+            and not line.startswith("Total")
+        )
+    return row_count
 
 
 def build_answer_prompt(question: str, context: str) -> str:
@@ -81,18 +103,8 @@ def build_answer_prompt(question: str, context: str) -> str:
     The row count is computed from the context (pipe-separated rows, excluding header).
     For county aggregate data (no pipe rows) the count is computed from newlines.
     """
-    # Count company rows (pipe-separated, excluding the header line)
-    row_count = sum(
-        1 for line in context.splitlines()
-        if " | " in line and not line.strip().startswith("Company")
-    )
-    # Fallback: for county aggregate lines (no pipes), count non-blank non-header lines
-    if row_count == 0:
-        row_count = sum(
-            1 for line in context.splitlines()
-            if line.strip() and not line.startswith("[") and ":" in line
-            and not line.startswith("Total")
-        )
+    prompt_context = prompt_context_for_model(context)
+    row_count = count_context_rows(prompt_context)
 
     row_noun = "company" if row_count == 1 else "companies"
     # For large lists: force compact numbered format to reduce token generation time
@@ -100,7 +112,7 @@ def build_answer_prompt(question: str, context: str) -> str:
 
     return _ANSWER_PROMPT_TEMPLATE.format(
         question=question,
-        context=context[:3500],
+        context=prompt_context,
         row_count=row_count if row_count > 0 else "unknown number of",
         row_noun=row_noun,
         format_instruction=format_instruction,

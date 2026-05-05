@@ -316,7 +316,10 @@ def run_one(agent: EVAgent, q: dict) -> dict:
             "answer":   result["answer"],
             "context":  result.get("retrieved_context", ""),
             "elapsed_s": round(time.monotonic() - t0, 1),
-            "path":     "cypher" if result["entities"].get("cypher_used") else "sql",
+            "path":     result["entities"].get(
+                "retrieval_source",
+                "cypher" if result["entities"].get("cypher_used") else "sql",
+            ),
         }
     except Exception as exc:
         logger.error("Pipeline error on %s: %s", q["id"], exc)
