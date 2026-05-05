@@ -262,6 +262,25 @@ def _apply_rule_based_semantic_filters(question: str, matches: list[dict[str, An
     return matches
 
 
+def _has_structured_filters(entities: Entities) -> bool:
+    return any([
+        entities.company_name,
+        entities.county,
+        entities.tier,
+        entities.industry_group,
+        entities.facility_type,
+        entities.classification_method,
+        entities.supplier_affiliation_type,
+        entities.ev_role,
+        entities.ev_role_list,
+        entities.oem,
+        entities.oem_list,
+        entities.min_employment is not None,
+        entities.max_employment is not None,
+        entities.ev_relevant_filter,
+    ])
+
+
 def _refine_matches(question: str, entities: Entities, matches: list[dict[str, Any]]) -> list[dict[str, Any]]:
     matches = _apply_rule_based_semantic_filters(question, matches)
     if not _needs_soft_interpretation(question, entities, matches):
@@ -402,6 +421,10 @@ def retrieve_companies(question: str, entities: Entities) -> list[dict[str, Any]
     if filtered:
         return _sort_matches(question, entities, filtered, rank_by_name)
 
+    if _has_structured_filters(entities):
+        logger.info("Strict retrieval: structured filters produced 0 matches")
+        return []
+
     if ranked_companies:
         return ranked_companies[:_limit_for_question(question, entities)]
 
@@ -425,6 +448,9 @@ def retrieve_context(question: str, entities: Entities) -> list[dict[str, Any]] 
     rank_by_name, ranked_companies = _semantic_rank(question)
     if matches:
         matches = _sort_matches(question, entities, matches, rank_by_name)
+    elif _has_structured_filters(entities):
+        logger.info("Strict retrieval: structured filters produced 0 matches")
+        return "No matching companies found."
     else:
         matches = ranked_companies[:_limit_for_question(question, entities)]
 

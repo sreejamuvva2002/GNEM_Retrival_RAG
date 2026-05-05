@@ -58,19 +58,17 @@ RETRIEVED DATA (retrieved from the vector knowledge base):
 
 CRITICAL INSTRUCTIONS:
 1. The data above comes from the Georgia EV vector knowledge base. Use it as your source of truth.
-2. This table contains exactly {row_count} {row_noun}. You MUST list all {row_count}.
-3. List them one by one in order. Do not skip, omit, or combine any rows.
-4. Copy company names EXACTLY character-by-character from the table — do NOT paraphrase or shorten.
-5. For each entry include the fields that matter for the question, especially exact name, tier, role, county, employment, OEMs, facility type, and products when they are present.
+2. List them one by one in order. Do not skip, omit, or combine any rows.
+3. Copy company names EXACTLY character-by-character from the table — do NOT paraphrase or shorten.
+5. For each entry include the fields that matter for the question, especially exact name, tier, role, county, employment, OEMs, facility type, and products when they are present, if they are not present then ignore then (leave it blank).
 6. {format_instruction}
 7. If the table shows employment by county, identify the highest-total county.
-8. Do NOT say "not found" or "database does not contain" — the data IS the database.
-9. Only say "No companies found" if the context literally says "No matching companies found."
+9. say "No companies found" if the context has no companies in it "No matching companies found."
 
 Answer:"""
 
-_FORMAT_COMPACT  = "Use ONLY a numbered list: '1. Name | Tier | Role | County | N employees'. No extra sentences."
-_FORMAT_DETAILED = "Include tier, role, county, and employment for each entry."
+_FORMAT_COMPACT  = "Use ONLY a numbered list: '1. Name | Tier | Role | County | N employees'. No extra sentences. if (Name or Tire or Role or County etc etc ) information is not available then leave it blank"
+_FORMAT_DETAILED = "if the data has tier, role, county, and employment for each entry then include them or include only what you have and leave other as blank."
 
 
 def prompt_context_for_model(context: str) -> str:

@@ -187,16 +187,17 @@ def verify_ollama_embed() -> dict[str, Any]:
         test_text = "Georgia EV supply chain test"
         vector = embed_single(test_text)
         dims = len(vector)
-        ok = dims == 768
+        expected_dims = Config.get().qdrant_dimensions
+        ok = dims == expected_dims
         if not ok:
-            logger.warning("Unexpected embedding dimensions: %d (expected 768)", dims)
+            logger.warning("Unexpected embedding dimensions: %d (expected %d)", dims, expected_dims)
         else:
             logger.info("Ollama embed verified: model=%s, dims=%d", _get_embed_model(), dims)
         return {
             "ok": ok,
             "model": _get_embed_model(),
             "dimensions": dims,
-            "error": None if ok else f"Wrong dimensions: {dims} (expected 768)",
+            "error": None if ok else f"Wrong dimensions: {dims} (expected {expected_dims})",
         }
     except Exception as exc:
         logger.error("Ollama embed verification FAILED: %s", exc)

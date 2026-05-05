@@ -34,6 +34,20 @@ logger = get_logger("ragas_eval")
 PROGRESS_FILE = ROOT / "outputs" / "progress" / "phase4_eval_progress.jsonl"
 ANSWERS_MD    = ROOT / "outputs" / "progress" / "phase4_eval_answers.md"
 
+
+def _sanitize_model_name(name: str) -> str:
+    """Make model names filesystem-safe while keeping them recognizable."""
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", name).strip("._-") or "unknown-model"
+
+
+def _default_report_path() -> Path:
+    cfg = Config.get()
+    embed_model = _sanitize_model_name(cfg.ollama_embed_model)
+    generation_model = _sanitize_model_name(cfg.ollama_llm_model)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"phase4_ragas_{embed_model}_{generation_model}_{timestamp}.xlsx"
+    return ROOT / "outputs" / "ragas_reports" / filename
+
 # ── Metric config (matches ev_data_LLM_comparsions/config/config.yaml) ────────
 WEIGHTS = {
     "faithfulness":       0.25,
@@ -511,8 +525,7 @@ if __name__ == "__main__":
     parser.add_argument("--resume",    action="store_true",
                         help="Resume from checkpoint (skip already-scored questions)")
     parser.add_argument("--out", type=str,
-                        default=str(ROOT / "outputs" / "ragas_reports" /
-                                    f"phase4_ragas_{datetime.now():%Y%m%d_%H%M%S}.xlsx"))
+                        default=str(_default_report_path()))
     args = parser.parse_args()
 
     qs = FIFTY_QUESTIONS[:args.questions]
