@@ -76,6 +76,8 @@ def _product_terms(question: str, entities: Entities) -> list[str]:
 
 
 def build_kb_query_plan(question: str, entities: Entities) -> KBQueryPlan:
+    return KBQueryPlan()
+
     q = question.lower()
 
     if "highest employment" in q and entities.county:
