@@ -18,6 +18,7 @@ TWO DOCUMENT TYPES:
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -39,6 +40,8 @@ CHARS_PER_TOKEN = 4
 CHILD_CHAR_TARGET = CHILD_TOKEN_TARGET * CHARS_PER_TOKEN    # ~1024 chars
 PARENT_CHAR_TARGET = PARENT_TOKEN_TARGET * CHARS_PER_TOKEN  # ~3200 chars
 OVERLAP_CHARS = CHILD_OVERLAP * CHARS_PER_TOKEN             # ~128 chars
+COMPANY_CHUNK_SCHEMA_VERSION = "gnem-company-multiview-v3"
+_COMPANY_CHUNK_NAMESPACE = uuid.UUID("6f7986f2-6c4b-4b05-9a35-7e9690f04a4f")
 
 
 @dataclass
@@ -112,6 +115,38 @@ def _company_row_id(company: dict[str, Any]) -> str:
     return f"gnem-row-{digest}"
 
 
+def _company_source_hash(company: dict[str, Any]) -> str:
+    """Canonical hash of source fields that should trigger re-embedding if changed."""
+    source_fields = {
+        key: company.get(key)
+        for key in (
+            "company_name",
+            "tier",
+            "ev_supply_chain_role",
+            "primary_oems",
+            "ev_battery_relevant",
+            "industry_group",
+            "facility_type",
+            "location_city",
+            "location_county",
+            "location_state",
+            "employment",
+            "products_services",
+            "classification_method",
+            "supplier_affiliation_type",
+            "latitude",
+            "longitude",
+        )
+    }
+    raw = json.dumps(source_fields, sort_keys=True, default=str, ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def _company_chunk_id(row_id: str, view_name: str) -> str:
+    """Deterministic UUID so repeated company indexing upserts instead of duplicating."""
+    return str(uuid.uuid5(_COMPANY_CHUNK_NAMESPACE, f"{row_id}:{view_name}"))
+
+
 def _nonempty_parts(parts: list[str]) -> list[str]:
     return [part for part in parts if part and part.strip()]
 
@@ -122,6 +157,11 @@ def _location_text(company: dict[str, Any]) -> str:
         str(company.get("location_county") or "").strip(),
         str(company.get("location_state") or "Georgia").strip(),
     ]))
+
+
+def _company_context_text(company: dict[str, Any], master_text: str) -> str:
+    """Canonical source-row text used for retrieval context and reranking."""
+    return _clean_text(master_text)
 
 
 def _company_view_texts(company: dict[str, Any], master_text: str) -> list[tuple[str, str]]:
@@ -182,6 +222,34 @@ def _company_view_texts(company: dict[str, Any], master_text: str) -> list[tuple
     ])
     if primary_oems:
         views.append(("oem", " | ".join(oem_parts)))
+
+    classification_parts = _nonempty_parts([
+        f"Company: {company_name}",
+        "Focus: tier, classification, affiliation, and relevance",
+        f"Tier: {tier}" if tier else "",
+        f"Classification: {classification}" if classification else "",
+        f"Supplier Affiliation: {affiliation}" if affiliation else "",
+        f"EV / Battery Relevant: {ev_relevant}" if ev_relevant else "",
+        f"EV Role: {role}" if role else "",
+        f"Facility Type: {facility}" if facility else "",
+        f"Primary OEMs: {primary_oems}" if primary_oems else "",
+    ])
+    if len(classification_parts) > 2:
+        views.append(("classification", " | ".join(classification_parts)))
+
+    capability_parts = _nonempty_parts([
+        f"Company: {company_name}",
+        "Focus: manufacturing capability, product fit, and OEM suitability",
+        f"Products: {products}" if products else "",
+        f"EV Role: {role}" if role else "",
+        f"Industry: {industry}" if industry else "",
+        f"Facility Type: {facility}" if facility else "",
+        f"Primary OEMs: {primary_oems}" if primary_oems else "",
+        f"EV / Battery Relevant: {ev_relevant}" if ev_relevant else "",
+        f"Tier: {tier}" if tier else "",
+    ])
+    if len(capability_parts) > 2:
+        views.append(("capability", " | ".join(capability_parts)))
 
     location_parts = _nonempty_parts([
         f"Company: {company_name}",
@@ -295,6 +363,9 @@ def chunk_company_record(
     """
     master_text = _clean_text(document_text)
     row_id = _company_row_id(company)
+    source_hash = _company_source_hash(company)
+    company_context = _company_context_text(company, master_text)
+    products_services = company.get("products_services") or ""
 
     metadata = {
         # Core identity
@@ -317,12 +388,16 @@ def chunk_company_record(
         # Size
         "employment": company.get("employment"),
         # Products / classification
-        "products_services": (company.get("products_services") or "")[:300],
+        "products_services": products_services,
+        "products_services_full": products_services,
         "classification_method": company.get("classification_method", ""),
         "supplier_affiliation_type": company.get("supplier_affiliation_type", ""),
         # Chunk metadata
         "source_type": "gnem_excel",
         "chunk_type": "company",
+        "kb_schema_version": COMPANY_CHUNK_SCHEMA_VERSION,
+        "source_row_hash": source_hash,
+        "company_context_text": company_context,
         "master_text": master_text,
         "document_id": None,
     }
@@ -330,6 +405,7 @@ def chunk_company_record(
     chunks: list[Chunk] = []
     for view_name, view_text in _company_view_texts(company, master_text):
         chunk = Chunk(
+            chunk_id=_company_chunk_id(row_id, view_name),
             chunk_type="company",
             parent_id=None,
             text=view_text,

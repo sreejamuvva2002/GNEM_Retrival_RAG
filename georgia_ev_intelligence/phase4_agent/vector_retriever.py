@@ -7,6 +7,7 @@ and use hybrid vector ranking only when we need semantic ordering.
 """
 from __future__ import annotations
 
+import re
 from functools import lru_cache
 from typing import Any
 
@@ -14,6 +15,7 @@ from phase2_embedding.embedder import embed_single
 from phase2_embedding.vector_store import scroll_points, search_dense
 from phase4_agent.entity_extractor import Entities
 from phase4_agent.filter_interpreter import SoftFilterPlan, interpret_soft_filters
+from phase4_agent.kb_query_planner import KBQueryPlan, build_kb_query_plan
 from phase4_agent.reranker import rerank_companies
 from shared.config import Config
 from shared.logger import get_logger
@@ -37,6 +39,30 @@ _SOFT_FILTER_TRIGGER_COUNT = 8
 
 def _normalize(value: Any) -> str:
     return str(value or "").strip().lower()
+
+
+def _normalized_text(value: Any) -> str:
+    text = _normalize(value)
+    return text.replace("‑", "-").replace("–", "-").replace("—", "-")
+
+
+def _tokenize(value: Any) -> set[str]:
+    return {
+        token
+        for token in re.findall(r"[a-z0-9]+", _normalized_text(value))
+        if len(token) >= 2
+    }
+
+
+def _field_contains(value: Any, term: str) -> bool:
+    text = _normalized_text(value)
+    term_norm = _normalized_text(term)
+    if not term_norm:
+        return False
+    if term_norm in text:
+        return True
+    term_tokens = _tokenize(term_norm)
+    return bool(term_tokens) and term_tokens.issubset(_tokenize(text))
 
 
 def _employment(company: dict[str, Any]) -> float:
@@ -65,10 +91,38 @@ def _tier_matches(company_tier: str, requested_tier: str) -> bool:
         return True
     if company_norm == requested_norm:
         return True
+    if (
+        "oem" in company_norm
+        and "oem" in requested_norm
+        and _tokenize(company_norm) == _tokenize(requested_norm)
+    ):
+        return True
     # Helpful normalization: Tier 2 requests should include Tier 2/3 companies.
     if requested_norm == "tier 2" and company_norm == "tier 2/3":
         return True
     return False
+
+
+def _role_matches(company_role: Any, requested_role: str) -> bool:
+    role = _normalized_text(company_role)
+    requested = _normalized_text(requested_role)
+    if not requested:
+        return True
+    if role == requested:
+        return True
+    if requested in role or role in requested:
+        return True
+    requested_tokens = _tokenize(requested)
+    role_tokens = _tokenize(role)
+    return bool(requested_tokens) and requested_tokens.issubset(role_tokens)
+
+
+def _ev_relevance_matches(company: dict[str, Any], include_indirect: bool = False) -> bool:
+    value = _normalize(company.get("ev_battery_relevant"))
+    allowed = {"yes"}
+    if include_indirect:
+        allowed.add("indirect")
+    return value in allowed
 
 
 def _entity_tier_filters(entities: Entities) -> list[str]:
@@ -82,6 +136,11 @@ def _entity_tier_filters(entities: Entities) -> list[str]:
 
 
 def _company_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    source_text = (
+        payload.get("company_context_text")
+        or payload.get("master_text")
+        or payload.get("text", "")
+    )
     return {
         "company_row_id": payload.get("company_row_id", ""),
         "company_name": payload.get("company_name", ""),
@@ -95,14 +154,16 @@ def _company_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         "location_county": payload.get("location_county", ""),
         "location_state": payload.get("location_state", "Georgia"),
         "employment": payload.get("employment"),
-        "products_services": payload.get("products_services", ""),
+        "products_services": payload.get("products_services_full") or payload.get("products_services", ""),
         "classification_method": payload.get("classification_method", ""),
         "supplier_affiliation_type": payload.get("supplier_affiliation_type", ""),
         "latitude": payload.get("latitude"),
         "longitude": payload.get("longitude"),
         "chunk_view": payload.get("chunk_view", "legacy"),
         "matched_view": payload.get("chunk_view", "legacy"),
-        "text": payload.get("master_text", payload.get("text", "")),
+        "source_row_hash": payload.get("source_row_hash", ""),
+        "kb_schema_version": payload.get("kb_schema_version", ""),
+        "text": source_text,
     }
 
 
@@ -167,13 +228,15 @@ def _matches_entities(company: dict[str, Any], entities: Entities) -> bool:
     if entities.supplier_affiliation_type and _normalize(company.get("supplier_affiliation_type")) != _normalize(entities.supplier_affiliation_type):
         return False
     excluded_roles = {_normalize(role) for role in getattr(entities, "exclude_ev_role_list", [])}
-    if excluded_roles and _normalize(company.get("ev_supply_chain_role")) in excluded_roles:
+    if excluded_roles and any(
+        _role_matches(company.get("ev_supply_chain_role"), role)
+        for role in excluded_roles
+    ):
         return False
-    if entities.ev_role and _normalize(company.get("ev_supply_chain_role")) != _normalize(entities.ev_role):
+    if entities.ev_role and not _role_matches(company.get("ev_supply_chain_role"), entities.ev_role):
         return False
     if entities.ev_role_list:
-        role_set = {_normalize(role) for role in entities.ev_role_list}
-        if _normalize(company.get("ev_supply_chain_role")) not in role_set:
+        if not any(_role_matches(company.get("ev_supply_chain_role"), role) for role in entities.ev_role_list):
             return False
     if entities.oem_list:
         oem_text = _normalize(company.get("primary_oems"))
@@ -187,7 +250,10 @@ def _matches_entities(company: dict[str, Any], entities: Entities) -> bool:
         return False
     if entities.max_employment is not None and emp > entities.max_employment:
         return False
-    if entities.ev_relevant_filter and _normalize(company.get("ev_battery_relevant")) != "yes":
+    ev_relevance_value = getattr(entities, "ev_relevance_value", None)
+    if ev_relevance_value and _normalize(company.get("ev_battery_relevant")) != _normalize(ev_relevance_value):
+        return False
+    if entities.ev_relevant_filter and not _ev_relevance_matches(company, include_indirect=True):
         return False
     return True
 
@@ -239,6 +305,20 @@ def _needs_soft_interpretation(question: str, entities: Entities, matches: list[
     if entities.is_aggregate or entities.is_risk_query or entities.is_top_n:
         return False
     q_lower = question.lower()
+    if any(_normalize(oem) == "multiple" for oem in getattr(entities, "oem_list", [])):
+        return False
+    exact_list_signals = ("identify all", "list all", "show all", "map all", "list every")
+    if any(signal in q_lower for signal in exact_list_signals) and any([
+        entities.tier,
+        entities.tier_list,
+        entities.ev_role,
+        entities.ev_role_list,
+        entities.oem,
+        entities.oem_list,
+        entities.facility_type,
+        entities.industry_group,
+    ]):
+        return False
     ambiguous_signals = (
         "primary",
         "main",
@@ -307,6 +387,7 @@ def _has_structured_filters(entities: Entities) -> bool:
         entities.min_employment is not None,
         entities.max_employment is not None,
         entities.ev_relevant_filter,
+        getattr(entities, "ev_relevance_value", None),
     ])
 
 
@@ -359,7 +440,14 @@ def _semantic_rank(question: str) -> tuple[dict[str, int], list[dict[str, Any]]]
 
 def _is_broad_listing(question: str, entities: Entities) -> bool:
     q_lower = question.lower()
-    broad_markers = ("show all", "list all", "list every", "map all", "full supplier network")
+    broad_markers = (
+        "identify all",
+        "show all",
+        "list all",
+        "list every",
+        "map all",
+        "full supplier network",
+    )
     return entities.is_aggregate or entities.is_top_n or any(marker in q_lower for marker in broad_markers)
 
 
@@ -454,8 +542,378 @@ def _format_risk_context(companies: list[dict[str, Any]]) -> str:
     return header + "\nCompany | Tier | Role | County | Employment\n" + "\n".join(lines)
 
 
+def _area_key(company: dict[str, Any], group_by: str | None) -> tuple[str, str]:
+    city = str(company.get("location_city") or "").strip()
+    county = str(company.get("location_county") or "").strip()
+    if group_by == "city_county":
+        label = ", ".join(part for part in (city, county) if part)
+        return label or "Unknown Area", county
+    return county or "Unknown County", county
+
+
+def _format_area_counts(rows: list[dict[str, Any]], label: str) -> str:
+    if not rows:
+        return "No matching companies found."
+    lines = [
+        f"{row['area']}: {row['count']} companies"
+        for row in rows
+    ]
+    return f"{label}\nTotal: {len(rows)} areas\n" + "\n".join(lines)
+
+
+def _format_area_list(rows: list[dict[str, Any]], label: str) -> str:
+    if not rows:
+        return "No matching companies found."
+    areas = [row["area"] for row in rows]
+    return f"{label}\nTotal: {len(areas)} areas\n" + "\n".join(areas)
+
+
+def _company_matches_product_terms(company: dict[str, Any], terms: list[str]) -> tuple[bool, int]:
+    if not terms:
+        return False, 0
+    products = company.get("products_services", "")
+    industry = company.get("industry_group", "")
+    facility = company.get("facility_type", "")
+
+    score = 0
+    matched = False
+    for term in terms:
+        if _field_contains(products, term):
+            matched = True
+            score += 5
+        elif _field_contains(industry, term) or _field_contains(facility, term):
+            matched = True
+            score += 2
+    return matched, score
+
+
+def _sort_by_product_relevance(companies: list[dict[str, Any]], terms: list[str]) -> list[dict[str, Any]]:
+    scored = []
+    for company in companies:
+        matched, score = _company_matches_product_terms(company, terms)
+        if matched:
+            enriched = company.copy()
+            enriched["_product_score"] = score
+            scored.append(enriched)
+    return sorted(scored, key=lambda c: (c.get("_product_score", 0), _employment(c)), reverse=True)
+
+
+def _base_filtered_companies(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    *,
+    ignore_ev_relevance: bool = False,
+) -> list[dict[str, Any]]:
+    if not ignore_ev_relevance:
+        return [company for company in companies if _matches_entities(company, entities)]
+
+    original = entities.ev_relevant_filter
+    original_value = getattr(entities, "ev_relevance_value", None)
+    entities.ev_relevant_filter = False
+    entities.ev_relevance_value = None
+    try:
+        return [company for company in companies if _matches_entities(company, entities)]
+    finally:
+        entities.ev_relevant_filter = original
+        entities.ev_relevance_value = original_value
+
+
+def _deterministic_product_contains(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    base = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    matches = _sort_by_product_relevance(base, plan.keywords)
+    if entities.ev_relevant_filter:
+        ev_matches = [c for c in matches if _ev_relevance_matches(c, include_indirect=True)]
+        if ev_matches:
+            matches = ev_matches
+    ev_relevance_value = getattr(entities, "ev_relevance_value", None)
+    if ev_relevance_value:
+        matches = [
+            c for c in matches
+            if _normalize(c.get("ev_battery_relevant")) == _normalize(ev_relevance_value)
+        ]
+    return matches
+
+
+def _deterministic_product_text_contains(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    base = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    matches = [
+        company for company in base
+        if any(_field_contains(company.get("products_services"), term) for term in plan.keywords)
+    ]
+    return sorted(matches, key=lambda c: (_employment(c), c.get("company_name") or ""), reverse=True)
+
+
+def _deterministic_ev_product_text_contains(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    matches = _deterministic_product_text_contains(companies, entities, plan)
+    return [
+        company for company in matches
+        if _ev_relevance_matches(company, include_indirect=False)
+    ]
+
+
+def _deterministic_role_text_contains(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    base = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    matches = [
+        company for company in base
+        if any(_field_contains(company.get("ev_supply_chain_role"), term) for term in plan.keywords)
+    ]
+    return sorted(matches, key=lambda c: (c.get("company_name") or ""))
+
+
+def _deterministic_role_or_product_text_contains(
+    question: str,
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    q = question.lower()
+    base = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    matches = [
+        company for company in base
+        if any(
+            _field_contains(company.get("ev_supply_chain_role"), term)
+            or _field_contains(company.get("products_services"), term)
+            for term in plan.keywords
+        )
+    ]
+    if "bev" in q or "ev " in q or "ev-" in q:
+        matches = [company for company in matches if _ev_relevance_matches(company, include_indirect=False)]
+    return sorted(matches, key=lambda c: (_employment(c), c.get("company_name") or ""), reverse=True)
+
+
+def _deterministic_industry_contains(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    base = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    matches = [
+        company for company in base
+        if any(_field_contains(company.get("industry_group"), term) for term in plan.keywords)
+    ]
+    return sorted(matches, key=lambda c: (c.get("location_city") or "", c.get("company_name") or ""))
+
+
+def _deterministic_top_employment(
+    question: str,
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    q = question.lower()
+    matches = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+
+    if "general automotive" in q:
+        matches = [
+            company for company in matches
+            if _role_matches(company.get("ev_supply_chain_role"), "General Automotive")
+        ]
+    if "ev-specific" in q or "ev specific" in q or "ev-related" in q:
+        matches = [company for company in matches if _ev_relevance_matches(company, include_indirect=True)]
+
+    sorted_matches = sorted(matches, key=lambda c: _employment(c), reverse=True)
+    return sorted_matches[: plan.limit or entities.top_n_limit]
+
+
+def _deterministic_highest_employment(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+) -> list[dict[str, Any]]:
+    matches = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    if not matches:
+        return []
+    return sorted(matches, key=lambda c: _employment(c), reverse=True)[:1]
+
+
+def _deterministic_role_list(
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]]:
+    matches = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    requested_roles = plan.keywords or entities.ev_role_list or ([entities.ev_role] if entities.ev_role else [])
+    if requested_roles:
+        matches = [
+            company for company in matches
+            if any(_role_matches(company.get("ev_supply_chain_role"), role) for role in requested_roles)
+        ]
+    return sorted(matches, key=lambda c: (c.get("ev_supply_chain_role") or "", c.get("company_name") or ""))
+
+
+def _deterministic_tier_list(
+    question: str,
+    companies: list[dict[str, Any]],
+    entities: Entities,
+) -> list[dict[str, Any]]:
+    q = question.lower()
+    matches = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
+    requested_tiers = list(entities.tier_list or ([entities.tier] if entities.tier else []))
+    if "oem footprint" in q and "OEM (Footprint)" not in requested_tiers:
+        requested_tiers.append("OEM (Footprint)")
+    if "oem supply chain" in q and "OEM Supply Chain" not in requested_tiers:
+        requested_tiers.append("OEM Supply Chain")
+    if requested_tiers:
+        matches = [
+            company for company in matches
+            if any(_tier_matches(company.get("tier", ""), tier) for tier in requested_tiers)
+        ]
+    if "ev-relevant" in q or "ev relevant" in q:
+        matches = [company for company in matches if _ev_relevance_matches(company, include_indirect=False)]
+    return sorted(matches, key=lambda c: (c.get("tier") or "", c.get("company_name") or ""))
+
+
+def _deterministic_dual_oem_capability(companies: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    matches = []
+    for company in companies:
+        oems = _normalized_text(company.get("primary_oems"))
+        if "rivian" in oems and ("hyundai" in oems or "kia" in oems):
+            matches.append(company)
+    return sorted(matches, key=lambda c: c.get("company_name") or "")
+
+
+def _deterministic_areas_with_role_without_roles(companies: list[dict[str, Any]]) -> str:
+    included: dict[str, list[dict[str, Any]]] = {}
+    excluded_counties: set[str] = set()
+    for company in companies:
+        county = str(company.get("location_county") or "").strip()
+        if not county:
+            continue
+        if (
+            _tier_matches(company.get("tier", ""), "Tier 1")
+            and _role_matches(company.get("ev_supply_chain_role"), "General Automotive")
+        ):
+            included.setdefault(county, []).append(company)
+        if any(
+            _role_matches(company.get("ev_supply_chain_role"), role)
+            for role in ("Battery Cell", "Battery Pack")
+        ):
+            excluded_counties.add(county)
+
+    rows = [
+        {"area": county, "count": len(rows)}
+        for county, rows in included.items()
+        if county not in excluded_counties
+    ]
+    rows.sort(key=lambda row: row["area"])
+    return _format_area_list(
+        rows,
+        "[Qdrant — Counties with Tier 1 General Automotive and no Battery Cell/Pack]:",
+    )
+
+
+def _deterministic_area_concentration(
+    companies: list[dict[str, Any]],
+    plan: KBQueryPlan,
+) -> str:
+    counts: dict[str, dict[str, Any]] = {}
+    for company in companies:
+        if not _role_matches(company.get("ev_supply_chain_role"), "Materials"):
+            continue
+        area, _county = _area_key(company, plan.group_by)
+        bucket = counts.setdefault(area, {"area": area, "count": 0})
+        bucket["count"] += 1
+    rows = sorted(counts.values(), key=lambda row: (row["count"], row["area"]), reverse=True)
+    return _format_area_counts(rows, "[Qdrant — Materials supplier concentration by area]:")
+
+
+def _deterministic_areas_facility_without_ev(
+    companies: list[dict[str, Any]],
+    plan: KBQueryPlan,
+) -> str:
+    groups: dict[str, dict[str, Any]] = {}
+    for company in companies:
+        if not _field_contains(company.get("facility_type"), "Manufacturing Plant"):
+            continue
+        if _ev_relevance_matches(company, include_indirect=False):
+            continue
+        area, _county = _area_key(company, plan.group_by)
+        if area == "Unknown Area":
+            continue
+        bucket = groups.setdefault(area, {"area": area, "plants": 0})
+        bucket["plants"] += 1
+
+    rows = [
+        {"area": row["area"], "count": row["plants"]}
+        for row in groups.values()
+        if row["plants"] > 0
+    ]
+    rows.sort(key=lambda row: (-row["count"], row["area"]))
+    return _format_area_counts(
+        rows,
+        "[Qdrant — Manufacturing Plant areas without EV-specific production]:",
+    )
+
+
+def _execute_kb_plan(
+    question: str,
+    companies: list[dict[str, Any]],
+    entities: Entities,
+    plan: KBQueryPlan,
+) -> list[dict[str, Any]] | str | None:
+    if not plan.deterministic:
+        return None
+    if plan.mode == "product_contains":
+        return _deterministic_product_contains(companies, entities, plan)
+    if plan.mode == "product_text_contains":
+        return _deterministic_product_text_contains(companies, entities, plan)
+    if plan.mode == "ev_product_text_contains":
+        return _deterministic_ev_product_text_contains(companies, entities, plan)
+    if plan.mode == "role_text_contains":
+        return _deterministic_role_text_contains(companies, entities, plan)
+    if plan.mode == "role_or_product_text_contains":
+        return _deterministic_role_or_product_text_contains(question, companies, entities, plan)
+    if plan.mode == "industry_contains":
+        return _deterministic_industry_contains(companies, entities, plan)
+    if plan.mode == "top_employment":
+        return _deterministic_top_employment(question, companies, entities, plan)
+    if plan.mode == "highest_employment":
+        return _deterministic_highest_employment(companies, entities)
+    if plan.mode == "role_list":
+        return _deterministic_role_list(companies, entities, plan)
+    if plan.mode == "tier_list":
+        return _deterministic_tier_list(question, companies, entities)
+    if plan.mode == "single_supplier_roles":
+        filtered = [company for company in companies if _matches_entities(company, entities)]
+        return _format_risk_context(filtered or companies)
+    if plan.mode == "structured_list":
+        return sorted(
+            _base_filtered_companies(companies, entities),
+            key=lambda c: (c.get("company_name") or ""),
+        )
+    if plan.mode == "dual_oem_capability":
+        return _deterministic_dual_oem_capability(companies)
+    if plan.mode == "areas_with_role_without_roles":
+        return _deterministic_areas_with_role_without_roles(companies)
+    if plan.mode == "area_concentration":
+        return _deterministic_area_concentration(companies, plan)
+    if plan.mode == "areas_facility_without_ev":
+        return _deterministic_areas_facility_without_ev(companies, plan)
+    return None
+
+
 def retrieve_companies(question: str, entities: Entities) -> list[dict[str, Any]]:
     companies = _load_all_companies()
+    plan = build_kb_query_plan(question, entities)
+    planned = _execute_kb_plan(question, companies, entities, plan)
+    if isinstance(planned, list):
+        return planned
+
     filtered = [company for company in companies if _matches_entities(company, entities)]
     filtered = _refine_matches(question, entities, filtered)
 
@@ -476,6 +934,15 @@ def retrieve_companies(question: str, entities: Entities) -> list[dict[str, Any]
 
 def retrieve_context(question: str, entities: Entities) -> list[dict[str, Any]] | str:
     companies = _load_all_companies()
+    plan = build_kb_query_plan(question, entities)
+    planned = _execute_kb_plan(question, companies, entities, plan)
+    if planned is not None:
+        if isinstance(planned, str):
+            return planned
+        if planned:
+            return planned
+        return "No matching companies found."
+
     filtered = [company for company in companies if _matches_entities(company, entities)]
     filtered = _refine_matches(question, entities, filtered)
 

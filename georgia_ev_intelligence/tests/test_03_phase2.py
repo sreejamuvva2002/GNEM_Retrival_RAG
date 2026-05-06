@@ -16,15 +16,18 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from phase2_embedding.chunker import (
+    COMPANY_CHUNK_SCHEMA_VERSION,
     Chunk,
     chunk_company_record,
     chunk_document,
     get_child_chunks,
     get_parent_chunk,
+    _company_source_hash,
     _estimate_tokens,
     CHILD_CHAR_TARGET,
     PARENT_CHAR_TARGET,
 )
+from phase2_embedding.index_freshness import audit_company_index
 from phase2_embedding.embedder import embed_single, embed_texts, verify_ollama_embed
 from phase2_embedding.vector_store import (
     ensure_collection_exists,
@@ -98,6 +101,8 @@ class TestChunker(unittest.TestCase):
         self.assertIn("role", view_names)
         self.assertIn("product", view_names)
         self.assertIn("oem", view_names)
+        self.assertIn("classification", view_names)
+        self.assertIn("capability", view_names)
         self.assertIn("location", view_names)
 
     def test_company_chunk_metadata_complete(self):
@@ -117,6 +122,32 @@ class TestChunker(unittest.TestCase):
         self.assertEqual(meta["company_name"], "Test EV Battery LLC")
         self.assertTrue(meta["company_row_id"])
         self.assertEqual(meta["chunk_view"], "master")
+        self.assertEqual(meta["kb_schema_version"], COMPANY_CHUNK_SCHEMA_VERSION)
+        self.assertTrue(meta["source_row_hash"])
+        self.assertIn("company_context_text", meta)
+        self.assertEqual(meta["products_services_full"], SAMPLE_COMPANY["products_services"])
+
+    def test_company_chunk_ids_are_stable(self):
+        """Company chunk ids must be deterministic for idempotent Qdrant upserts."""
+        doc_text = build_document_text(SAMPLE_COMPANY)
+        first = chunk_company_record(SAMPLE_COMPANY, doc_text)
+        second = chunk_company_record(SAMPLE_COMPANY, doc_text)
+        self.assertEqual([chunk.chunk_id for chunk in first], [chunk.chunk_id for chunk in second])
+
+    def test_company_source_hash_changes_with_source_fields(self):
+        """Source hash must change when a source field changes."""
+        changed = dict(SAMPLE_COMPANY)
+        changed["products_services"] = "Changed battery module description"
+        self.assertNotEqual(_company_source_hash(SAMPLE_COMPANY), _company_source_hash(changed))
+
+    def test_company_product_payload_keeps_full_source_text(self):
+        """Long product text should remain available in payload for context recall."""
+        company = dict(SAMPLE_COMPANY)
+        company["products_services"] = " ".join(["battery module enclosure"] * 40)
+        chunks = chunk_company_record(company, build_document_text(company))
+        master = next(chunk for chunk in chunks if chunk.metadata.get("chunk_view") == "master")
+        self.assertEqual(master.metadata["products_services"], company["products_services"])
+        self.assertEqual(master.metadata["products_services_full"], company["products_services"])
 
     def test_company_chunk_contains_all_text(self):
         """Master company chunk text must include company name, tier, location."""
@@ -227,6 +258,56 @@ class TestChunker(unittest.TestCase):
             self.assertIn("location_county", meta)
             self.assertIn("ev_battery_relevant", meta)
             self.assertEqual(meta["company_name"], "Hyundai Metaplant")
+
+
+class TestIndexFreshness(unittest.TestCase):
+    """Test offline Qdrant freshness audit logic."""
+
+    def _master_payload(self, company: dict, **overrides):
+        doc_text = build_document_text(company)
+        chunks = chunk_company_record(company, doc_text)
+        master = next(chunk for chunk in chunks if chunk.metadata.get("chunk_view") == "master")
+        return {**master.metadata, **overrides}
+
+    def test_company_index_audit_ok_for_matching_master(self):
+        """Matching KB row and Qdrant master payload should pass."""
+        payload = self._master_payload(SAMPLE_COMPANY)
+        audit = audit_company_index(
+            kb_companies=[SAMPLE_COMPANY],
+            qdrant_records=[{"payload": payload}],
+        )
+        self.assertTrue(audit["ok"])
+        self.assertEqual(audit["expected_rows"], 1)
+        self.assertEqual(audit["indexed_master_rows"], 1)
+
+    def test_company_index_audit_flags_stale_missing_extra_duplicate(self):
+        """Audit should identify freshness failures without Qdrant access."""
+        other_company = dict(SAMPLE_COMPANY)
+        other_company["id"] = 10000
+        other_company["company_name"] = "Other Battery Co"
+
+        stale_payload = self._master_payload(
+            SAMPLE_COMPANY,
+            source_row_hash="old-hash",
+            kb_schema_version="old-schema",
+        )
+        duplicate_payload = dict(stale_payload)
+        extra_payload = self._master_payload(other_company)
+
+        audit = audit_company_index(
+            kb_companies=[SAMPLE_COMPANY],
+            qdrant_records=[
+                {"payload": stale_payload},
+                {"payload": duplicate_payload},
+                {"payload": extra_payload},
+            ],
+        )
+
+        self.assertFalse(audit["ok"])
+        self.assertIn(stale_payload["company_row_id"], audit["stale_row_ids"])
+        self.assertIn(stale_payload["company_row_id"], audit["duplicate_row_ids"])
+        self.assertIn(extra_payload["company_row_id"], audit["extra_row_ids"])
+        self.assertIn(stale_payload["company_row_id"], audit["stale_schema_row_ids"])
 
 
 class TestSparseVector(unittest.TestCase):

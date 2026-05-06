@@ -36,6 +36,16 @@ from shared.logger import get_logger
 logger = get_logger("phase4.agent")
 
 _MAX_LLM_COMPANIES = 15   # capped from 50 — prevents LLM reading overload that causes 'not found' hallucination
+_PRODUCT_CONTEXT_CHARS = 180
+
+
+def _table_cell(value: Any, max_chars: int | None = None) -> str:
+    """Format one pipe-table cell without letting source pipes corrupt columns."""
+    text = str(value or "").replace("|", "/")
+    text = " ".join(text.split())
+    if max_chars is not None and len(text) > max_chars:
+        return text[: max_chars - 3].rstrip() + "..."
+    return text
 
 
 def _is_oem_reference(tier_value: str | None) -> bool:
@@ -68,7 +78,8 @@ def _parse_aggregate_context(context: str) -> list[dict]:
 def _parse_company_context(context: str) -> list[dict]:
     """
     Parse pipe-separated company table rows from formatted context.
-    Context rows look like: "Company | Tier | Role | County | Emp | Industry | EV | Facility | Products"
+    Context rows look like:
+    "Company | Tier | Role | City | County | Emp | OEMs | Industry | EV | Facility | Classification | Affiliation | Products"
     """
     companies = []
     lines = context.splitlines()
@@ -86,12 +97,16 @@ def _parse_company_context(context: str) -> list[dict]:
                     "company_name":         parts[0],
                     "tier":                 parts[1],
                     "ev_supply_chain_role": parts[2],
-                    "location_county":      parts[3],
-                    "employment":           parts[4] if parts[4] else None,
-                    "industry_group":       parts[5] if len(parts) > 5 else "",
-                    "ev_battery_relevant":  parts[6] if len(parts) > 6 else "",
-                    "facility_type":        parts[7] if len(parts) > 7 else "",
-                    "products_services":    parts[8] if len(parts) > 8 else "",
+                    "location_city":        parts[3] if len(parts) > 3 else "",
+                    "location_county":      parts[4] if len(parts) > 4 else "",
+                    "employment":           parts[5] if len(parts) > 5 and parts[5] else None,
+                    "primary_oems":         parts[6] if len(parts) > 6 else "",
+                    "industry_group":       parts[7] if len(parts) > 7 else "",
+                    "ev_battery_relevant":  parts[8] if len(parts) > 8 else "",
+                    "facility_type":        parts[9] if len(parts) > 9 else "",
+                    "classification_method": parts[10] if len(parts) > 10 else "",
+                    "supplier_affiliation_type": parts[11] if len(parts) > 11 else "",
+                    "products_services":    parts[12] if len(parts) > 12 else "",
                 })
     return companies
 
@@ -151,24 +166,31 @@ class EVAgent:
         if not companies:
             return "No matching companies found."
 
-        header  = "Company | Tier | Role | County | Employment | Primary_OEMs | Industry | EV_Relevant | Facility | Products"
+        header  = (
+            "Company | Tier | Role | City | County | Employment | Primary_OEMs | "
+            "Industry | EV_Relevant | Facility | Classification | Affiliation | Products"
+        )
         divider = "-" * len(header)
         rows    = [f"Total: {len(companies)} companies\n", header, divider]
 
         for c in companies:
-            name     = (c.get("company_name") or "")[:40]
-            tier     = (c.get("tier") or "")
-            role     = (c.get("ev_supply_chain_role") or "")[:35]
-            county   = (c.get("location_county") or "")
+            name     = _table_cell(c.get("company_name"), 48)
+            tier     = _table_cell(c.get("tier"))
+            role     = _table_cell(c.get("ev_supply_chain_role"), 48)
+            city     = _table_cell(c.get("location_city"))
+            county   = _table_cell(c.get("location_county"))
             emp      = int(float(c.get("employment") or 0)) if c.get("employment") else ""
-            oems     = (c.get("primary_oems") or "")[:30]
-            industry = (c.get("industry_group") or "")[:30]
-            ev_rel   = (c.get("ev_battery_relevant") or "")
-            facility = (c.get("facility_type") or "")
-            product  = (c.get("products_services") or "")[:60]
+            oems     = _table_cell(c.get("primary_oems"), 48)
+            industry = _table_cell(c.get("industry_group"), 48)
+            ev_rel   = _table_cell(c.get("ev_battery_relevant"))
+            facility = _table_cell(c.get("facility_type"), 40)
+            classification = _table_cell(c.get("classification_method"), 48)
+            affiliation = _table_cell(c.get("supplier_affiliation_type"), 48)
+            product  = _table_cell(c.get("products_services"), _PRODUCT_CONTEXT_CHARS)
             rows.append(
-                f"{name} | {tier} | {role} | {county} | {emp} | {oems} | "
-                f"{industry} | {ev_rel} | {facility} | {product}"
+                f"{name} | {tier} | {role} | {city} | {county} | {emp} | {oems} | "
+                f"{industry} | {ev_rel} | {facility} | {classification} | "
+                f"{affiliation} | {product}"
             )
         return "\n".join(rows)
 

@@ -79,6 +79,7 @@ def _hard_filter_summary(entities: Entities) -> str:
         ("min_employment", entities.min_employment),
         ("max_employment", entities.max_employment),
         ("ev_relevant_filter", entities.ev_relevant_filter),
+        ("ev_relevance_value", getattr(entities, "ev_relevance_value", None)),
     ]:
         if value not in (None, "", [], False):
             parts.append(f"{label}={value}")

@@ -43,9 +43,9 @@ from phase2_embedding.chunker import (
 )
 from phase2_embedding.embedder import embed_chunks, verify_ollama_embed
 from phase2_embedding.vector_store import (
-    delete_company_chunks,
     ensure_collection_exists,
     get_collection_stats,
+    prune_stale_company_index_chunks,
     upload_chunks,
     verify_qdrant_connection,
 )
@@ -98,11 +98,6 @@ def embed_companies(company_filter: str | None = None, reembed: bool = False) ->
 
     logger.info("Processing %d companies...", len(companies))
 
-    if reembed:
-        logger.info("Re-embedding requested — deleting existing company chunks from Qdrant first")
-        for company in companies:
-            delete_company_chunks(company["company_name"])
-
     all_chunks: list[Chunk] = []
     parent_map: dict[str, Chunk] = {}  # parent_id → parent chunk
 
@@ -117,6 +112,25 @@ def embed_companies(company_filter: str | None = None, reembed: bool = False) ->
 
     # Upload to Qdrant
     uploaded = upload_chunks(all_chunks, vectors, parent_chunks=parent_map)
+    if reembed and uploaded == len(all_chunks):
+        if company_filter:
+            for company in companies:
+                company_name = company["company_name"]
+                keep_ids = {
+                    chunk.chunk_id
+                    for chunk in all_chunks
+                    if chunk.metadata.get("company_name") == company_name
+                }
+                prune_stale_company_index_chunks(keep_ids, company_name=company_name)
+        else:
+            keep_ids = {chunk.chunk_id for chunk in all_chunks}
+            prune_stale_company_index_chunks(keep_ids)
+    elif reembed:
+        logger.warning(
+            "Skipping stale company chunk pruning because upload was partial (%d/%d)",
+            uploaded,
+            len(all_chunks),
+        )
 
     logger.info("✅ Pass 1 done: %d company chunks uploaded to Qdrant", uploaded)
     return {"embedded": uploaded, "skipped": 0, "failed": len(all_chunks) - uploaded}

@@ -96,6 +96,46 @@ class TestPhase4EntityExtractor(unittest.TestCase):
         )
         self.assertNotIn("battery", e.oem_list)
 
+    def test_indirect_ev_relevance_is_exact_filter(self):
+        e = extract(
+            "Which companies with over 1,000 employees are indirectly relevant "
+            "to the EV sector, and what are their main products/services?"
+        )
+        self.assertEqual(e.min_employment, 1001)
+        self.assertEqual(e.ev_relevance_value, "Indirect")
+        self.assertFalse(e.ev_relevant_filter)
+
+    def test_over_employment_is_strictly_greater_than(self):
+        e = extract(
+            "Find Tier 2/3 suppliers with employment over 300 that are classified "
+            "as General Automotive."
+        )
+        self.assertEqual(e.min_employment, 301)
+
+    def test_negated_ev_specific_presence_is_not_positive_filter(self):
+        e = extract(
+            "Which Georgia areas have Manufacturing Plant facility types but no "
+            "EV-specific production presence?"
+        )
+        self.assertEqual(e.facility_type, "Manufacturing Plant")
+        self.assertEqual(e.ev_relevance_value, "No")
+        self.assertFalse(e.ev_relevant_filter)
+
+    def test_word_number_largest_employment_sets_top_n(self):
+        e = extract(
+            "Which three Georgia companies have the largest employment and are "
+            "Thermal Management suppliers?"
+        )
+        self.assertTrue(e.is_top_n)
+        self.assertEqual(e.top_n_limit, 3)
+        self.assertEqual(e.ev_role, "Thermal Management")
+
+    def test_thermal_related_products_maps_to_thermal_management_role(self):
+        e = extract(
+            "Which companies are producing thermal-related products or services?"
+        )
+        self.assertEqual(e.ev_role, "Thermal Management")
+
 
 if __name__ == "__main__":
     unittest.main()

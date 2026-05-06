@@ -5,7 +5,7 @@ DIRECTLY ADAPTED FROM: ev_data_LLM_comparsions/src/evaluator.py
 Zero external RAGAS library — pure Ollama + httpx.
 
 KEY DIFFERENCES from original:
-  - Judge model: qwen2.5:14b (local) instead of kimi-k2.5:cloud
+  - Judge model: qwen2.5:14b (local) instead of kimi-k2.6:cloud
   - Provider: ollama ONLY (no OpenRouter dependency)
   - Config: reads from shared.config (our .env) not config.yaml
   - Input: chunks from Qdrant + Neo4j, not ChromaDB
@@ -61,11 +61,11 @@ METRIC_DEFINITIONS = {
 
 # Weights — identical to ev_data_LLM_comparsions/config/config.yaml
 METRIC_WEIGHTS = {
-    "faithfulness":       0.25,  # Highest — no hallucination is top priority
-    "answer_relevancy":   0.20,
+    "faithfulness":       0.20, 
+    "answer_relevancy":   0.15,
     "context_precision":  0.20,
-    "context_recall":     0.20,
-    "answer_correctness": 0.15,
+    "context_recall":     0.15,
+    "answer_correctness": 0.30,
 }
 
 # Targets for our system (from Architecture_Decisions.md)

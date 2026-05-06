@@ -361,6 +361,7 @@ class Entities:
     is_top_n:          bool        = False  # "Top 10 by employment" questions
     top_n_limit:       int         = 10     # how many to return for top_n
     ev_relevant_filter: bool       = False  # only EV-relevant companies
+    ev_relevance_value: str | None = None   # exact EV relevance: "Yes", "Indirect", or "No"
 
 
 
@@ -386,17 +387,38 @@ def extract(question: str) -> Entities:
     e.is_aggregate = any(sig in q_lower for sig in aggregate_signals)
 
     # ── 1b. Top-N company ranking questions ─────────────────────────────────
+    number_words = {
+        "one": 1,
+        "two": 2,
+        "three": 3,
+        "four": 4,
+        "five": 5,
+        "six": 6,
+        "seven": 7,
+        "eight": 8,
+        "nine": 9,
+        "ten": 10,
+    }
+
     top_n_match = re.search(
-        r"(?:top|largest|biggest|leading)\s+(\d+)"
-        r"|(?:(\d+)\s+(?:largest|biggest|leading))",
-        q_lower
+        r"(?:top|largest|biggest|leading)\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)"
+        r"|(?:(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+(?:largest|biggest|leading))",
+        q_lower,
     )
+    if not top_n_match:
+        top_n_match = re.search(
+            r"\b(?:which|what)\s+(\d+|one|two|three|four|five|six|seven|eight|nine|ten)\s+"
+            r"[a-z0-9\s,-]{0,90}?\b(?:largest|highest|biggest)\s+employment",
+            q_lower,
+        )
     if top_n_match:
         e.is_top_n = True
         e.is_aggregate = False  # top-N overrides aggregate
-        n_str = top_n_match.group(1) or top_n_match.group(2)
+        n_str = next((group for group in top_n_match.groups() if group), None)
         if n_str and n_str.isdigit():
             e.top_n_limit = int(n_str)
+        elif n_str:
+            e.top_n_limit = number_words.get(n_str, e.top_n_limit)
 
     # ── 2. Detect risk query subtypes ────────────────────────────────────────
     # WHY SUBTYPES (not one broad flag):
@@ -430,8 +452,17 @@ def extract(question: str) -> Entities:
         e.is_risk_query = e.is_oem_dependency = e.is_capacity_risk = e.is_misalignment = False
 
     # ── 2b. EV-relevant filter ───────────────────────────────────────────────
-    ev_filter_signals = ["ev relevant", "ev-relevant", "ev specific", "ev-specific"]
-    e.ev_relevant_filter = any(sig in q_lower for sig in ev_filter_signals)
+    ev_negative_patterns = (
+        r"\b(?:no|not|without|lacking|lack|lacks)\s+ev[-\s]?(?:relevant|specific|related)\b",
+        r"\b(?:no|not|without|lacking|lack|lacks)\s+ev[-\s]?specific\s+production\s+presence\b",
+    )
+    if re.search(r"\bindirect(?:ly)?\s+relevant\b", q_lower):
+        e.ev_relevance_value = "Indirect"
+    elif any(re.search(pattern, q_lower) for pattern in ev_negative_patterns):
+        e.ev_relevance_value = "No"
+    else:
+        ev_filter_signals = ["ev relevant", "ev-relevant", "ev specific", "ev-specific", "ev-related"]
+        e.ev_relevant_filter = any(sig in q_lower for sig in ev_filter_signals)
 
     # ── 3. Tier extraction — boundary-aware with intent guards ────────────────
     tier_matches: list[tuple[int, str]] = []
@@ -552,6 +583,15 @@ def extract(question: str) -> Entities:
         e.ev_role_list = matched_roles
     e.exclude_ev_role_list = excluded_roles
 
+    if not e.ev_role and not e.ev_role_list:
+        thermal_match = re.search(r"\bthermal[-\s]?related\b", question, re.IGNORECASE)
+        if (
+            thermal_match
+            and any(role.lower() == "thermal management" for role in roles)
+            and not _is_hypothetical_company_filter(question, thermal_match.start(), thermal_match.end())
+        ):
+            e.ev_role = "Thermal Management"
+
     # Words already captured as tier/role — OEM extractor must skip these
     # e.g. 'battery' is in 'Battery Cell' role → must not match 'SK Battery' OEM
     role_words: set[str] = set()
@@ -627,7 +667,9 @@ def extract(question: str) -> Entities:
     # ── 7. Employment range extraction — regex ─────────────────────────────────
     over_match = re.search(r"(?:over|more than|above|greater than)\s+(\d[\d,]*)", q_lower)
     if over_match:
-        e.min_employment = int(over_match.group(1).replace(",", ""))
+        # "Over 300" is strictly greater than 300. Employment is stored as whole
+        # people, so convert strict lower bounds to the next integer.
+        e.min_employment = int(over_match.group(1).replace(",", "")) + 1
 
     under_match = re.search(r"(?:fewer than|less than|under|below)\s+(\d[\d,]*)", q_lower)
     if under_match:

@@ -84,12 +84,18 @@ def ensure_payload_indexes() -> None:
         "chunk_type": models.PayloadSchemaType.KEYWORD,
         "chunk_view": models.PayloadSchemaType.KEYWORD,
         "company_row_id": models.PayloadSchemaType.KEYWORD,
+        "kb_schema_version": models.PayloadSchemaType.KEYWORD,
+        "source_row_hash": models.PayloadSchemaType.KEYWORD,
+        "embed_model": models.PayloadSchemaType.KEYWORD,
         "company_name": models.PayloadSchemaType.KEYWORD,
         "tier": models.PayloadSchemaType.KEYWORD,
         "location_county": models.PayloadSchemaType.KEYWORD,
         "location_city": models.PayloadSchemaType.KEYWORD,
         "industry_group": models.PayloadSchemaType.KEYWORD,
         "facility_type": models.PayloadSchemaType.KEYWORD,
+        "classification_method": models.PayloadSchemaType.KEYWORD,
+        "supplier_affiliation_type": models.PayloadSchemaType.KEYWORD,
+        "primary_oems": models.PayloadSchemaType.KEYWORD,
         "document_type": models.PayloadSchemaType.KEYWORD,
         "ev_supply_chain_role": models.PayloadSchemaType.KEYWORD,
         "ev_battery_relevant": models.PayloadSchemaType.KEYWORD,
@@ -274,6 +280,7 @@ def upload_chunks(
         payload["chunk_id"] = chunk.chunk_id
         payload["token_estimate"] = chunk.token_estimate
         payload["char_count"] = chunk.char_count
+        payload.setdefault("embed_model", Config.get().ollama_embed_model)
 
         # Store parent text inside child payload
         # KEY PATTERN: search with small (256 tokens), return large (800 tokens)
@@ -355,6 +362,8 @@ def _build_metadata_filter(filters: dict[str, Any]) -> Filter | None:
         "ev_battery_relevant", "source_type", "chunk_type",
         "document_type", "ev_supply_chain_role", "facility_type",
         "industry_group", "chunk_view", "company_row_id",
+        "kb_schema_version", "source_row_hash", "embed_model",
+        "classification_method", "supplier_affiliation_type", "primary_oems",
     ]
     for field in str_fields:
         if field in filters:
@@ -594,20 +603,83 @@ def scroll_points(
 
 def delete_company_chunks(company_name: str) -> int:
     """Delete all chunks for a specific company (for re-embedding)."""
+    return delete_company_index_chunks(company_name=company_name)
+
+
+def delete_company_index_chunks(company_name: str | None = None) -> int:
+    """
+    Delete GNEM company chunks only.
+
+    This intentionally leaves web-document chunks untouched, even if they share
+    a company name with the structured KB row.
+    """
     client = get_qdrant_client()
     collection_name = get_collection_name()
+    must = [
+        FieldCondition(key="source_type", match=MatchValue(value="gnem_excel")),
+        FieldCondition(key="chunk_type", match=MatchValue(value="company")),
+    ]
+    if company_name:
+        must.append(FieldCondition(key="company_name", match=MatchValue(value=company_name)))
+
     try:
-        result = client.delete(
+        client.delete(
             collection_name=collection_name,
-            points_selector=Filter(
-                must=[FieldCondition(key="company_name", match=MatchValue(value=company_name))]
-            ),
+            points_selector=Filter(must=must),
+            wait=True,
         )
-        logger.info("Deleted chunks for '%s' from Qdrant", company_name)
+        logger.info("Deleted GNEM company chunks from Qdrant (company=%s)", company_name or "all")
         return 1
     except Exception as exc:
-        logger.error("Failed to delete chunks for '%s': %s", company_name, exc)
+        logger.error("Failed to delete GNEM company chunks (company=%s): %s", company_name, exc)
         return 0
+
+
+def prune_stale_company_index_chunks(
+    keep_point_ids: set[str],
+    company_name: str | None = None,
+) -> int:
+    """
+    Delete GNEM company chunks not present in keep_point_ids.
+
+    Rebuild flow uses this after uploading fresh deterministic IDs, so old
+    random-ID chunks from earlier indexing runs do not linger in retrieval.
+    """
+    existing = scroll_points(
+        filters={
+            "source_type": "gnem_excel",
+            "chunk_type": "company",
+            **({"company_name": company_name} if company_name else {}),
+        },
+        limit=None,
+    )
+    stale_ids = [record["id"] for record in existing if record["id"] not in keep_point_ids]
+    if not stale_ids:
+        logger.info("No stale GNEM company chunks to prune (company=%s)", company_name or "all")
+        return 0
+
+    client = get_qdrant_client()
+    collection_name = get_collection_name()
+    deleted = 0
+    for batch_start in range(0, len(stale_ids), UPLOAD_BATCH_SIZE):
+        batch = stale_ids[batch_start: batch_start + UPLOAD_BATCH_SIZE]
+        try:
+            client.delete(
+                collection_name=collection_name,
+                points_selector=models.PointIdsList(points=batch),
+                wait=True,
+            )
+            deleted += len(batch)
+        except Exception as exc:
+            logger.error(
+                "Failed to prune stale GNEM company chunks [%d:%d]: %s",
+                batch_start,
+                batch_start + len(batch),
+                exc,
+            )
+
+    logger.info("Pruned %d stale GNEM company chunks (company=%s)", deleted, company_name or "all")
+    return deleted
 
 
 def verify_qdrant_connection() -> dict[str, Any]:
