@@ -5,7 +5,7 @@ Run: venv\\Scripts\\python scripts\\inspect_graph.py
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from phase3_graph.graph_loader import get_driver, get_graph_stats
+from db_storage.graph_loader import get_driver, get_graph_stats
 
 driver = get_driver()
 SEP = "-" * 50

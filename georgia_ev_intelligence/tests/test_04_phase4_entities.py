@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from phase4_agent.entity_extractor import extract
+from filters_and_validation.query_entity_extractor import extract
 
 
 class TestPhase4EntityExtractor(unittest.TestCase):

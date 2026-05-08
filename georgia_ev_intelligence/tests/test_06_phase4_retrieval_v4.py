@@ -47,8 +47,8 @@ class _StubEntities:
 
 class TestQueryClassifier(unittest.TestCase):
     def setUp(self):
-        from phase4_agent.query_classifier import classify
-        from phase4_agent.retrieval_types import QueryClass
+        from filters_and_validation.query_classifier import classify
+        from core_agent.retrieval_types import QueryClass
         self.classify = classify
         self.QC = QueryClass
 
@@ -129,7 +129,7 @@ class TestSynonymExpander(unittest.TestCase):
 
     def setUp(self):
         # Stub KB schema lookups so the test does not hit Postgres.
-        import phase4_agent.synonym_expander as se
+        import filters_and_validation.synonym_expander as se
         se._all_product_phrases = lambda: {"lithium battery", "electrolyte"}
         se._value_set = lambda col: {
             "tier": {"tier 1", "tier 2", "tier 2/3"},
@@ -137,7 +137,7 @@ class TestSynonymExpander(unittest.TestCase):
         }.get(col, set())
         # Pretend the rule store has nothing approved for these tests.
         se._rule_mappings_for = lambda *a, **k: []
-        from phase4_agent.synonym_expander import resolve
+        from filters_and_validation.synonym_expander import resolve
         self.resolve = resolve
 
     def test_small_scale_unresolved_without_approved_rule(self):
@@ -169,16 +169,16 @@ class TestSynonymExpander(unittest.TestCase):
 
 class TestAmbiguityResolver(unittest.TestCase):
     def setUp(self):
-        import phase4_agent.synonym_expander as se
+        import filters_and_validation.synonym_expander as se
         se._all_product_phrases = lambda: set()
         se._value_set = lambda col: {
             "tier": {"tier 1", "tier 2", "tier 2/3"},
             "facility_type": {"r&d"},
         }.get(col, set())
         se._rule_mappings_for = lambda *a, **k: []
-        from phase4_agent.synonym_expander import resolve
-        from phase4_agent.ambiguity_resolver import branches
-        from phase4_agent.retrieval_types import QueryClass
+        from filters_and_validation.synonym_expander import resolve
+        from filters_and_validation.ambiguity_resolver import branches
+        from core_agent.retrieval_types import QueryClass
         self.resolve = resolve
         self.branches = branches
         self.QC = QueryClass
@@ -202,7 +202,7 @@ class TestAmbiguityResolver(unittest.TestCase):
         ambiguity_resolver.kb_columns_supporting = (
             lambda term: ["tier", "facility_type"]
         )
-        from phase4_agent.retrieval_types import ResolvedTerm
+        from core_agent.retrieval_types import ResolvedTerm
         e = _StubEntities(
             oem="hyundai", oem_list=["hyundai"],
             residual_abstract_terms=["mystery"],
@@ -224,8 +224,8 @@ class TestAmbiguityResolver(unittest.TestCase):
 
 class TestRetrievalFusion(unittest.TestCase):
     def setUp(self):
-        from phase4_agent.retrieval_types import Candidate, QueryClass
-        from phase4_agent.retrieval_fusion import merge, fuse, select
+        from core_agent.retrieval_types import Candidate, QueryClass
+        from retrievals.retrieval_fusion import merge, fuse, select
         self.Candidate = Candidate
         self.QC = QueryClass
         self.merge = merge
@@ -276,10 +276,10 @@ class TestRetrievalFusion(unittest.TestCase):
 class TestEvidenceVerification(unittest.TestCase):
     def setUp(self):
         # Stub _company_names so verify_answer doesn't hit Postgres.
-        import phase4_agent.evidence_validator as ev
+        import filters_and_validation.evidence_validator as ev
         ev._company_names = lambda: ["Foo Inc", "Bar Manufacturing"]
-        from phase4_agent.evidence_validator import verify_answer
-        from phase4_agent.retrieval_types import Candidate
+        from filters_and_validation.evidence_validator import verify_answer
+        from core_agent.retrieval_types import Candidate
         self.verify = verify_answer
         self.Candidate = Candidate
 
@@ -301,14 +301,14 @@ class TestEvidenceVerification(unittest.TestCase):
 
 class TestBranchedFormatter(unittest.TestCase):
     def test_single_branch_returns_none(self):
-        from phase4_agent.formatters import format_branched_answer
-        from phase4_agent.retrieval_types import RetrievalBranch
+        from core_agent.formatters import format_branched_answer
+        from core_agent.retrieval_types import RetrievalBranch
         bs = [RetrievalBranch(branch_id="A", interpreted_meaning="x → y")]
         self.assertIsNone(format_branched_answer(bs))
 
     def test_two_branches_produces_labelled_sections(self):
-        from phase4_agent.formatters import format_branched_answer
-        from phase4_agent.retrieval_types import Candidate, RetrievalBranch
+        from core_agent.formatters import format_branched_answer
+        from core_agent.retrieval_types import Candidate, RetrievalBranch
         # New invariant: every row a formatter sees must carry validated=True
         # (the evidence_validator sets this before the row reaches the
         # formatter in the live pipeline). Construct test rows accordingly.

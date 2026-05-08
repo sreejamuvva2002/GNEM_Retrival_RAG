@@ -103,7 +103,7 @@ def check_db_columns():
 def check_seed_sqls():
     from shared.db import get_session
     from sqlalchemy import text
-    from phase5_fewshot.seed_store import SQL_EXAMPLES
+    from embeddings_store.seed_store import SQL_EXAMPLES
 
     session = get_session()
     failures = []
@@ -137,7 +137,7 @@ def check_seed_sqls():
 # CHECK 4: Embedder — nomic-embed-text or fallback
 # ─────────────────────────────────────────────────────────────────────────────
 def check_embedder():
-    from phase5_fewshot.embedder import embed_text, check_embed_model_available, _EMBED_DIM
+    from embeddings_store.few_shot_embedder import embed_text, check_embed_model_available, _EMBED_DIM
     model_ok = check_embed_model_available()
     vec = embed_text("Which county has the highest Tier 1 employment?")
     if len(vec) != _EMBED_DIM:
@@ -158,8 +158,8 @@ def check_qdrant_store():
     except ImportError:
         return FAIL, "qdrant-client not installed. Run: pip install qdrant-client"
 
-    from phase5_fewshot.qdrant_store import upsert_example, search_similar, count_examples
-    from phase5_fewshot.embedder import embed_text
+    from embeddings_store.qdrant_store import upsert_example, search_similar, count_examples
+    from embeddings_store.few_shot_embedder import embed_text
 
     # Test upsert
     test_q = "TEST: Which county has highest Tier 1 employment?"
@@ -191,7 +191,7 @@ def check_qdrant_store():
 # CHECK 6: Few-shot retriever — finds similar questions above threshold
 # ─────────────────────────────────────────────────────────────────────────────
 def check_retriever():
-    from phase5_fewshot.few_shot_retriever import get_few_shot_examples, get_few_shot_block
+    from retrievals.few_shot_retriever import get_few_shot_examples, get_few_shot_block
 
     # At least the test example from check 5 should be in the store
     similar_q = "Which county has the highest employment among Tier 1 suppliers?"
@@ -214,9 +214,9 @@ def check_retriever():
 # CHECK 7: Full seed — seed all SQL + Cypher examples
 # ─────────────────────────────────────────────────────────────────────────────
 def check_full_seed():
-    from phase5_fewshot.seed_store import SQL_EXAMPLES, CYPHER_EXAMPLES
-    from phase5_fewshot.qdrant_store import upsert_example, count_examples, delete_collection
-    from phase5_fewshot.embedder import embed_text
+    from embeddings_store.seed_store import SQL_EXAMPLES, CYPHER_EXAMPLES
+    from embeddings_store.qdrant_store import upsert_example, count_examples, delete_collection
+    from embeddings_store.few_shot_embedder import embed_text
 
     # Wipe test data and re-seed properly
     try:
@@ -262,7 +262,7 @@ def check_full_seed():
 # CHECK 8: Integration — text_to_sql gets few-shot block injected
 # ─────────────────────────────────────────────────────────────────────────────
 def check_integration():
-    from phase5_fewshot.few_shot_retriever import get_few_shot_block
+    from retrievals.few_shot_retriever import get_few_shot_block
 
     # Test 3 question types that should find examples
     test_questions = [

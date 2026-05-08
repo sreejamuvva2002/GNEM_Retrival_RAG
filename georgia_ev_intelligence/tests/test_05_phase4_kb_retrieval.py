@@ -15,9 +15,9 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from phase4_agent.entity_extractor import extract
-from phase4_agent.pipeline import EVAgent, _parse_company_context
-from phase4_agent.vector_retriever import retrieve_context
+from filters_and_validation.query_entity_extractor import extract
+from core_agent.agent_pipeline import EVAgent, _parse_company_context
+from retrievals.vector_retriever import retrieve_context
 
 
 def company(
@@ -439,7 +439,7 @@ SAMPLE_KB = [
 
 class TestKBFirstRetrieval(unittest.TestCase):
     def retrieve(self, question: str):
-        with patch("phase4_agent.vector_retriever._load_all_companies", return_value=SAMPLE_KB):
+        with patch("retrievals.vector_retriever._load_all_companies", return_value=SAMPLE_KB):
             return retrieve_context(question, extract(question))
 
     def names(self, result) -> set[str]:
@@ -535,8 +535,8 @@ class TestKBFirstRetrieval(unittest.TestCase):
             "Which companies with over 1,000 employees are indirectly relevant "
             "to the EV sector, and what are their main products/services?"
         )
-        with patch("phase4_agent.vector_retriever._load_all_companies", return_value=SAMPLE_KB), \
-             patch("phase4_agent.vector_retriever._semantic_rank", return_value=({}, [])):
+        with patch("retrievals.vector_retriever._load_all_companies", return_value=SAMPLE_KB), \
+             patch("retrievals.vector_retriever._semantic_rank", return_value=({}, [])):
             result = retrieve_context(question, extract(question))
         self.assertEqual(self.names(result), {"Large Indirect Supplier"})
 
@@ -584,10 +584,10 @@ class TestKBFirstRetrieval(unittest.TestCase):
             "Identify all Georgia-based Tier 1/2 automotive suppliers that "
             "maintain a diversified customer base (serving 'Multiple OEMs')."
         )
-        with patch("phase4_agent.vector_retriever._load_all_companies", return_value=SAMPLE_KB), \
-             patch("phase4_agent.vector_retriever.interpret_soft_filters") as soft_filter, \
-             patch("phase4_agent.vector_retriever._semantic_rank", return_value=({}, [])), \
-             patch("phase4_agent.vector_retriever.rerank_companies", side_effect=lambda _q, rows: rows):
+        with patch("retrievals.vector_retriever._load_all_companies", return_value=SAMPLE_KB), \
+             patch("retrievals.vector_retriever.interpret_soft_filters") as soft_filter, \
+             patch("retrievals.vector_retriever._semantic_rank", return_value=({}, [])), \
+             patch("retrievals.vector_retriever.rerank_companies", side_effect=lambda _q, rows: rows):
             result = retrieve_context(question, extract(question))
         soft_filter.assert_not_called()
         names = self.names(result)

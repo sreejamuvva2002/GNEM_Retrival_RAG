@@ -14,7 +14,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import pandas as pd
-from phase1_extraction.kb_loader import _find_gnem_excel, _normalize_columns
+from db_storage.kb_loader import _find_gnem_excel, _normalize_columns
 
 SEP  = "=" * 72
 HALF = "-" * 72

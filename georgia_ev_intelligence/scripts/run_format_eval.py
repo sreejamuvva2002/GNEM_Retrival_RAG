@@ -28,7 +28,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from shared.logger import get_logger
 from shared.config import Config
-from evaluate.format_runner import (
+from evaluation.format_runner import (
     run_format1, run_format2, run_format3, run_format4,
     check_few_shot_contamination, _call_llm,
 )
@@ -162,7 +162,7 @@ def run_evaluation(
     # We pass the model string directly to EVAgent and _call_llm instead.
     pipeline = None
     if format_num in (1, 3, 4):
-        from phase4_agent.pipeline import EVAgent
+        from core_agent.agent_pipeline import EVAgent
         pipeline = EVAgent(model_override=model)   # model passed directly
 
     results = []

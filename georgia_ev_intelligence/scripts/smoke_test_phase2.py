@@ -20,9 +20,9 @@ import time
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from phase2_embedding.chunker import chunk_company_record, chunk_document, get_child_chunks
-from phase2_embedding.embedder import embed_single, embed_texts, verify_ollama_embed
-from phase2_embedding.vector_store import (
+from chunking.chunker import chunk_company_record, chunk_document, get_child_chunks
+from embeddings_store.doc_embedder import embed_single, embed_texts, verify_ollama_embed
+from embeddings_store.vector_store import (
     ensure_collection_exists,
     get_collection_stats,
     upload_chunks,
@@ -30,8 +30,8 @@ from phase2_embedding.vector_store import (
     verify_qdrant_connection,
     _build_sparse_vector,
 )
-from phase1_extraction.kb_loader import build_document_text, get_all_companies_from_db
-from phase2_embedding.embedder import embed_chunks
+from db_storage.kb_loader import build_document_text, get_all_companies_from_db
+from embeddings_store.doc_embedder import embed_chunks
 from shared.config import Config
 
 SEP = "=" * 60
@@ -195,7 +195,7 @@ def test_search_5_queries():
     # (Qdrant may be empty on first run before full Phase 2 pipeline)
     assert hits >= 1, (
         f"0 of 5 queries returned results. "
-        f"Run Phase 2 pipeline first: venv\\Scripts\\python -m phase2_embedding.pipeline --companies-only"
+        f"Run Phase 2 pipeline first: venv\\Scripts\\python -m core_agent.embedding_pipeline --companies-only"
     )
     print(f"\n         → {hits}/5 queries returned results")
 
@@ -229,8 +229,8 @@ def main():
     if passed == total:
         print(f"\n  🎉 All smoke tests passed!")
         print(f"  → Safe to run full Phase 2:")
-        print(f"     venv\\Scripts\\python -m phase2_embedding.pipeline --companies-only")
-        print(f"     venv\\Scripts\\python -m phase2_embedding.pipeline")
+        print(f"     venv\\Scripts\\python -m core_agent.embedding_pipeline --companies-only")
+        print(f"     venv\\Scripts\\python -m core_agent.embedding_pipeline")
     else:
         print(f"\n  ⚠️  {total - passed} test(s) failed — fix before running full pipeline")
     print()

@@ -21,7 +21,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from shared.db import get_session, Company
-from phase3_graph.graph_loader import get_driver
+from db_storage.graph_loader import get_driver
 from shared.logger import get_logger
 
 logger = get_logger("scripts.sync_neo4j")

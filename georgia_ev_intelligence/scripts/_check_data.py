@@ -1,5 +1,5 @@
 import sys; sys.path.insert(0, '.')
-from phase1_extraction.kb_loader import load_companies_from_excel
+from db_storage.kb_loader import load_companies_from_excel
 companies = load_companies_from_excel()
 print(f'Total loaded: {len(companies)}')
 print()

@@ -29,14 +29,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from shared.db import get_engine, get_session, Company, create_tables
 from shared.logger import get_logger
-from phase1_extraction.kb_loader import load_companies_from_excel
-from phase3_graph.graph_loader import (
+from db_storage.kb_loader import load_companies_from_excel
+from db_storage.graph_loader import (
     get_driver, verify_connection, create_schema,
     load_companies, load_locations, load_oem_relationships,
     load_tier_relationships, load_industry_relationships,
     load_product_relationships, get_graph_stats, close_driver,
 )
-from phase1_extraction.kb_loader import get_all_companies_from_db
+from db_storage.kb_loader import get_all_companies_from_db
 from sqlalchemy import text
 
 logger = get_logger("scripts.fresh_load")

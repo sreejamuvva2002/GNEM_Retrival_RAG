@@ -13,7 +13,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from phase2_embedding.index_freshness import audit_company_index
+from embeddings_store.index_freshness import audit_company_index
 
 
 def main() -> None:

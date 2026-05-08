@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from phase3_graph.graph_loader import verify_connection, get_graph_stats, get_driver
+from db_storage.graph_loader import verify_connection, get_graph_stats, get_driver
 from shared.logger import get_logger
 
 SEP = "=" * 55

@@ -26,7 +26,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from phase4_agent.pipeline import EVAgent
+from core_agent.agent_pipeline import EVAgent
 from shared.config import Config
 from shared.logger import get_logger
 

@@ -2,7 +2,7 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
-from phase4_agent.sql_retriever import aggregate_employment_by_county
+from retrievals.sql_retriever import aggregate_employment_by_county
 from shared.db import get_session, Company
 
 session = get_session()

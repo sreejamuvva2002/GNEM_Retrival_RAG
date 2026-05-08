@@ -18,7 +18,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from shared.db import get_engine, get_session, Company, create_tables
 from shared.logger import get_logger
-from phase1_extraction.kb_loader import load_companies_from_excel
+from db_storage.kb_loader import load_companies_from_excel
 
 logger = get_logger("migrate_and_reload")
 
@@ -136,7 +136,7 @@ if __name__ == "__main__":
     verify_columns()
 
     print("\n✅ Done. Next steps:")
-    print("   venv\\Scripts\\python -m phase3_graph.pipeline")
+    print("   venv\\Scripts\\python -m core_agent.graph_pipeline")
     print("   venv\\Scripts\\python scripts\\sync_neo4j.py")
     print("   venv\\Scripts\\python scripts\\smoke_test_phase4.py")
 test_phase4.py")

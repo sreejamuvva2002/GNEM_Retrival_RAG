@@ -10,7 +10,7 @@ Tests the 5 bug fix categories:
 import sys, time
 sys.path.insert(0, ".")
 
-from phase4_agent.pipeline import EVAgent
+from core_agent.agent_pipeline import EVAgent
 
 QUESTIONS = [
     # ── T1: SPOF — should return direct list ✅ PASSING ──────────────────────

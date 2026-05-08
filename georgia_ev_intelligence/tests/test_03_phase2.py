@@ -15,7 +15,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from phase2_embedding.chunker import (
+from chunking.chunker import (
     COMPANY_CHUNK_SCHEMA_VERSION,
     Chunk,
     chunk_company_record,
@@ -27,9 +27,9 @@ from phase2_embedding.chunker import (
     CHILD_CHAR_TARGET,
     PARENT_CHAR_TARGET,
 )
-from phase2_embedding.index_freshness import audit_company_index
-from phase2_embedding.embedder import embed_single, embed_texts, verify_ollama_embed
-from phase2_embedding.vector_store import (
+from embeddings_store.index_freshness import audit_company_index
+from embeddings_store.doc_embedder import embed_single, embed_texts, verify_ollama_embed
+from embeddings_store.vector_store import (
     ensure_collection_exists,
     get_collection_stats,
     upload_chunks,
@@ -39,7 +39,7 @@ from phase2_embedding.vector_store import (
     _build_metadata_filter,
     _build_sparse_vector,
 )
-from phase1_extraction.kb_loader import build_document_text
+from db_storage.kb_loader import build_document_text
 
 
 # ─── Sample data ──────────────────────────────────────────────────────────────
@@ -372,7 +372,7 @@ class TestEmbedder(unittest.TestCase):
 
     def test_embed_chunks_returns_dict(self):
         """embed_chunks should return dict mapping chunk_id → vector."""
-        from phase2_embedding.embedder import embed_chunks
+        from embeddings_store.doc_embedder import embed_chunks
         doc_text = build_document_text(SAMPLE_COMPANY)
         chunks = chunk_company_record(SAMPLE_COMPANY, doc_text)
         vectors = embed_chunks(chunks)
@@ -422,7 +422,7 @@ class TestVectorStore(unittest.TestCase):
 
     def test_upload_company_chunk(self):
         """Upload a test company chunk to Qdrant."""
-        from phase2_embedding.embedder import embed_chunks
+        from embeddings_store.doc_embedder import embed_chunks
 
         doc_text = build_document_text(SAMPLE_COMPANY)
         chunks = chunk_company_record(SAMPLE_COMPANY, doc_text)

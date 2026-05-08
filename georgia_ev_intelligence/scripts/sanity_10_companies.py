@@ -33,7 +33,7 @@ from shared.config import Config
 from shared.db import create_tables, get_engine, get_session, verify_connection
 from shared.logger import get_logger
 import shared.storage as storage_mod
-from phase1_extraction.kb_loader import (
+from db_storage.kb_loader import (
     _detect_shifted_row,
     _parse_float,
     _parse_employment,
@@ -200,7 +200,7 @@ async def run_phase1_10(all_companies: list[dict]) -> None:
     section("STEP 3: Running Phase 1 Pipeline — First 10 Companies")
 
     # Import pipeline here (after path setup)
-    from phase1_extraction.pipeline import run_pipeline, print_summary
+    from core_agent.extraction_pipeline import run_pipeline, print_summary
 
     target_companies = all_companies[:10]
     print(f"\n  Processing {len(target_companies)} companies:")

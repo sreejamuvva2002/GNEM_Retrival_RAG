@@ -22,35 +22,35 @@ class TestKbLoader(unittest.TestCase):
 
     def test_excel_can_be_found(self):
         """GNEM Excel must be findable."""
-        from phase1_extraction.kb_loader import _find_gnem_excel
+        from db_storage.kb_loader import _find_gnem_excel
         path = _find_gnem_excel()
         self.assertTrue(path.exists(), f"GNEM Excel not found at {path}")
         self.assertTrue(path.suffix in (".xlsx", ".xls"), "File must be an Excel file")
 
     def test_excel_has_205_rows(self):
         """Must load exactly 205 companies (or close — GNEM is fixed)."""
-        from phase1_extraction.kb_loader import load_companies_from_excel
+        from db_storage.kb_loader import load_companies_from_excel
         companies = load_companies_from_excel()
         self.assertGreaterEqual(len(companies), 200, "Expected ~205 companies in GNEM Excel")
         self.assertLessEqual(len(companies), 210, "Too many rows — check Excel parsing")
 
     def test_companies_have_required_fields(self):
         """Every company must have company_name."""
-        from phase1_extraction.kb_loader import load_companies_from_excel
+        from db_storage.kb_loader import load_companies_from_excel
         companies = load_companies_from_excel()
         for c in companies:
             self.assertTrue(c.get("company_name"), f"Company missing name: {c}")
 
     def test_tier_field_present(self):
         """At least some companies should have tier info."""
-        from phase1_extraction.kb_loader import load_companies_from_excel
+        from db_storage.kb_loader import load_companies_from_excel
         companies = load_companies_from_excel()
         with_tier = [c for c in companies if c.get("tier")]
         self.assertGreater(len(with_tier), 100, "Expected most companies to have tier info")
 
     def test_db_sync(self):
         """Sync to PostgreSQL and verify count — 190+ of 204 good companies expected."""
-        from phase1_extraction.kb_loader import (
+        from db_storage.kb_loader import (
             load_companies_from_excel,
             sync_companies_to_db,
             get_all_companies_from_db,
@@ -70,7 +70,7 @@ class TestKbLoader(unittest.TestCase):
 
     def test_build_document_text(self):
         """Document text must contain all required labels."""
-        from phase1_extraction.kb_loader import build_document_text
+        from db_storage.kb_loader import build_document_text
         company = {
             "company_name": "Test Corp",
             "tier": "Tier 1",
@@ -105,30 +105,30 @@ class TestQueryGenerator(unittest.TestCase):
         }
 
     def test_queries_generated(self):
-        from phase1_extraction.query_generator import build_queries
+        from web_extraction.query_generator import build_queries
         queries = build_queries(self.company)
         self.assertGreater(len(queries), 5, "Expected at least 5 queries for an OEM")
 
     def test_no_duplicate_queries(self):
-        from phase1_extraction.query_generator import build_queries
+        from web_extraction.query_generator import build_queries
         queries = build_queries(self.company)
         query_texts = [q["query_text"].lower().strip() for q in queries]
         self.assertEqual(len(query_texts), len(set(query_texts)), "Queries must be deduplicated")
 
     def test_company_name_in_queries(self):
-        from phase1_extraction.query_generator import build_queries
+        from web_extraction.query_generator import build_queries
         queries = build_queries(self.company)
         for q in queries:
             self.assertIn("Hanwha Q Cells", q["query_text"], "Company name must appear in all queries")
 
     def test_search_depth_is_advanced(self):
-        from phase1_extraction.query_generator import build_queries
+        from web_extraction.query_generator import build_queries
         queries = build_queries(self.company)
         for q in queries:
             self.assertEqual(q["search_depth"], "advanced", "All queries must use advanced depth")
 
     def test_estimate_query_count(self):
-        from phase1_extraction.query_generator import estimate_query_count
+        from web_extraction.query_generator import estimate_query_count
         companies = [self.company]
         est = estimate_query_count(companies)
         self.assertIn("total_queries", est)
@@ -137,7 +137,7 @@ class TestQueryGenerator(unittest.TestCase):
 
     def test_tier2_gets_fewer_queries(self):
         """Tier 2 companies should have fewer query families than OEM."""
-        from phase1_extraction.query_generator import build_queries
+        from web_extraction.query_generator import build_queries
         tier2_company = {**self.company, "tier": "Tier 2", "company_name": "Small Parts Co"}
         oem_queries = build_queries(self.company)
         tier2_queries = build_queries(tier2_company)
@@ -150,7 +150,7 @@ class TestExtractor(unittest.TestCase):
 
     def test_pdf_bytes_extraction(self):
         """Test PyMuPDF extraction on a real PDF (skip if no PDF available)."""
-        from phase1_extraction.extractor import extract_pdf_bytes
+        from web_extraction.extractor import extract_pdf_bytes
         # Create a minimal valid PDF in memory to test parsing
         try:
             import fitz
@@ -168,7 +168,7 @@ class TestExtractor(unittest.TestCase):
 
     def test_is_pdf_url_detection(self):
         """URL detection heuristic."""
-        from phase1_extraction.extractor import _is_pdf_url
+        from web_extraction.extractor import _is_pdf_url
         self.assertTrue(_is_pdf_url("https://sec.gov/filing/10k.pdf"))
         self.assertTrue(_is_pdf_url("https://example.com/pdf/report"))
         self.assertFalse(_is_pdf_url("https://example.com/article"))
@@ -176,7 +176,7 @@ class TestExtractor(unittest.TestCase):
 
     def test_tavily_extract_called_for_html(self):
         """Tavily Extract returns clean text for HTML URLs."""
-        import phase1_extraction.extractor as extractor_mod
+        import web_extraction.extractor as extractor_mod
 
         original = extractor_mod.tavily_extract
         mock_result = {
@@ -197,7 +197,7 @@ class TestExtractor(unittest.TestCase):
         try:
             loop = asyncio.new_event_loop()
             try:
-                from phase1_extraction.extractor import extract_document
+                from web_extraction.extractor import extract_document
                 result = loop.run_until_complete(
                     extract_document("https://example.com/article", "Hanwha Q Cells")
                 )
@@ -213,7 +213,7 @@ class TestExtractor(unittest.TestCase):
 
     def test_failed_extraction_returns_error_doc(self):
         """Failed Tavily call returns error doc, does not raise."""
-        import phase1_extraction.extractor as extractor_mod
+        import web_extraction.extractor as extractor_mod
         original = extractor_mod.tavily_extract
 
         async def fake_extract_fail(url):
@@ -223,7 +223,7 @@ class TestExtractor(unittest.TestCase):
         try:
             loop = asyncio.new_event_loop()
             try:
-                from phase1_extraction.extractor import extract_document
+                from web_extraction.extractor import extract_document
                 result = loop.run_until_complete(
                     extract_document("https://example.com/broken", "Test Corp")
                 )
@@ -237,7 +237,7 @@ class TestExtractor(unittest.TestCase):
 
     def test_content_hash_computed(self):
         """SHA-256 hash must be 64-char hex string for successful extractions."""
-        import phase1_extraction.extractor as extractor_mod
+        import web_extraction.extractor as extractor_mod
         original = extractor_mod.tavily_extract
 
         async def fake_extract_hash(url):
@@ -247,7 +247,7 @@ class TestExtractor(unittest.TestCase):
         try:
             loop = asyncio.new_event_loop()
             try:
-                from phase1_extraction.extractor import extract_document
+                from web_extraction.extractor import extract_document
                 result = loop.run_until_complete(
                     extract_document("https://x.com", "Test Corp")
                 )
@@ -264,7 +264,7 @@ class TestEntityExtractor(unittest.TestCase):
 
     def test_json_parsing_valid(self):
         """Valid JSON from Ollama is parsed correctly."""
-        from phase1_extraction.entity_extractor import _parse_facts_json
+        from web_extraction.entity_extractor import _parse_facts_json
         raw = '[{"fact_type":"investment","fact_value_text":"$400M","fact_value_numeric":400000000,"fact_currency":"USD","fact_unit":"USD","fact_year":2024,"fact_quarter":null,"location_city":"Dalton","location_county":"Whitfield","oem_partner":null,"confidence_score":0.95,"source_sentence":"Company announced $400M investment."}]'
         facts = _parse_facts_json(raw)
         self.assertEqual(len(facts), 1)
@@ -273,7 +273,7 @@ class TestEntityExtractor(unittest.TestCase):
 
     def test_json_parsing_with_markdown_fence(self):
         """LLM often wraps JSON in markdown fences."""
-        from phase1_extraction.entity_extractor import _parse_facts_json
+        from web_extraction.entity_extractor import _parse_facts_json
         raw = '```json\n[{"fact_type":"jobs_created","fact_value_numeric":3000}]\n```'
         facts = _parse_facts_json(raw)
         self.assertEqual(len(facts), 1)
@@ -281,14 +281,14 @@ class TestEntityExtractor(unittest.TestCase):
 
     def test_json_parsing_empty_returns_empty_list(self):
         """Empty or non-JSON LLM output returns empty list without raising."""
-        from phase1_extraction.entity_extractor import _parse_facts_json
+        from web_extraction.entity_extractor import _parse_facts_json
         self.assertEqual(_parse_facts_json(""), [])
         self.assertEqual(_parse_facts_json("No facts found."), [])
         self.assertEqual(_parse_facts_json("[]"), [])
 
     def test_extract_facts_calls_ollama(self):
         """extract_facts calls Ollama and returns parsed facts."""
-        from phase1_extraction.entity_extractor import extract_facts
+        from web_extraction.entity_extractor import extract_facts
 
         mock_response = {
             "response": '[{"fact_type":"investment","fact_value_text":"$400 million","fact_value_numeric":400000000,"fact_currency":"USD","fact_unit":"USD","fact_year":2024,"fact_quarter":null,"location_city":"Dalton","location_county":"Whitfield","oem_partner":"Hyundai","confidence_score":0.9,"source_sentence":"Hanwha announced a $400M investment."}]'
@@ -312,7 +312,7 @@ class TestEntityExtractor(unittest.TestCase):
 
     def test_low_confidence_filtered(self):
         """Facts with confidence < 0.3 are not saved to DB."""
-        from phase1_extraction.entity_extractor import save_facts_to_db
+        from web_extraction.entity_extractor import save_facts_to_db
         facts = [
             {
                 "company_id": None,
@@ -343,20 +343,20 @@ class TestSearcher(unittest.TestCase):
 
     def test_blocklist_filtering(self):
         """LinkedIn, YouTube, etc. should be blocked."""
-        from phase1_extraction.searcher import _is_blocked
+        from web_extraction.searcher import _is_blocked
         self.assertTrue(_is_blocked("https://linkedin.com/company/hanwha"))
         self.assertTrue(_is_blocked("https://youtube.com/watch?v=123"))
         self.assertFalse(_is_blocked("https://georgia.org/news/hanwha"))
 
     def test_priority_detection(self):
-        from phase1_extraction.searcher import _is_priority
+        from web_extraction.searcher import _is_priority
         self.assertTrue(_is_priority("https://georgia.org/announcement"))
         self.assertTrue(_is_priority("https://sec.gov/filing"))
         self.assertFalse(_is_priority("https://example.com/news"))
 
     def test_tavily_search_called(self):
         """tavily_search returns expected result structure."""
-        from phase1_extraction.searcher import tavily_search
+        from web_extraction.searcher import tavily_search
 
         mock_api_response = {
             "results": [

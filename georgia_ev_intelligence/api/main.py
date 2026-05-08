@@ -26,9 +26,9 @@ from fastapi.responses import StreamingResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from phase4_agent.pipeline import EVAgent
-from phase4_agent.entity_extractor import extract
-from phase4_agent.streaming import stream_answer, build_answer_prompt, _budget_tokens
+from core_agent.agent_pipeline import EVAgent
+from filters_and_validation.query_entity_extractor import extract
+from core_agent.streaming import stream_answer, build_answer_prompt, _budget_tokens
 from shared.config import Config
 from shared.logger import get_logger
 
@@ -142,7 +142,7 @@ async def stream_question(q: str = Query(..., description="Question to answer"))
         agent = get_agent()
 
         # Step 1: Retrieve (sync, but fast)
-        from phase4_agent.entity_extractor import extract as _extract
+        from filters_and_validation.query_entity_extractor import extract as _extract
         entities = _extract(q)
         context, _ = agent._retrieve(q, entities)
 
