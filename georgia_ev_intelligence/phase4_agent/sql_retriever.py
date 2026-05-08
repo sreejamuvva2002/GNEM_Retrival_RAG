@@ -3,20 +3,57 @@ Phase 4 — SQL Retriever
 Runs structured PostgreSQL queries against gev_companies and gev_documents.
 
 WHY SQL AS PRIMARY RETRIEVER:
-  43/50 evaluation questions are aggregation or filter queries:
-    "List all Tier 1/2 suppliers" → WHERE tier = 'Tier 1/2'
-    "Which county has highest employment?" → GROUP BY county ORDER BY SUM
-    "Companies with <200 employees in Thermal Management" → WHERE + AND
+  43/50 evaluation questions are aggregation or filter queries that
+  cannot be answered by semantic vector search alone — SQL gives exact,
+  complete, deterministic results.
 
-  These cannot be answered by semantic vector search alone.
-  SQL gives exact, complete, deterministic results.
+The retriever validates incoming filter operators against the approved
+SUPPORTED_OPERATORS set from shared/metadata_schema.py. Field references
+should be looked up via CANONICAL_FIELDS so a future column rename only
+changes one file.
 """
 from __future__ import annotations
 from typing import Any
+from shared.config import Config
 from shared.db import get_session, Company
 from shared.logger import get_logger
+from shared.metadata_schema import CANONICAL_FIELDS, SUPPORTED_OPERATORS
 
 logger = get_logger("phase4.sql_retriever")
+
+
+def _employment_outlier_cap() -> float:
+    """
+    Read the employment outlier cap from config/settings.yaml. Cap excludes
+    rows whose `employment` value is a global parent headcount, not the
+    Georgia footprint. Returns 0 (disabled) when not configured.
+    """
+    try:
+        ph4 = getattr(Config.get().settings, "phase4", None)
+        cap = getattr(ph4, "employment_outlier_cap", 0) if ph4 is not None else 0
+        return float(cap or 0)
+    except Exception:
+        return 0.0
+
+
+def _validate_operator(op: str) -> None:
+    """Reject operators that are not in the approved SUPPORTED_OPERATORS set."""
+    if op not in SUPPORTED_OPERATORS:
+        raise ValueError(
+            f"unsupported operator {op!r}; allowed: {sorted(SUPPORTED_OPERATORS)}"
+        )
+
+
+def _canonical(name: str) -> str:
+    """
+    Resolve a logical field name to its canonical KB column name. If `name`
+    is already a canonical column it is returned unchanged.
+    """
+    if name in CANONICAL_FIELDS:
+        return CANONICAL_FIELDS[name]
+    if name in CANONICAL_FIELDS.values():
+        return name
+    raise KeyError(f"unknown field {name!r}; not in CANONICAL_FIELDS")
 
 
 def _tier_filter(model: type, tier: str):
@@ -115,8 +152,10 @@ def aggregate_employment_by_county(tier: str | None = None) -> list[dict]:
         ).filter(
             Company.location_county.isnot(None),
             Company.employment.isnot(None),
-            Company.employment <= 100000,   # exclude global headcount outliers
         )
+        outlier_cap = _employment_outlier_cap()
+        if outlier_cap > 0:
+            q = q.filter(Company.employment <= outlier_cap)
         if tier:
             q = q.filter(_tier_filter(Company, tier))
         q = q.group_by(Company.location_county).order_by(func.sum(Company.employment).desc())
@@ -149,19 +188,21 @@ def top_companies_by_employment(
     limit: int = 10,
     ev_relevant_only: bool = False,
     tier: str | None = None,
-    max_employment: float = 100000,
+    max_employment: float | None = None,
 ) -> list[dict]:
     """
     Return top N companies by employment size.
     Used for 'Top 10 companies by employment' questions.
-    Excludes global headcount outliers (>100k) by default.
+    Excludes global headcount outliers when phase4.employment_outlier_cap is
+    set in config/settings.yaml. Pass an explicit max_employment to override.
     """
+    if max_employment is None:
+        max_employment = _employment_outlier_cap()
     session = get_session()
     try:
-        q = session.query(Company).filter(
-            Company.employment.isnot(None),
-            Company.employment <= max_employment,
-        )
+        q = session.query(Company).filter(Company.employment.isnot(None))
+        if max_employment and max_employment > 0:
+            q = q.filter(Company.employment <= max_employment)
         if ev_relevant_only:
             # 'Yes' or 'Indirect' — not 'No'
             from sqlalchemy import or_
@@ -302,6 +343,7 @@ def full_text_search(question_words: list[str], tier: str | None = None, limit: 
 
 def _company_to_dict(c: Company) -> dict:
     return {
+        "id":                     c.id,
         "company_name":           c.company_name,
         "tier":                   c.tier,
         "ev_supply_chain_role":   c.ev_supply_chain_role,
@@ -316,3 +358,193 @@ def _company_to_dict(c: Company) -> dict:
         "classification_method":  c.classification_method,
         "supplier_affiliation_type": c.supplier_affiliation_type,
     }
+
+
+# ── Pipeline-level wiring: SQLPlan + run_plan ────────────────────────────────
+# Used by the new retrieval pipeline (pipeline.py → ambiguity_resolver →
+# retrieval_fusion). Wraps the existing helpers above without changing their
+# public behaviour.
+
+def filters_from_entities(entities, branch_filters: dict | None = None) -> dict:
+    """
+    Translate a deterministic Entities object plus optional branch-level
+    overlay into the filters dict consumed by query_companies().
+
+    Branch overlay wins on key collisions — that is how an ambiguity branch
+    narrows or widens a base interpretation (e.g. branch A adds
+    {"max_employment": 200}, branch B adds {"tier": "Tier 2"}).
+    """
+    filters: dict = {}
+    if entities.tier:
+        filters["tier"] = entities.tier
+    elif entities.tier_list:
+        filters["tier"] = entities.tier_list[0]
+    if entities.county:
+        filters["location_county"] = entities.county
+    if entities.industry_group:
+        filters["industry_group"] = entities.industry_group
+    if entities.facility_type:
+        filters["facility_type"] = entities.facility_type
+    if entities.classification_method:
+        filters["classification_method"] = entities.classification_method
+    if entities.supplier_affiliation_type:
+        filters["supplier_affiliation_type"] = entities.supplier_affiliation_type
+    if entities.company_name:
+        filters["company_name"] = entities.company_name
+    if entities.min_employment is not None:
+        filters["min_employment"] = entities.min_employment
+    if entities.max_employment is not None:
+        filters["max_employment"] = entities.max_employment
+    if entities.ev_relevance_value:
+        filters["ev_battery_relevant"] = entities.ev_relevance_value
+
+    role_values: list[str] = []
+    if entities.ev_role:
+        role_values.append(entities.ev_role)
+    role_values.extend(r for r in entities.ev_role_list if r not in role_values)
+    if role_values:
+        filters["ev_supply_chain_role"] = " OR ".join(role_values)
+
+    oem_values: list[str] = []
+    if entities.oem:
+        oem_values.append(entities.oem)
+    oem_values.extend(o for o in entities.oem_list if o not in oem_values)
+    if oem_values:
+        filters["primary_oems"] = " OR ".join(oem_values)
+
+    if branch_filters:
+        for k, v in branch_filters.items():
+            if v is None:
+                continue
+            filters[k] = v
+
+    return filters
+
+
+def _wrap_rows_as_candidates(rows: list[dict]) -> list:
+    """
+    Convert SQL result rows into Candidate objects for the fusion layer.
+    The `sql` source contributes a flat 1.0 to that source's normalised
+    score (post-min-max it stays 1.0 because every SQL row has the same
+    raw score — SQL is binary: matched or not).
+    """
+    from phase4_agent.retrieval_types import Candidate
+    candidates: list[Candidate] = []
+    for row in rows:
+        name = (row.get("company_name") or "").strip()
+        if not name:
+            continue
+        cand = Candidate(
+            canonical_name=name,
+            company_row_id=row.get("id"),
+            row=row,
+        )
+        cand.add_source("sql", 1.0)
+        candidates.append(cand)
+    return candidates
+
+
+def run_plan(plan, branch_filters: dict | None = None, entities=None) -> list:
+    """
+    Execute a SQLPlan against gev_companies and wrap rows as Candidates.
+
+    Branch filters overlay the entity-derived filters when plan.mode=='filter'
+    or 'keyword_products'. For aggregate / count / top_n / single_supplier
+    modes the plan carries its own parameters.
+    """
+    mode = plan.mode
+
+    if mode == "filter":
+        filters = dict(plan.filters)
+        if entities is not None:
+            filters = filters_from_entities(entities, branch_filters) | filters
+        elif branch_filters:
+            filters = filters | branch_filters
+        rows = query_companies(filters=filters, limit=plan.limit)
+        return _wrap_rows_as_candidates(rows)
+
+    if mode == "aggregate_county":
+        # Aggregate rows do not have company_name — return raw rows wrapped
+        # as candidates with canonical_name = "<county> (aggregate)" so the
+        # audit table records them; downstream evidence selection uses
+        # query_class==AGGREGATE to format from the row dicts directly.
+        from phase4_agent.retrieval_types import Candidate
+        rows = aggregate_employment_by_county(tier=plan.tier)
+        out: list = []
+        for r in rows:
+            cand = Candidate(
+                canonical_name=f"{r.get('county')} (aggregate)",
+                row=r,
+            )
+            cand.add_source("sql", 1.0)
+            out.append(cand)
+        return out
+
+    if mode == "count_role":
+        from phase4_agent.retrieval_types import Candidate
+        rows = count_by_role()
+        return [
+            (lambda r: (
+                lambda c: (c.add_source("sql", 1.0) or c)
+            )(Candidate(canonical_name=f"{r.get('role')} (count)", row=r)))(r)
+            for r in rows
+        ]
+
+    if mode == "top_n_employment":
+        rows = top_companies_by_employment(
+            limit=plan.limit,
+            ev_relevant_only=plan.ev_relevant_only,
+            tier=plan.tier,
+        )
+        return _wrap_rows_as_candidates(rows)
+
+    if mode == "single_supplier":
+        from phase4_agent.retrieval_types import Candidate
+        rows = get_single_supplier_roles()
+        out: list = []
+        for r in rows:
+            cand = Candidate(
+                canonical_name=r.get("company") or r.get("role") or "(unknown)",
+                row=r,
+            )
+            cand.add_source("sql", 1.0)
+            out.append(cand)
+        return out
+
+    if mode == "keyword_products":
+        rows = keyword_search_products(plan.keywords, tier=plan.tier)
+        return _wrap_rows_as_candidates(rows)
+
+    if mode == "full_text":
+        rows = full_text_search(plan.keywords, tier=plan.tier, limit=plan.limit)
+        return _wrap_rows_as_candidates(rows)
+
+    logger.warning("run_plan: unknown SQL plan mode %s — returning empty", mode)
+    return []
+
+
+def find_company_by_name(name: str) -> dict | None:
+    """
+    Look up a single canonical gev_companies row by case-insensitive name.
+    Used by evidence_validator to confirm vector candidates against KB
+    truth before letting them survive into final evidence.
+    """
+    if not name:
+        return None
+    session = get_session()
+    try:
+        row = (
+            session.query(Company)
+            .filter(Company.company_name.ilike(name.strip()))
+            .one_or_none()
+        )
+        if row is None:
+            row = (
+                session.query(Company)
+                .filter(Company.company_name.ilike(f"%{name.strip()}%"))
+                .order_by(Company.employment.desc().nullslast())
+                .first()
+            )
+        return _company_to_dict(row) if row else None
+    finally:
+        session.close()

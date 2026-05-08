@@ -52,20 +52,48 @@ def rerank_companies(question: str, companies: list[dict[str, Any]]) -> list[dic
     """
     Reorder candidate company rows using a cross-encoder score.
 
+    PRECONDITION: candidates must already have passed evidence_validator
+    (i.e. `hard_filter_passed=True` on the underlying Candidate). The
+    reranker is a *ranking* layer, not a filter — it cannot resurrect a row
+    that hard-filter validation rejected. Callers that pass raw rows
+    (legacy V3 path) bypass this gate and accept the responsibility.
+
     Returns the original order unchanged if reranking fails.
+
+    Output rows include `_reranker_score` (raw cross-encoder score) and
+    `_score_breakdown` (an audit-friendly dict carrying the score under the
+    'reranker' key) so retrieval_fusion / audit_logger can record the
+    contribution.
     """
     if len(companies) <= 1:
         return companies
 
+    # Defensive precondition: drop anything explicitly marked as failed
+    # validation. Rows without the field are treated as validated (legacy
+    # callers may not set it).
+    eligible = [c for c in companies if c.get("hard_filter_passed", True)]
+    rejected_count = len(companies) - len(eligible)
+    if rejected_count:
+        logger.info(
+            "reranker: skipped %d candidate(s) with hard_filter_passed=False",
+            rejected_count,
+        )
+    if not eligible:
+        return []
+
     try:
         model = _get_reranker()
-        pairs = [(question, _candidate_text(company)) for company in companies]
+        pairs = [(question, _candidate_text(company)) for company in eligible]
         scores = model.predict(pairs, show_progress_bar=False)
 
         rescored = []
-        for company, score in zip(companies, scores):
+        for company, score in zip(eligible, scores):
             enriched = company.copy()
-            enriched["_reranker_score"] = float(score)
+            score_f = float(score)
+            enriched["_reranker_score"] = score_f
+            breakdown = dict(enriched.get("_score_breakdown") or {})
+            breakdown["reranker"] = score_f
+            enriched["_score_breakdown"] = breakdown
             rescored.append(enriched)
 
         rescored.sort(key=lambda item: item["_reranker_score"], reverse=True)
@@ -73,4 +101,4 @@ def rerank_companies(question: str, companies: list[dict[str, Any]]) -> list[dic
         return rescored
     except Exception as exc:
         logger.warning("Cross-encoder reranking failed, keeping dense order: %s", exc)
-        return companies
+        return eligible

@@ -32,6 +32,11 @@ phase4:
   max_retrieved_chunks: 5          # Chunks sent to LLM per query
   max_cypher_results: 20           # Max Neo4j results per Cypher query
   tavily_store_results: true       # Auto-store Tavily results back to KB
+  # Cap excludes companies whose `employment` value is the GLOBAL parent
+  # headcount (Georgia footprint << global). Without it, county aggregates
+  # would be dominated by one or two entries reporting >100k employees
+  # worldwide. 0 disables the cap.
+  employment_outlier_cap: 100000
 
 phase5:
   host: "0.0.0.0"

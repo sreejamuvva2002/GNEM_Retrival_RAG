@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import (
+    ARRAY,
     BigInteger,
     Boolean,
     Column,
@@ -21,6 +22,7 @@ from sqlalchemy import (
     create_engine,
     text,
 )
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Session, relationship, sessionmaker
 
 from shared.config import Config
@@ -187,6 +189,130 @@ class EvalResult(Base):
     evaluated_at = Column(DateTime, default=datetime.utcnow)
 
 
+# ── Table: retrieval_audit ───────────────────────────────────────────────────
+class RetrievalAudit(Base):
+    """
+    One row per question answered by the new retrieval pipeline.
+
+    Captures the full provenance: classified intent, extracted entities,
+    ambiguous terms and their branches, retrievers invoked, raw SQL/Cypher/
+    Qdrant queries, final selected evidence, the produced answer, and a
+    hallucination-risk score from the answer verifier.
+
+    Note on schema: JSONB columns hold structured data so it stays queryable
+    (`SELECT ... WHERE extracted_entities->>'tier' = 'Tier 1'`).
+    """
+    __tablename__ = "gev_retrieval_audit"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    run_id = Column(String(100), index=True)
+    question = Column(Text, nullable=False)
+    query_class = Column(String(64), index=True)
+
+    extracted_entities = Column(JSONB)
+    hard_filters = Column(JSONB)
+    ambiguous_terms = Column(JSONB)
+    selected_interpretations = Column(JSONB)
+    synonym_mappings = Column(JSONB)
+
+    retrieval_methods_used = Column(ARRAY(String(32)))
+    sql_query = Column(Text)
+    cypher_query = Column(Text)
+    qdrant_dense_query = Column(Text)
+    qdrant_sparse_query = Column(Text)
+
+    final_evidence = Column(JSONB)
+    answer_text = Column(Text)
+    support_level = Column(String(20))
+    hallucination_risk = Column(Integer, default=0)
+    audit_comment = Column(Text)
+    elapsed_ms = Column(Integer)
+    created_at = Column(DateTime, default=datetime.utcnow, index=True)
+
+    candidates = relationship("RetrievalCandidate", back_populates="audit", lazy="dynamic")
+
+
+# ── Table: retrieval_candidates ──────────────────────────────────────────────
+class RetrievalCandidate(Base):
+    """
+    One row per candidate that was considered for a question. Includes both
+    selected and rejected candidates so post-hoc analysis can answer
+    'why did Foo Inc. not appear in the answer?'.
+
+    `scores` keeps per-source raw scores (dense, sparse, reranker, ...).
+    `fused_score` is the final weighted score from retrieval_fusion.
+    `rejection_reason` is set whenever hard_filter_passed is False.
+    """
+    __tablename__ = "gev_retrieval_candidates"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    audit_id = Column(BigInteger, ForeignKey("gev_retrieval_audit.id"), nullable=False, index=True)
+    branch_id = Column(String(8))
+    company_row_id = Column(Integer, ForeignKey("gev_companies.id"), nullable=True, index=True)
+    canonical_name = Column(String(500), index=True)
+    sources = Column(ARRAY(String(16)))
+    scores = Column(JSONB)
+    fused_score = Column(Float)
+    hard_filter_passed = Column(Boolean, default=True)
+    rejection_reason = Column(Text)
+    final_selected = Column(Boolean, default=False, index=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    audit = relationship("RetrievalAudit", back_populates="candidates")
+
+
+# ── Table: domain_mapping_rules ──────────────────────────────────────────────
+#
+# WRITE POLICY — DO NOT BREAK
+#
+# Rows in gev_domain_mapping_rules are the ONLY sanctioned home for
+# domain-specific natural-language → KB-filter mappings (e.g.
+# "small scale" → employment < 200, "sole-sourced" → exactly one primary OEM).
+#
+# Allowed writers:
+#   - scripts/approve_mapping_rule.py (admin CLI, requires human confirmation)
+#   - manual SQL run by an operator
+#
+# FORBIDDEN writers:
+#   - any module under phase4_agent/* (no INSERT / UPDATE / DELETE)
+#   - any LLM-driven path (filter_interpreter, synonym_expander, pipeline)
+#
+# Reasoning: a mapping that has not been reviewed by a human is a model
+# guess — persisting it would let the system silently overfit to one
+# question's wording. Audit logs may *record* a guess as
+# `support_basis="llm_suggestion"`; only an explicit approval moves it
+# here. See the refactor plan §E ("No feedback = no permanent learning").
+#
+# Read policy: phase4_agent/synonym_expander.py is the only module that
+# reads this table at retrieval time. It filters
+# `WHERE status='approved'` (or 'active' for legacy rows). Anything not
+# approved is treated as if absent.
+class DomainMappingRule(Base):
+    """
+    Human-approved conditional mappings from natural-language abstract terms
+    to concrete KB filters.
+
+    CRITICAL: rows are NEVER inserted automatically by the agent. The audit
+    pipeline may capture LLM-suggested mappings in the audit log, but only
+    explicit human approval (via a separate admin tool) writes a row here.
+    See plan §E ("No feedback = no permanent learning").
+    """
+    __tablename__ = "gev_domain_mapping_rules"
+
+    id = Column(BigInteger, primary_key=True, autoincrement=True)
+    term = Column(String(200), nullable=False, index=True)
+    mapped_column = Column(String(100), nullable=False)
+    mapped_value_or_condition = Column(String(500), nullable=False)
+    valid_when = Column(Text)
+    invalid_when = Column(Text)
+    source = Column(String(50), default="human_approved")
+    status = Column(String(20), default="active", index=True)
+    confidence = Column(Float, default=1.0)
+    example_question = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
 # ── Engine & Session Factory ─────────────────────────────────────────────────
 _engine = None
 _SessionFactory = None
@@ -241,6 +367,27 @@ def create_tables() -> None:
     engine = get_engine()
     Base.metadata.create_all(engine)
     logger.info("All gev_* tables created/verified in PostgreSQL")
+
+
+def create_audit_tables() -> None:
+    """
+    Create only the new retrieval-audit tables (gev_retrieval_audit,
+    gev_retrieval_candidates, gev_domain_mapping_rules). Safe to run
+    multiple times. Used by scripts/create_audit_tables.py so the audit
+    schema can be applied without touching the existing gev_companies
+    or gev_documents tables.
+    """
+    engine = get_engine()
+    target_tables = [
+        Base.metadata.tables[name]
+        for name in (
+            "gev_retrieval_audit",
+            "gev_retrieval_candidates",
+            "gev_domain_mapping_rules",
+        )
+    ]
+    Base.metadata.create_all(engine, tables=target_tables)
+    logger.info("Retrieval audit tables created/verified")
 
 
 def verify_connection() -> bool:

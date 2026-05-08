@@ -51,7 +51,7 @@ _ANSWER_PROMPT_TEMPLATE = """You are an expert analyst for the Georgia EV Supply
 
 QUESTION: {question}
 
-RETRIEVED DATA (pre-filtered by SQL/graph queries — every row below matches the question):
+RETRIEVED DATA (pre-filtered by SQL/graph queries and validated by evidence_validator — every row below has passed every hard filter the question implied):
 {context}
 
 CRITICAL INSTRUCTIONS:
@@ -64,6 +64,8 @@ CRITICAL INSTRUCTIONS:
 7. If the table shows employment by county, identify the highest-total county.
 8. Do NOT say "not found" or "database does not contain" — the data IS the database.
 9. Only say "No companies found" if the context literally says "No matching companies found."
+10. Use ONLY values that literally appear in the table above. If a fact (company name, OEM, county, role, count, employment number) is not in the table, do not state it. Do not add anything from prior knowledge.
+11. If the context is split into branch sections (lines starting with "Branch A — …" / "Branch B — …"), preserve the branch labels in your answer and answer each branch separately. Do not merge branches into a single combined claim.
 
 Answer:"""
 

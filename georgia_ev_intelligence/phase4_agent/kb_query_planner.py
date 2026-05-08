@@ -1,13 +1,39 @@
 """
-Phase 4 — deterministic KB query planning.
+Phase 4 — Deterministic KB query planner (legacy V3 path).
 
-The GNEM workbook is structured data. Questions that ask for exact lists,
-counts, top-N rankings, product phrase matches, or area set differences should
-be handled as KB operations before semantic vector ranking is considered.
+WHY THIS FILE STILL EXISTS
+--------------------------
+The V4 retrieval pipeline (pipeline.py::EVAgent.ask) does NOT call this
+planner. V4 builds plans through ambiguity_resolver._build_plans_for_class
+based on the QueryClass returned by query_classifier. This module is kept
+as the entry point for the V3 retrieve_context() fallback in
+vector_retriever.py and for any tooling that still consumes KBQueryPlan.
+
+WHAT CHANGED IN THE REFACTOR
+----------------------------
+The previous version contained 15+ `if "<phrase>" in question` branches
+that pinned a specific retrieval mode to a specific golden-question
+wording (product, role, and industry phrases). Every one of those
+branches has been deleted because:
+
+  1. Each branch encoded a domain fact (a phrase implies a specific KB
+     keyword set) that was never reviewed against the
+     gev_domain_mapping_rules approval workflow.
+
+  2. A re-phrased version of the same eval question silently failed to
+     match the branch and fell through to a different retrieval mode,
+     producing brittle pass/fail behaviour against the 50-question set.
+
+The remaining planner only handles modes that key off entity-extracted
+flags or generic English question shapes (top-N, SPOF, classification
+list). Anything more specific (product term routing, area set
+differences) belongs in either:
+  - the V4 pipeline (where ambiguity_resolver branches over KB-supported
+    interpretations), or
+  - an approved row in gev_domain_mapping_rules.
 """
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass, field
 
 from phase4_agent.entity_extractor import Entities
@@ -19,65 +45,44 @@ class KBQueryPlan:
     keywords: list[str] = field(default_factory=list)
     group_by: str | None = None
     limit: int | None = None
+    # `query_class` is the enum-string value attached by the new classifier;
+    # preserved for the audit log even when the legacy V3 retriever runs.
+    query_class: str = ""
 
     @property
     def deterministic(self) -> bool:
         return self.mode != "semantic"
 
 
-def _clean_keyword(term: str) -> str:
-    return term.strip(" \"'.,:;()[]{}").lower()
-
-
-def _quoted_terms(question: str) -> list[str]:
-    return [
-        _clean_keyword(match)
-        for match in re.findall(r"'([^']+)'|\"([^\"]+)\"", question)
-        for match in match
-        if match
-    ]
-
-
-def _keywords_from_entities(entities: Entities) -> list[str]:
-    skip = {
-        "top", "size", "many", "areas", "area", "whose", "product",
-        "products", "service", "services", "description", "descriptions",
-        "include", "includes", "including", "they", "signal", "signals",
-        "growth", "customer", "base", "growing", "applicable", "currently",
-        "international", "battery", "materials", "infrastructure",
-        "components", "component", "structural", "thermal", "applicable",
-        "such", "now", "chain",
-    }
-    result: list[str] = []
-    for term in entities.product_keywords:
-        cleaned = _clean_keyword(term)
-        if cleaned and cleaned not in skip and len(cleaned) >= 3:
-            result.append(cleaned)
-    return result
-
-
-def _dedupe(values: list[str]) -> list[str]:
-    seen: set[str] = set()
-    deduped: list[str] = []
-    for value in values:
-        key = value.lower()
-        if key and key not in seen:
-            seen.add(key)
-            deduped.append(value)
-    return deduped
-
-
-def _product_terms(question: str, entities: Entities) -> list[str]:
-    quoted = _quoted_terms(question)
-    if quoted:
-        return _dedupe(quoted)
-    keywords = _keywords_from_entities(entities)
-    return _dedupe(keywords)
+def _classify_for_audit(question: str, entities: Entities) -> str:
+    """Run the deterministic classifier purely for audit annotation."""
+    try:
+        from phase4_agent.query_classifier import classify
+        return classify(question, entities).value
+    except Exception:
+        return ""
 
 
 def build_kb_query_plan(question: str, entities: Entities) -> KBQueryPlan:
-    return KBQueryPlan()
+    """Public entry: thin wrapper that annotates the legacy plan with the new query_class."""
+    plan = _build_kb_query_plan_inner(question, entities)
+    qclass = _classify_for_audit(question, entities)
+    if qclass and plan.query_class != qclass:
+        from dataclasses import replace
+        plan = replace(plan, query_class=qclass)
+    return plan
 
+
+def _build_kb_query_plan_inner(question: str, entities: Entities) -> KBQueryPlan:
+    """
+    Pick the V3 retrieval mode from entity-driven signals only.
+
+    All keyword/phrase-keyed routing has been removed. If the entities and
+    generic English question shape are insufficient to pick a deterministic
+    mode, return the default semantic plan and let the retriever fall back
+    to vector ranking. The V4 pipeline handles richer cases via the
+    QueryClass + ambiguity branches.
+    """
     q = question.lower()
 
     if "highest employment" in q and entities.county:
@@ -93,124 +98,25 @@ def build_kb_query_plan(question: str, entities: Entities) -> KBQueryPlan:
         return KBQueryPlan(mode="structured_list")
 
     if entities.ev_role or entities.ev_role_list:
-        role_list_intent = any(
-            signal in q
-            for signal in (
-                "classified under",
-                "classified as",
-                "list every",
-                "list all",
-                "show all",
-                "map all",
-            )
+        list_intent_phrases = (
+            "classified under",
+            "classified as",
+            "list every",
+            "list all",
+            "show all",
+            "map all",
         )
-        if role_list_intent:
+        if any(phrase in q for phrase in list_intent_phrases):
             return KBQueryPlan(mode="role_list")
 
-    if "ev supply chain role" in q and "related to" in q:
-        if "wiring harness" in q or "wiring harnesses" in q:
-            return KBQueryPlan(mode="role_text_contains", keywords=["wiring harnesses"])
-
-    if "vehicle assembly" in q and ("facilit" in q or "primary oem" in q):
-        return KBQueryPlan(mode="role_list", keywords=["Vehicle Assembly"])
-
-    if "oem footprint" in q or "oem supply chain" in q:
-        return KBQueryPlan(mode="tier_list")
-
-    if (
-        "traditional oem" in q
-        and ("ev-native" in q or "ev native" in q or "rivian" in q)
-    ) or "dual-platform" in q:
-        return KBQueryPlan(mode="dual_oem_capability")
-
-    if (
-        "lack battery cell" in q
-        or "lacks battery cell" in q
-        or "no battery cell" in q
-    ) and "general automotive" in q:
-        return KBQueryPlan(mode="areas_with_role_without_roles", group_by="county")
-
-    if (
-        "manufacturing plant" in q
-        and ("no ev-specific" in q or "no ev specific" in q)
-    ):
-        return KBQueryPlan(mode="areas_facility_without_ev", group_by="city_county")
-
-    if "highest concentration" in q and "materials" in q:
-        return KBQueryPlan(mode="area_concentration", group_by="city_county")
-
-    if "chemical manufacturing infrastructure" in q:
-        return KBQueryPlan(
-            mode="industry_contains",
-            keywords=["chemical", "chemicals"],
+    if entities.tier or entities.tier_list:
+        tier_list_intent = (
+            "list every",
+            "list all",
+            "show all",
+            "map all",
         )
-
-    if "battery recycling" in q or "second-life battery" in q or "second life battery" in q:
-        return KBQueryPlan(
-            mode="product_text_contains",
-            keywords=["recycler", "recycling", "second-life", "second life"],
-        )
-
-    if "battery parts" in q or "enclosure systems" in q:
-        return KBQueryPlan(
-            mode="ev_product_text_contains",
-            keywords=["lithium-ion battery", "battery cells", "battery parts", "battery electrolyte"],
-        )
-
-    if "lithium-ion battery materials, cells, or electrolytes" in q:
-        return KBQueryPlan(
-            mode="ev_product_text_contains",
-            keywords=["lithium-ion battery", "battery cells", "battery electrolyte"],
-        )
-
-    if (
-        "battery materials" in q
-        and any(term in q for term in ("anodes", "cathodes", "electrolytes", "copper foil"))
-    ):
-        return KBQueryPlan(
-            mode="ev_product_text_contains",
-            keywords=["lithium-ion battery", "battery electrolyte", "copper foil"],
-        )
-
-    if any(signal in q for signal in ("research", "development", "prototyping", "innovation-stage")):
-        return KBQueryPlan(
-            mode="product_contains",
-            keywords=["r&d", "research", "development", "prototyping"],
-        )
-
-    if "wiring harness" in q or "wiring harnesses" in q:
-        return KBQueryPlan(mode="role_or_product_text_contains", keywords=["wiring harnesses"])
-
-    if "dc-to-dc" in q and "capacitor" in q:
-        return KBQueryPlan(mode="product_text_contains", keywords=["dc-to-dc", "capacitors"])
-
-    product_intent = any(
-        signal in q
-        for signal in (
-            "product descriptions include",
-            "provide",
-            "provides",
-            "providing",
-            "produce",
-            "produces",
-            "producing",
-            "manufacture",
-            "manufactures",
-            "manufacturing",
-        )
-    )
-    if product_intent:
-        if "product descriptions include" in q:
-            terms = _product_terms(question, entities)
-            if terms:
-                return KBQueryPlan(mode="product_text_contains", keywords=terms)
-        if "powder coating" in q or "powder coating-related" in q:
-            return KBQueryPlan(
-                mode="product_contains",
-                keywords=["powder coating", "powder coatings"],
-            )
-        terms = _product_terms(question, entities)
-        if terms:
-            return KBQueryPlan(mode="product_contains", keywords=terms)
+        if any(phrase in q for phrase in tier_list_intent):
+            return KBQueryPlan(mode="tier_list")
 
     return KBQueryPlan()

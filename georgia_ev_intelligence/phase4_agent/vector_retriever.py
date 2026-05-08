@@ -1,9 +1,23 @@
 """
-Phase 4 — Qdrant-only retrieval.
+Phase 4 — Qdrant-only retrieval (V3, legacy).
 
 All answer context comes from company records stored in the vector DB.
 We load company payloads from Qdrant, apply structured filtering in Python,
 and use hybrid vector ranking only when we need semantic ordering.
+
+DEPRECATION NOTE (V4 retrieval pipeline)
+----------------------------------------
+The V4 pipeline (pipeline.py::EVAgent.ask) does NOT call retrieve_context.
+It composes SQL + Cypher + Qdrant retrievers directly via:
+
+  - phase4_agent.sql_retriever.run_plan
+  - phase4_agent.cypher_retriever.run_plan
+  - phase4_agent.qdrant_search.{dense,hybrid,sparse}
+
+…then merges via retrieval_fusion, validates via evidence_validator, and
+audits via audit_logger. The functions in this file are retained as a
+fallback for tools that still depend on the V3 retrieve_context() entry
+point. New work should target the V4 modules.
 """
 from __future__ import annotations
 
@@ -542,30 +556,8 @@ def _format_risk_context(companies: list[dict[str, Any]]) -> str:
     return header + "\nCompany | Tier | Role | County | Employment\n" + "\n".join(lines)
 
 
-def _area_key(company: dict[str, Any], group_by: str | None) -> tuple[str, str]:
-    city = str(company.get("location_city") or "").strip()
-    county = str(company.get("location_county") or "").strip()
-    if group_by == "city_county":
-        label = ", ".join(part for part in (city, county) if part)
-        return label or "Unknown Area", county
-    return county or "Unknown County", county
-
-
-def _format_area_counts(rows: list[dict[str, Any]], label: str) -> str:
-    if not rows:
-        return "No matching companies found."
-    lines = [
-        f"{row['area']}: {row['count']} companies"
-        for row in rows
-    ]
-    return f"{label}\nTotal: {len(rows)} areas\n" + "\n".join(lines)
-
-
-def _format_area_list(rows: list[dict[str, Any]], label: str) -> str:
-    if not rows:
-        return "No matching companies found."
-    areas = [row["area"] for row in rows]
-    return f"{label}\nTotal: {len(areas)} areas\n" + "\n".join(areas)
+# _area_key, _format_area_counts, _format_area_list were removed alongside
+# the question-specific deterministic answer paths that consumed them.
 
 
 def _company_matches_product_terms(company: dict[str, Any], terms: list[str]) -> tuple[bool, int]:
@@ -719,11 +711,10 @@ def _deterministic_top_employment(
     q = question.lower()
     matches = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
 
-    if "general automotive" in q:
-        matches = [
-            company for company in matches
-            if _role_matches(company.get("ev_supply_chain_role"), "General Automotive")
-        ]
+    # Generic ev-relevance modifier: "ev-specific" / "ev relevant" maps to the
+    # ev_battery_relevant column. No domain role values are hardcoded here —
+    # role filtering has already happened in _matches_entities via the KB
+    # role list loaded by entity_extractor.
     if "ev-specific" in q or "ev specific" in q or "ev-related" in q:
         matches = [company for company in matches if _ev_relevance_matches(company, include_indirect=True)]
 
@@ -764,10 +755,6 @@ def _deterministic_tier_list(
     q = question.lower()
     matches = _base_filtered_companies(companies, entities, ignore_ev_relevance=True)
     requested_tiers = list(entities.tier_list or ([entities.tier] if entities.tier else []))
-    if "oem footprint" in q and "OEM (Footprint)" not in requested_tiers:
-        requested_tiers.append("OEM (Footprint)")
-    if "oem supply chain" in q and "OEM Supply Chain" not in requested_tiers:
-        requested_tiers.append("OEM Supply Chain")
     if requested_tiers:
         matches = [
             company for company in matches
@@ -778,86 +765,16 @@ def _deterministic_tier_list(
     return sorted(matches, key=lambda c: (c.get("tier") or "", c.get("company_name") or ""))
 
 
-def _deterministic_dual_oem_capability(companies: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    matches = []
-    for company in companies:
-        oems = _normalized_text(company.get("primary_oems"))
-        if "rivian" in oems and ("hyundai" in oems or "kia" in oems):
-            matches.append(company)
-    return sorted(matches, key=lambda c: c.get("company_name") or "")
-
-
-def _deterministic_areas_with_role_without_roles(companies: list[dict[str, Any]]) -> str:
-    included: dict[str, list[dict[str, Any]]] = {}
-    excluded_counties: set[str] = set()
-    for company in companies:
-        county = str(company.get("location_county") or "").strip()
-        if not county:
-            continue
-        if (
-            _tier_matches(company.get("tier", ""), "Tier 1")
-            and _role_matches(company.get("ev_supply_chain_role"), "General Automotive")
-        ):
-            included.setdefault(county, []).append(company)
-        if any(
-            _role_matches(company.get("ev_supply_chain_role"), role)
-            for role in ("Battery Cell", "Battery Pack")
-        ):
-            excluded_counties.add(county)
-
-    rows = [
-        {"area": county, "count": len(rows)}
-        for county, rows in included.items()
-        if county not in excluded_counties
-    ]
-    rows.sort(key=lambda row: row["area"])
-    return _format_area_list(
-        rows,
-        "[Qdrant — Counties with Tier 1 General Automotive and no Battery Cell/Pack]:",
-    )
-
-
-def _deterministic_area_concentration(
-    companies: list[dict[str, Any]],
-    plan: KBQueryPlan,
-) -> str:
-    counts: dict[str, dict[str, Any]] = {}
-    for company in companies:
-        if not _role_matches(company.get("ev_supply_chain_role"), "Materials"):
-            continue
-        area, _county = _area_key(company, plan.group_by)
-        bucket = counts.setdefault(area, {"area": area, "count": 0})
-        bucket["count"] += 1
-    rows = sorted(counts.values(), key=lambda row: (row["count"], row["area"]), reverse=True)
-    return _format_area_counts(rows, "[Qdrant — Materials supplier concentration by area]:")
-
-
-def _deterministic_areas_facility_without_ev(
-    companies: list[dict[str, Any]],
-    plan: KBQueryPlan,
-) -> str:
-    groups: dict[str, dict[str, Any]] = {}
-    for company in companies:
-        if not _field_contains(company.get("facility_type"), "Manufacturing Plant"):
-            continue
-        if _ev_relevance_matches(company, include_indirect=False):
-            continue
-        area, _county = _area_key(company, plan.group_by)
-        if area == "Unknown Area":
-            continue
-        bucket = groups.setdefault(area, {"area": area, "plants": 0})
-        bucket["plants"] += 1
-
-    rows = [
-        {"area": row["area"], "count": row["plants"]}
-        for row in groups.values()
-        if row["plants"] > 0
-    ]
-    rows.sort(key=lambda row: (-row["count"], row["area"]))
-    return _format_area_counts(
-        rows,
-        "[Qdrant — Manufacturing Plant areas without EV-specific production]:",
-    )
+# Deleted in refactor:
+#   _deterministic_dual_oem_capability        (hardcoded specific OEM brand names)
+#   _deterministic_areas_with_role_without_roles (hardcoded specific tier + role values)
+#   _deterministic_area_concentration         (hardcoded specific role value)
+#   _deterministic_areas_facility_without_ev  (hardcoded specific facility type)
+# These functions matched specific golden-question wordings against domain
+# values that were not reviewed via gev_domain_mapping_rules. The V4
+# pipeline handles richer cross-attribute filtering via ambiguity branches;
+# for cases the V4 path does not yet cover, an admin must add an approved
+# row in gev_domain_mapping_rules.
 
 
 def _execute_kb_plan(
@@ -896,14 +813,11 @@ def _execute_kb_plan(
             _base_filtered_companies(companies, entities),
             key=lambda c: (c.get("company_name") or ""),
         )
-    if plan.mode == "dual_oem_capability":
-        return _deterministic_dual_oem_capability(companies)
-    if plan.mode == "areas_with_role_without_roles":
-        return _deterministic_areas_with_role_without_roles(companies)
-    if plan.mode == "area_concentration":
-        return _deterministic_area_concentration(companies, plan)
-    if plan.mode == "areas_facility_without_ev":
-        return _deterministic_areas_facility_without_ev(companies, plan)
+    # Modes "dual_oem_capability", "areas_with_role_without_roles",
+    # "area_concentration", "areas_facility_without_ev" were removed in the
+    # KB-only refactor — they hardcoded specific OEM / tier / role / facility
+    # values to short-circuit individual eval questions. The V4 pipeline
+    # handles those queries through ambiguity_resolver branching.
     return None
 
 

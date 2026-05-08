@@ -130,11 +130,16 @@ class TestPhase4EntityExtractor(unittest.TestCase):
         self.assertEqual(e.top_n_limit, 3)
         self.assertEqual(e.ev_role, "Thermal Management")
 
-    def test_thermal_related_products_maps_to_thermal_management_role(self):
+    def test_thermal_related_alone_does_not_map_to_kb_role(self):
+        # Per the KB-only refactor, abstract phrases like "thermal-related"
+        # are NOT auto-mapped to a KB role value. Such mappings must come
+        # from an approved row in gev_domain_mapping_rules. With no rule,
+        # the extractor leaves ev_role = None and the residual term is
+        # passed downstream to synonym_expander / ambiguity_resolver.
         e = extract(
             "Which companies are producing thermal-related products or services?"
         )
-        self.assertEqual(e.ev_role, "Thermal Management")
+        self.assertIsNone(e.ev_role)
 
 
 if __name__ == "__main__":

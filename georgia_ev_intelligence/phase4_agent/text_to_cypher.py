@@ -1,191 +1,112 @@
 """
 phase4_agent/text_to_cypher.py
 ==============================================================
-Text-to-Cypher: converts any natural language question into
-a Cypher query using the local Gemma model, then executes it
-against Neo4j with one self-healing retry on failure.
+Text-to-Cypher: converts a natural-language question into Cypher using the
+local Gemma model, then executes it against Neo4j with one self-healing
+retry on failure.
 
 WHY GEMMA FOR CYPHER GENERATION:
-  - Faster than qwen2.5:14b (~1-3s vs 5-10s)
-  - Google trained it with strong code understanding
+  - Faster than the main answer model (~1-3s vs 5-10s)
+  - Strong code understanding from Google training
   - Smaller context needed (just schema + question)
-  - qwen2.5:14b is reserved for full answer synthesis
+  - The main answer model is reserved for answer synthesis
 
-WHY THIS IS GENERIC (vs old keyword approach):
-  - No stop words, no bigrams, no hardcoded entity extraction
-  - LLM reads the schema and generates the correct Cypher
-  - Works for any new question automatically
-  - Multi-hop traversal is native Cypher (impossible in SQL)
+SCHEMA PROVIDED TO LLM:
+  Built at runtime from GRAPH_LABELS + GRAPH_RELATIONSHIPS plus a small
+  sample of distinct property values per Company column from the live KB.
+  NOTHING in source code hardcodes a real company / OEM / county / tier /
+  role / facility value. All example values shown to the LLM are sampled
+  from gev_companies via metadata_loader.
+
+  The block of question-to-Cypher few-shot pairs that previously appeared
+  here has been removed. Each pair encoded a domain-specific question
+  wording (specific OEM brands, tier values, role values, and county
+  names) and was the most direct form of golden-question shape leakage
+  in the codebase. The LLM now reasons from the schema block alone;
+  KB-grounded examples may be injected at runtime via the Phase 5
+  few-shot store if configured.
 
 SCHEMA NOTE:
-  Neo4j Company nodes use c.name (NOT c.company_name)
-  All queries must alias: c.name AS company_name
+  Neo4j Company nodes use c.name (NOT c.company_name).
+  All queries must alias: c.name AS company_name.
 """
 from __future__ import annotations
 
 import re
 import httpx
+
 from phase3_graph.graph_loader import get_driver
+from phase4_agent.metadata_loader import loader as kb_loader
 from shared.config import Config
 from shared.logger import get_logger
+from shared.metadata_schema import (
+    CANONICAL_FIELDS,
+    FIELD_TYPES,
+    GRAPH_LABELS,
+    GRAPH_RELATIONSHIPS,
+)
 
 logger = get_logger("phase4.text_to_cypher")
 
-# ── Neo4j Schema description (given to LLM for context) ──────────────────────
-_SCHEMA = """
-GRAPH SCHEMA — Georgia EV Supply Chain
 
-NODE LABELS AND PROPERTIES:
-  (:Company)
-    name                    STRING  — company name (PRIMARY KEY, use for MATCH)
-    tier                    STRING  — "Tier 1", "Tier 1/2", "Tier 2/3", "OEM",
-                                      "OEM Supply Chain", "OEM Footprint"
-    ev_supply_chain_role    STRING  — "Battery Cell", "Battery Pack",
-                                      "Thermal Management", "Power Electronics",
-                                      "Charging Infrastructure", "Vehicle Assembly",
-                                      "General Automotive", "Materials"
-    ev_battery_relevant     STRING  — "Yes", "No", "Indirect"
-    industry_group          STRING  — e.g. "Primary Metal Industries",
-                                      "Chemicals and Allied Products"
-    facility_type           STRING  — "Manufacturing Plant", "R&D", "Headquarters",
-                                      "Distribution Center", "Assembly"
-    supplier_affiliation_type STRING — "Automotive supply chain participant", etc.
-    location_county         STRING  — county name, e.g. "Gwinnett County"
-    location_city           STRING  — city name
-    employment              FLOAT   — number of employees at Georgia facility
-    products_services       STRING  — free-text product description
-    primary_oems            STRING  — comma-separated OEM names
+# Mapping from gev_companies column name to the Company node property name.
+# 'company_name' is exposed as `c.name` on the Company node; everything else
+# uses the column name directly. Defined here, not derived from a magic dict
+# elsewhere, because the Neo4j loader is the source of truth and this name
+# mismatch is intentional.
+_COLUMN_TO_NODE_PROPERTY: dict[str, str] = {
+    "company_name": "name",
+}
 
-  (:OEM)    name STRING
-  (:Tier)   name STRING
-  (:Location)   city STRING, county STRING, state STRING
-  (:IndustryGroup)  name STRING
-  (:Product)    name STRING
 
-RELATIONSHIPS:
-  (Company)-[:SUPPLIES_TO]->(:OEM)
-  (Company)-[:LOCATED_IN]->(:Location)
-  (Company)-[:IN_TIER]->(:Tier)
-  (Company)-[:IN_INDUSTRY]->(:IndustryGroup)
-  (Company)-[:MANUFACTURES]->(:Product)
-  (Company)-[:PEER_OF]->(Company)   [same tier + same OEM set]
+def _node_property(column: str) -> str:
+    return _COLUMN_TO_NODE_PROPERTY.get(column, column)
 
-IMPORTANT:
-  - Company node property is 'name' (not 'company_name')
-  - Always alias: c.name AS company_name in RETURN
-  - Use toLower() + CONTAINS for case-insensitive partial matching
-  - Use IS NOT NULL checks before CONTAINS to avoid null pointer errors
-"""
 
-# ── Few-shot examples (question → Cypher) ────────────────────────────────────
-_EXAMPLES = """
--- Q: Which companies supply Rivian?
-MATCH (c:Company)-[:SUPPLIES_TO]->(o:OEM)
-WHERE toLower(o.name) CONTAINS 'rivian'
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.employment, c.location_county
-ORDER BY c.tier, c.employment DESC
-LIMIT 50
+def _build_schema_block(per_field: int = 5) -> str:
+    """Compose the Neo4j schema description with KB-sampled example values."""
+    samples = kb_loader.sample_distinct_values(per_field=per_field)
+    lines: list[str] = ["GRAPH SCHEMA — Georgia EV Supply Chain", "", "NODE LABELS:"]
+    # Company carries every domain attribute; list other labels as bare names.
+    lines.append("  (:Company)")
+    for col in CANONICAL_FIELDS.values():
+        prop = _node_property(col)
+        ftype = FIELD_TYPES.get(col, "text").upper()
+        examples = samples.get(col, [])
+        ex_str = ", ".join(repr(v) for v in examples[:per_field]) if examples else ""
+        ex_clause = f"  e.g. {ex_str}" if ex_str else ""
+        lines.append(f"    c.{prop:<23} {ftype:<8}{ex_clause}")
+    lines.append("")
+    other_labels = [lbl for lbl in sorted(GRAPH_LABELS) if lbl != "Company"]
+    for lbl in other_labels:
+        lines.append(f"  (:{lbl})  name STRING")
+    lines.append("")
+    lines.append("RELATIONSHIPS:")
+    for rel in sorted(GRAPH_RELATIONSHIPS):
+        lines.append(f"  (Company)-[:{rel}]->(...)")
+    lines.append("")
+    lines.append("RULES:")
+    lines.append("  - Company node property is `name` (NOT `company_name`).")
+    lines.append("  - Always alias `c.name AS company_name` in the RETURN clause.")
+    lines.append("  - Use toLower() + CONTAINS for case-insensitive partial matching.")
+    lines.append("  - Use IS NOT NULL checks before CONTAINS on nullable fields.")
+    lines.append("  - Add LIMIT 50 to prevent huge result sets.")
+    lines.append("  - Do NOT invent property names or label names not listed above.")
+    return "\n".join(lines)
 
--- Q: Find all Tier 1/2 companies
-MATCH (c:Company)-[:IN_TIER]->(t:Tier)
-WHERE t.name CONTAINS 'Tier 1'
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.location_county, c.employment
-ORDER BY c.employment DESC
-LIMIT 50
 
--- Q: Which companies manufacture copper foil or battery materials?
-MATCH (c:Company)
-WHERE (c.products_services IS NOT NULL AND toLower(c.products_services) CONTAINS 'copper')
-   OR (c.products_services IS NOT NULL AND toLower(c.products_services) CONTAINS 'battery material')
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.location_county, c.employment, c.products_services
-ORDER BY c.employment DESC
-LIMIT 50
-
--- Q: Companies in Gwinnett County with highest employment
-MATCH (c:Company)-[:LOCATED_IN]->(l:Location)
-WHERE toLower(l.county) CONTAINS 'gwinnett'
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.employment, l.county AS location_county
-ORDER BY c.employment DESC
-LIMIT 20
-
--- Q: Which roles have only one supplier (single point of failure)?
-MATCH (c:Company)
-WHERE c.ev_supply_chain_role IS NOT NULL
-WITH c.ev_supply_chain_role AS role, collect(c.name) AS companies
-WHERE size(companies) = 1
-RETURN role, companies[0] AS company_name
-ORDER BY role
-
--- Q: Show Tier 1 suppliers connected to both Rivian and Hyundai
-MATCH (c:Company)-[:SUPPLIES_TO]->(o1:OEM)
-MATCH (c)-[:SUPPLIES_TO]->(o2:OEM)
-WHERE toLower(o1.name) CONTAINS 'rivian'
-  AND toLower(o2.name) CONTAINS 'hyundai'
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.location_county, c.employment
-
--- Q: Find R&D facilities in Georgia
-MATCH (c:Company)
-WHERE c.facility_type IS NOT NULL AND toLower(c.facility_type) CONTAINS 'r&d'
-RETURN c.name AS company_name, c.tier, c.location_county,
-       c.employment, c.facility_type
-ORDER BY c.employment DESC
-
--- Q: Which Battery Cell or Battery Pack companies are Tier 1/2?
-MATCH (c:Company)-[:IN_TIER]->(t:Tier)
-WHERE (t.name CONTAINS 'Tier 1')
-  AND (c.ev_supply_chain_role IS NOT NULL)
-  AND (c.ev_supply_chain_role CONTAINS 'Battery Cell'
-       OR c.ev_supply_chain_role CONTAINS 'Battery Pack')
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.location_county, c.employment
-ORDER BY c.employment DESC
-
--- Q: Vehicle Assembly OEMs and their Tier 1 suppliers
-MATCH (assembler:Company)-[:SUPPLIES_TO]->(oem:OEM)
-MATCH (supplier:Company)-[:SUPPLIES_TO]->(oem)
-WHERE assembler.ev_supply_chain_role IS NOT NULL
-  AND assembler.ev_supply_chain_role CONTAINS 'Vehicle Assembly'
-  AND supplier.tier IS NOT NULL
-  AND supplier.tier CONTAINS 'Tier 1'
-RETURN assembler.name AS oem_company,
-       oem.name AS oem_name,
-       collect(DISTINCT supplier.name) AS tier1_suppliers
-ORDER BY assembler.name
-
--- Q: Companies involved in battery recycling
-MATCH (c:Company)
-WHERE (c.name IS NOT NULL AND toLower(c.name) CONTAINS 'recycl')
-   OR (c.products_services IS NOT NULL AND toLower(c.products_services) CONTAINS 'recycl')
-RETURN c.name AS company_name, c.tier, c.ev_supply_chain_role,
-       c.location_county, c.employment, c.products_services
-ORDER BY c.employment DESC
-"""
-
-# ── Cypher generation prompt ──────────────────────────────────────────────────
 _CYPHER_PROMPT = """You are a Neo4j Cypher expert for the Georgia EV Supply Chain Intelligence System.
 
 GRAPH SCHEMA:
 {schema}
 
-EXAMPLE QUESTION-TO-CYPHER PAIRS:
-{examples}
-
-STRICT RULES:
-1. Return ONLY the raw Cypher query — NO explanation, NO markdown, NO backticks
-2. ALWAYS alias c.name AS company_name in the RETURN clause
-3. Use toLower() + CONTAINS for string matching (case-insensitive)
-4. Always add IS NOT NULL check before CONTAINS on nullable fields
-5. Use LIMIT 50 to prevent huge result sets
-6. For multi-hop: MATCH multiple patterns on the same variable c
-7. For product/text search: search c.products_services (full text on node)
-   AND also (c)-[:MANUFACTURES]->(p:Product) when appropriate
-8. For county: match both c.location_county directly AND via [:LOCATED_IN]->(l:Location)
-9. NEVER use c.company_name — the property is c.name
+OUTPUT RULES:
+1. Return ONLY the raw Cypher query — no explanation, no markdown, no backticks.
+2. ALWAYS alias `c.name AS company_name` in the RETURN clause.
+3. Use toLower() + CONTAINS for case-insensitive partial matching.
+4. Always add IS NOT NULL check before CONTAINS on nullable fields.
+5. Use LIMIT 50 to prevent huge result sets.
+6. NEVER use `c.company_name` — the Company node property is `name`.
 
 QUESTION: {question}
 
@@ -198,6 +119,18 @@ def generate_cypher(question: str, error_feedback: str = "") -> str:
     If error_feedback is provided, includes it for self-correction.
     """
     cfg = Config.get()
+    schema_block = _build_schema_block()
+
+    fewshot_block = ""
+    try:
+        from phase5_fewshot.few_shot_retriever import get_few_shot_block
+        block = get_few_shot_block(question, query_type="cypher", top_k=3)
+        if block:
+            fewshot_block = "\n\nEXAMPLES (retrieved from approved store):\n" + block
+            logger.info("Phase 5: injected dynamic Cypher examples")
+    except Exception as exc:
+        logger.debug("Phase 5 few-shot unavailable (%s) — proceeding with schema-only prompt", exc)
+
     prompt_question = question
     if error_feedback:
         prompt_question = (
@@ -207,8 +140,7 @@ def generate_cypher(question: str, error_feedback: str = "") -> str:
         )
 
     prompt = _CYPHER_PROMPT.format(
-        schema=_SCHEMA,
-        examples=_EXAMPLES,
+        schema=schema_block + fewshot_block,
         question=prompt_question,
     )
 
@@ -217,19 +149,18 @@ def generate_cypher(question: str, error_feedback: str = "") -> str:
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.0,     # deterministic — we want exact Cypher
-            "num_predict": 400,     # Cypher queries are short
+            "temperature": 0.0,
+            "num_predict": 400,
             "num_ctx": 4096,
         },
     }
 
     try:
         url = f"{cfg.ollama_base_url}/api/generate"
-        with httpx.Client(timeout=90.0) as client:   # 90s — generous for cold start
+        with httpx.Client(timeout=90.0) as client:
             resp = client.post(url, json=payload)
             resp.raise_for_status()
             raw = str(resp.json().get("response", "")).strip()
-            # Strip any accidental markdown fences
             cypher = _clean_cypher(raw)
             logger.info("Generated Cypher (%d chars): %s", len(cypher), cypher[:100])
             return cypher
@@ -240,11 +171,8 @@ def generate_cypher(question: str, error_feedback: str = "") -> str:
 
 def _clean_cypher(raw: str) -> str:
     """Remove markdown fences, leading/trailing whitespace, thinking tags."""
-    # Remove <think>...</think> blocks (some models emit these)
     raw = re.sub(r"<think>.*?</think>", "", raw, flags=re.DOTALL).strip()
-    # Remove ```cypher ... ``` or ``` ... ```
     raw = re.sub(r"```(?:cypher)?", "", raw, flags=re.IGNORECASE).strip("`").strip()
-    # Remove any explanatory text before the first MATCH/WITH/RETURN
     match = re.search(r"\b(MATCH|WITH|RETURN|CALL)\b", raw, re.IGNORECASE)
     if match:
         raw = raw[match.start():]
@@ -265,7 +193,6 @@ def execute_cypher(cypher: str) -> list[dict]:
     except Exception as exc:
         err_str = str(exc)
         logger.warning("Cypher execution error: %s", err_str)
-        # If it's a connection drop, reset the driver so next call reconnects
         if any(kw in err_str.lower() for kw in ("routing", "connection", "no data", "defunct")):
             logger.info("Neo4j connection lost — resetting driver for reconnect")
             from phase3_graph.graph_loader import close_driver
@@ -273,7 +200,7 @@ def execute_cypher(cypher: str) -> list[dict]:
                 close_driver()
             except Exception:
                 pass
-        raise  # re-raise so caller can do self-heal
+        raise
 
 
 def execute_cypher_safe(question: str) -> list[dict]:
@@ -282,24 +209,19 @@ def execute_cypher_safe(question: str) -> list[dict]:
     If generation fails → return []
     If execution fails → regenerate with error message → retry once
     If retry also fails → return []
-
-    IMPORTANT: Python 3 deletes the `exc` variable after an except block exits.
-    We must capture the error message INSIDE the except block.
     """
-    # Attempt 1
     cypher = generate_cypher(question)
     if not cypher:
         logger.warning("Cypher generation produced empty string")
         return []
 
-    error_msg = ""   # ← capture here so it's accessible after the except block
+    error_msg = ""
     try:
         return execute_cypher(cypher)
     except Exception as exc:
-        error_msg = str(exc)   # ← save BEFORE except block exits (Python 3 deletes exc)
+        error_msg = str(exc)
         logger.warning("Cypher attempt 1 failed, self-healing: %s", error_msg)
 
-    # Attempt 2 — self-heal: send the error back to Gemma to fix the query
     cypher2 = generate_cypher(question, error_feedback=error_msg)
     if not cypher2:
         return []
@@ -312,12 +234,11 @@ def execute_cypher_safe(question: str) -> list[dict]:
 
 def normalize_cypher_results(rows: list[dict]) -> list[dict]:
     """
-    Normalize Neo4j result rows to the standard _company_to_dict format
-    so they work with the existing _format_companies() pipeline method.
+    Normalize Neo4j result rows to the standard company-row format so they
+    feed the existing formatter pipeline.
     """
     normalized = []
     for row in rows:
-        # company_name: always aliased as company_name in our queries
         name = (
             row.get("company_name")
             or row.get("c.name")

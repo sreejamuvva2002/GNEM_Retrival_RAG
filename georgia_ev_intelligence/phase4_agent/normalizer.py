@@ -2,21 +2,18 @@
 Phase 4 — Parameter Normalizer
 
 WHY THIS EXISTS:
-  The LLM router returns natural language values like "Rivian Automotive"
-  but our database stores "Rivian" (Neo4j OEM node) or "Hyundai, Kia, Rivian".
+  The LLM router returns natural-language values like "<OEM> Automotive"
+  but the database stores the brand alone (e.g. an OEM node with
+  `name=<brand>`). Instead of hardcoding suffixes to strip, this module
+  fetches the REAL values from Neo4j / Postgres at startup and fuzzy-
+  matches the LLM's output against them. When a new value is added to
+  the KB it becomes available here automatically — no code change.
 
-  Instead of hardcoding a list of OEM names to strip suffixes from,
-  we fetch the REAL values from the database at startup and fuzzy-match
-  the LLM's output against them.
-
-  When Phase 1 adds a new OEM "Tesla" to Neo4j, it automatically becomes
-  available here — zero code changes needed.
-
-WHAT IT NORMALIZES:
-  - oem: "Rivian Automotive" → "Rivian"  (matched against real Neo4j OEM nodes)
-  - tier: "Tier 1 suppliers" → "Tier 1"  (matched against real Neo4j Tier nodes)
-  - county: "Gwinnett County" → "Gwinnett" (matched against real DB county values)
-  - ev_supply_chain_role: list → "Role1 OR Role2" (OR-joined for SQL)
+WHAT IT NORMALIZES (shape only — no domain values appear in this file):
+  - oem:                     LLM string → canonical OEM node name
+  - tier:                    LLM string → canonical Tier node name
+  - county:                  LLM string → canonical county value
+  - ev_supply_chain_role:    list → "Role1 OR Role2" (OR-joined for SQL)
 """
 from __future__ import annotations
 
@@ -112,8 +109,8 @@ def _best_match(value: str, candidates: list[str], cutoff: float = 0.5) -> str:
       2. Substring: value appears inside a candidate
       3. Containing: a candidate appears inside value
       4. Word-level: any meaningful word from value matches inside a candidate
-         e.g. 'Rivian Automotive' -> 'rivian' found in 'Hyundai, Kia, Rivian'
-              returns 'rivian' so Cypher CONTAINS 'rivian' works correctly
+         (returns the matched word itself so a Cypher CONTAINS still works
+          when the candidate is a comma-joined list of names)
       5. difflib fuzzy match
 
     Returns original value if no match found (safe fallback).
@@ -143,8 +140,8 @@ def _best_match(value: str, candidates: list[str], cutoff: float = 0.5) -> str:
         return best
 
     # 4. Word-level: split value into words, find any meaningful word in a candidate
-    #    Returns the WORD itself so Cypher CONTAINS works:
-    #    'Rivian Automotive' -> 'rivian' found in 'Hyundai, Kia, Rivian' -> return 'rivian'
+    #    Returns the WORD itself so Cypher CONTAINS works against
+    #    comma-joined candidate strings.
     stop_words = {
         "the", "and", "for", "with", "inc", "corp", "llc", "ltd",
         "group", "north", "south", "east", "west", "america", "americas",
@@ -175,10 +172,11 @@ def _best_match(value: str, candidates: list[str], cutoff: float = 0.5) -> str:
 
 def is_valid_ev_role(value: str) -> bool:
     """
-    Check if a value is an actual EV supply chain role in our database.
-    Used to detect when the LLM mistakenly puts product keywords
-    (e.g. 'copper foil OR electrodeposited materials') into ev_supply_chain_role.
-    Returns False for product descriptions, True for real roles like 'General Automotive'.
+    Check whether a value is an actual EV supply chain role in the KB.
+
+    Used to detect when the LLM mistakenly puts product keywords (e.g. raw
+    material names) into ev_supply_chain_role. Returns False for product
+    descriptions, True for values that actually appear in the KB role list.
     """
     if not value:
         return False
@@ -198,17 +196,14 @@ def normalize_params(strategy: str, params: dict[str, Any]) -> dict[str, Any]:
     """
     Normalize LLM router params against real database values.
 
-    Input:  {"oem": "Rivian Automotive"}
-    Output: {"oem": "Rivian"}            ← matched against real Neo4j OEM nodes
+    Shape (no domain values appear in this docstring):
+      - OEM strings:     "<brand> <suffix>"  →  "<brand>"   (matched to KB)
+      - tier strings:    "<tier> <noise>"    →  "<tier>"    (matched to KB)
+      - county strings:  "<county> County"   →  "<county>"  (matched to KB)
+      - ev_supply_chain_role list →           "<r1> OR <r2>" (joined for SQL)
 
-    Input:  {"tier": "Tier 1 suppliers"}
-    Output: {"tier": "Tier 1"}           ← matched against real Neo4j Tier nodes
-
-    Input:  {"county": "Gwinnett County"}
-    Output: {"county": "Gwinnett"}       ← matched against real DB county values
-
-    Input:  {"ev_supply_chain_role": ["Battery Cell", "Battery Pack"]}
-    Output: {"ev_supply_chain_role": "Battery Cell OR Battery Pack"}
+    The candidate sets come from Neo4j / Postgres at runtime; nothing is
+    hardcoded here.
     """
     if not params:
         return params
@@ -231,7 +226,7 @@ def normalize_params(strategy: str, params: dict[str, Any]) -> dict[str, Any]:
     for key in ("county", "filter_county", "location_county"):
         if key in result and result[key]:
             county_candidates = _load_county_names()
-            # Strip "County" suffix first: "Gwinnett County" → "Gwinnett"
+            # Strip "County" suffix first so "<county> County" → "<county>"
             raw = str(result[key]).replace(" County", "").strip()
             result[key] = _best_match(raw, county_candidates)
 

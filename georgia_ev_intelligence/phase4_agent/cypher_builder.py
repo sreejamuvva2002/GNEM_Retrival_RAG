@@ -43,7 +43,6 @@ def build_cypher(e: Entities, question: str) -> str | None:
 
     # ── 1. OEM supplier network ───────────────────────────────────────────────
     # Triggered when entity_extractor found a real OEM name from Neo4j.
-    # "Show suppliers linked to Rivian" → e.oem = "rivian" (from real OEM node)
     if e.oem:
         cypher = f"""MATCH (c:Company)-[:SUPPLIES_TO]->(o:OEM)
 WHERE toLower(o.name) CONTAINS '{e.oem.lower()}'
@@ -58,7 +57,6 @@ LIMIT 50"""
 
     # ── 2. EV role filter ─────────────────────────────────────────────────────
     # Triggered when entity_extractor found real role values from PostgreSQL.
-    # "Which Battery Cell companies are Tier 1?" → e.ev_role_list = ["Battery Cell"]
     if e.ev_role_list:
         role_conditions = " OR ".join(
             f"toLower(c.ev_supply_chain_role) CONTAINS '{r.lower()}'"
@@ -80,11 +78,9 @@ LIMIT 50"""
         return cypher
 
     # ── 3. Facility type filter ───────────────────────────────────────────────
-    # Triggered when entity_extractor matched a real facility_type from PostgreSQL.
-    # "Which companies operate R&D facilities?" →
-    #   entity_extractor checks question against real DB values like "R&D",
-    #   "Manufacturing Plant", "Engineering / Operations" etc.
-    #   e.facility_type = "R&D"  (from DB, not from hardcoded map)
+    # Triggered when entity_extractor matched a real facility_type value from
+    # PostgreSQL — the candidate set is loaded from the live KB, not from a
+    # hardcoded map.
     if e.facility_type:
         cypher = f"""MATCH (c:Company)
 WHERE c.facility_type IS NOT NULL
@@ -99,7 +95,6 @@ LIMIT 50"""
 
     # ── 4. Company direct lookup ──────────────────────────────────────────────
     # Triggered when entity_extractor matched a real company name from PostgreSQL.
-    # "What does SK Battery America do?" → e.company_name = "SK Battery America"
     if e.company_name:
         cypher = f"""MATCH (c:Company)
 WHERE toLower(c.name) CONTAINS '{e.company_name.lower()}'
@@ -113,11 +108,11 @@ LIMIT 10"""
 
     # ── 5. Product keyword search — AND-first, OR-fallback ────────────────────
     # WHY AND-FIRST:
-    #   OR logic: "copper OR foil OR materials" → matches hundreds of rows (false positives)
-    #   AND logic: "copper AND foil" → matches only Duckyang (precise)
+    #   OR across many keywords matches too many rows (false positives).
+    #   Two-keyword AND is precise and survives noisy question wordings.
     #
     # STRATEGY (no stop words, no hardcoding, works for any new question):
-    #   1. Take first 2 keywords (most specific, per question word order)
+    #   1. Take the first 2 keywords (most specific, per question word order)
     #   2. Build an AND Cypher — both must appear in products_services
     #   3. If AND returns 0 rows → fall back to OR across top 3 keywords
     #   This is stateless and scales to any domain without maintenance.

@@ -2,11 +2,9 @@
 Phase 4 — Deterministic Entity Extractor
 
 WHY DETERMINISTIC INSTEAD OF LLM ROUTING:
-  LLM routing is unreliable:
-    - Returns "copper foil" as an EV role
-    - Returns "Rivian Automotive" instead of "Rivian"
-    - Requires JSON parsing that fails on edge cases
-    - Needs 1 extra LLM call per question (slow)
+  LLM routing is unreliable: it confuses product strings with EV roles,
+  appends suffixes to canonical brand names, requires JSON parsing that
+  fails on edge cases, and adds an extra LLM round-trip per question.
 
   Deterministic extraction:
     - Always extracts the RIGHT entities
@@ -91,10 +89,8 @@ def _company_names() -> list[str]:
 @lru_cache(maxsize=1)
 def _facility_types() -> list[str]:
     """
-    Load all DISTINCT facility_type values from PostgreSQL.
-    Example real values: 'Manufacturing Plant', 'R&D', 'Engineering / Operations',
-    'Headquarters', 'Distribution Center', 'Assembly'
-    These come from the actual database — no hardcoding.
+    Load all DISTINCT facility_type values from the company KB. Values come
+    from gev_companies at runtime — nothing is hardcoded here.
     """
     return sorted({
         company.get("facility_type")
@@ -157,19 +153,59 @@ _STOP_WORDS = {
 
 # ── Result dataclass ──────────────────────────────────────────────────────────
 
-# ── Tier synonym mapping ─────────────────────────────────────────────────────
-# Maps natural language phrasing to exact DB tier values.
-# WHY: Questions use "Direct Manufacturer", "OEM", "vehicle assembler" etc.
-# but the DB stores 'OEM', 'OEM (Footprint)', 'OEM Supply Chain'.
-# Mapping here avoids question-specific rules and works for ANY new phrasing.
-_TIER_SYNONYMS: dict[str, str] = {
-    "direct manufacturer":   "OEM",
-    "vehicle assembler":      "OEM",
-    "vehicle assembly":       "OEM",
-    "original equipment manufacturer": "OEM",
-    "oem footprint":         "OEM (Footprint)",
-    "oem supply chain":      "OEM Supply Chain",
-}
+# ── Tier synonyms ────────────────────────────────────────────────────────────
+# Natural-language tier phrasings (e.g. "vehicle assembler" → "OEM") are NOT
+# hardcoded here — they are stored as approved rows in
+# gev_domain_mapping_rules with mapped_column='tier'. The extractor loads
+# them at startup so a new synonym only requires a DB row, not a code change.
+#
+# When the rule store has no rows, this map is empty: only literal tier values
+# present in the KB (loaded from _tier_names()) will match. Synonyms missing
+# from the rule store are reported as residual abstract terms downstream so
+# the synonym_expander / ambiguity_resolver can surface them as unresolved.
+@lru_cache(maxsize=1)
+def _tier_synonyms_from_rules() -> dict[str, str]:
+    """
+    Load approved tier-synonym rows from gev_domain_mapping_rules.
+
+    Returns a dict {phrase_lower: kb_tier_value}. Only rules whose
+    mapped_column is 'tier' and whose mapped_value_or_condition matches one
+    of the canonical tier values currently in the KB are included.
+    """
+    try:
+        from shared.db import DomainMappingRule, get_session
+    except Exception as exc:
+        logger.debug("tier_synonyms: db import failed — %s", exc)
+        return {}
+    valid_tiers = {t.lower(): t for t in _tier_names()}
+    out: dict[str, str] = {}
+    try:
+        session = get_session()
+    except Exception as exc:
+        logger.debug("tier_synonyms: db unavailable — %s", exc)
+        return {}
+    try:
+        rows = (
+            session.query(DomainMappingRule)
+            .filter(DomainMappingRule.mapped_column == "tier")
+            .filter(DomainMappingRule.status.in_(["approved", "active"]))
+            .all()
+        )
+        for r in rows:
+            target = (r.mapped_value_or_condition or "").strip()
+            phrase = (r.term or "").strip().lower()
+            if not phrase or not target:
+                continue
+            canonical = valid_tiers.get(target.lower())
+            if canonical:
+                out[phrase] = canonical
+    except Exception as exc:
+        logger.debug("tier_synonyms: query failed — %s", exc)
+    finally:
+        session.close()
+    if out:
+        logger.info("Loaded %d tier synonyms from gev_domain_mapping_rules", len(out))
+    return out
 
 
 def _phrase_pattern(phrase: str) -> str:
@@ -336,33 +372,96 @@ def _industry_groups() -> list[str]:
 
 @dataclass
 class Entities:
-    """Structured entities extracted from a question."""
-    tier:              str | None  = None   # e.g. "Tier 1/2"
+    """
+    Structured entities extracted from a question.
+
+    Field values are loaded from the live KB at extraction time — none of
+    the example values that used to appear in the field comments here have
+    been retained, since putting real KB values in source code violates the
+    no-hardcoded-facts policy. The shape of each field is documented in the
+    inline comments only.
+    """
+    tier:              str | None  = None   # canonical Tier value
     tier_list:         list[str]   = field(default_factory=list)
-    county:            str | None  = None   # e.g. "Gwinnett"
-    oem:               str | None  = None   # PRIMARY oem (first matched) — backward-compat
-    oem_list:          list[str]   = field(default_factory=list)  # ALL oems in question
-    company_name:      str | None  = None   # e.g. "SungEel Recycling Park Georgia"
-    ev_role:           str | None  = None   # e.g. "Thermal Management"
+    county:            str | None  = None   # canonical county value (no "County" suffix)
+    oem:               str | None  = None   # primary OEM (first matched) — backward-compat
+    oem_list:          list[str]   = field(default_factory=list)  # all OEMs in question
+    company_name:      str | None  = None   # canonical gev_companies.company_name
+    ev_role:           str | None  = None   # canonical ev_supply_chain_role
     ev_role_list:      list[str]   = field(default_factory=list)
     exclude_ev_role_list: list[str] = field(default_factory=list)
-    facility_type:     str | None  = None   # e.g. "R&D", "Manufacturing Plant"
-    industry_group:    str | None  = None   # e.g. "Chemicals and Allied Products"
-    classification_method: str | None = None   # e.g. "Supplier", "Direct Manufacturer"
+    facility_type:     str | None  = None   # canonical facility_type value
+    industry_group:    str | None  = None   # canonical industry_group value
+    classification_method: str | None = None   # canonical classification_method value
     supplier_affiliation_type: str | None = None
     min_employment:    int | None  = None
     max_employment:    int | None  = None
     product_keywords:  list[str]   = field(default_factory=list)
     is_aggregate:      bool        = False  # county-level SUM questions
-    is_risk_query:     bool        = False  # SPOF: single-point-of-failure questions
-    is_oem_dependency: bool        = False  # sole-sourced by specific OEM
-    is_capacity_risk:  bool        = False  # small companies (<N employees)
-    is_misalignment:   bool        = False  # tier/role mismatch risk
-    is_top_n:          bool        = False  # "Top 10 by employment" questions
+    is_risk_query:     bool        = False  # generic single-point-of-failure phrasing
+    is_top_n:          bool        = False  # "Top N by employment" questions
     top_n_limit:       int         = 10     # how many to return for top_n
     ev_relevant_filter: bool       = False  # only EV-relevant companies
-    ev_relevance_value: str | None = None   # exact EV relevance: "Yes", "Indirect", or "No"
+    ev_relevance_value: str | None = None   # exact ev_battery_relevant value
+    residual_abstract_terms: list[str] = field(default_factory=list)  # abstract phrases for synonym_expander
 
+
+
+# ── Residual term extraction (generic, no hardcoded phrase list) ─────────────
+
+def _extract_residual_terms(
+    question: str,
+    e: "Entities",
+    consumed_tokens: set[str],
+) -> list[str]:
+    """
+    Extract candidate noun-phrases that are not already captured as KB
+    entities. Used to feed the synonym_expander / ambiguity_resolver.
+
+    The extractor is deliberately conservative: it returns at most 4 terms,
+    and only multi-word phrases (length >= 2 words after filtering). Single
+    words are already covered by `e.product_keywords`. This avoids flooding
+    the resolver with single-word noise that the rule store does not need.
+
+    No domain phrase list is consulted; matching against approved
+    domain_mapping_rules happens later in synonym_expander.
+    """
+    q_lower = question.lower()
+    # Build a token sequence preserving order, dropping stop words and
+    # already-consumed entity tokens.
+    tokens = re.findall(r"[A-Za-z][A-Za-z0-9\-&]+", q_lower)
+    is_stop = lambda w: (
+        w in _STOP_WORDS
+        or w in consumed_tokens
+        or len(w) < 4
+        or w.isdigit()
+    )
+    out: list[str] = []
+    seen: set[str] = set()
+    i = 0
+    while i < len(tokens) - 1:
+        if is_stop(tokens[i]):
+            i += 1
+            continue
+        # Try trigram first, then bigram
+        for span_len in (3, 2):
+            end = i + span_len
+            if end > len(tokens):
+                continue
+            window = tokens[i:end]
+            if any(is_stop(w) for w in window):
+                continue
+            phrase = " ".join(window)
+            if phrase in seen:
+                continue
+            seen.add(phrase)
+            out.append(phrase)
+            i = end - 1  # step past trigram on success, allow overlapping bigrams
+            break
+        i += 1
+        if len(out) >= 4:
+            break
+    return out
 
 
 # ── Main extractor ────────────────────────────────────────────────────────────
@@ -420,36 +519,24 @@ def extract(question: str) -> Entities:
         elif n_str:
             e.top_n_limit = number_words.get(n_str, e.top_n_limit)
 
-    # ── 2. Detect risk query subtypes ────────────────────────────────────────
-    # WHY SUBTYPES (not one broad flag):
-    #   Q27 "single-point-of-failure" → SPOF list (get_single_supplier_roles)
-    #   Q28 "sole-sourced by a specific OEM" → OEM dependency query (different SQL)
-    #   Q29 "fewer than 200 employees" + OEM context → capacity risk (filtered query)
-    #   Q30 "EV Relevant + General Automotive + Battery" → misalignment (compound filter)
-    # Mixing all these into one is_risk_query=True caused Q28/29/30 to get Q27's answer.
-
-    # SPOF: only true when asking about roles served by single company
-    spof_signals = ["single-point", "single point", "only a single", "only one company",
-                    "served by only", "single-point-of-failure", "single point of failure"]
+    # ── 2. Detect generic single-point-of-failure phrasing ──────────────────
+    # SPOF questions ask about roles served by exactly one company. The
+    # phrases here are generic English risk-analysis terminology — not
+    # specific to any one question — so they remain in code rather than the
+    # rule store. Specific risk subtypes (sole-sourced, capacity fragility,
+    # misalignment) used to live here; they have been removed because they
+    # were brittle phrase-keyed routing tied to individual eval questions.
+    # Those interpretations now flow through gev_domain_mapping_rules.
+    spof_signals = (
+        "single-point", "single point",
+        "only a single", "only one company",
+        "served by only",
+        "single-point-of-failure", "single point of failure",
+    )
     e.is_risk_query = any(sig in q_lower for sig in spof_signals)
 
-    # OEM dependency: sole-sourced / dependency from OEM perspective
-    oem_dep_signals = ["sole-sourced", "sole sourced", "dependency risk", "high dependency",
-                       "dependent on", "only one oem", "single oem"]
-    e.is_oem_dependency = any(sig in q_lower for sig in oem_dep_signals)
-
-    # Capacity risk: small company employee count with OEM/supplier context
-    capacity_signals = ["fewer than", "less than", "under 200", "under 300", "small scale",
-                        "capacity fragility", "surge production", "limited capacity"]
-    e.is_capacity_risk = any(sig in q_lower for sig in capacity_signals)
-
-    # Misalignment: role/tier mismatch signal
-    misalign_signals = ["misalignment", "mismatch", "misclassified", "supply chain misalignment"]
-    e.is_misalignment = any(sig in q_lower for sig in misalign_signals)
-
     if e.is_top_n:
-        # top-N overrides all risk flags
-        e.is_risk_query = e.is_oem_dependency = e.is_capacity_risk = e.is_misalignment = False
+        e.is_risk_query = False
 
     # ── 2b. EV-relevant filter ───────────────────────────────────────────────
     ev_negative_patterns = (
@@ -468,7 +555,10 @@ def extract(question: str) -> Entities:
     tier_matches: list[tuple[int, str]] = []
     occupied_tier_spans: list[tuple[int, int]] = []
 
-    for phrase, mapped_tier in sorted(_TIER_SYNONYMS.items(), key=lambda item: len(item[0]), reverse=True):
+    # Apply tier synonyms loaded from gev_domain_mapping_rules. Empty when no
+    # synonyms have been approved yet.
+    tier_synonyms = _tier_synonyms_from_rules()
+    for phrase, mapped_tier in sorted(tier_synonyms.items(), key=lambda item: len(item[0]), reverse=True):
         for span in _phrase_spans(question, phrase):
             if _overlaps(span, occupied_tier_spans) or _is_hypothetical_company_filter(question, *span):
                 continue
@@ -525,7 +615,8 @@ def extract(question: str) -> Entities:
     # ── 4b. Company name extraction — from real PostgreSQL company names ────────
     # Matches the question against real company names using multi-word matching.
     # Handles: "What does SungEel do?", "What tier is Hanwha Q CELLS?"
-    # Sorted longest-first so "Hyundai Motor Group" matches before "Hyundai".
+    # Sorted longest-first so a multi-word company name matches before any
+    # single-word substring of it.
     all_companies = sorted(_company_names(), key=len, reverse=True)
     for name in all_companies:
         if len(name) < 5:
@@ -539,8 +630,8 @@ def extract(question: str) -> Entities:
 
     # ── 4c. Facility type extraction — from real PostgreSQL values ─────────────
     # Loads DISTINCT facility_type values from the DB (same pattern as tier/county).
-    # Real values: 'Manufacturing Plant', 'R&D', 'Engineering / Operations', etc.
-    # No hardcoding — if a new facility type is added to DB, it is auto-detected.
+    # Candidate values come from gev_companies. No hardcoding — if a new
+    # facility type is added to the KB, it is auto-detected here.
     facility_types = sorted(_facility_types(), key=len, reverse=True)  # longest first
     for ftype in facility_types:
         for span in _phrase_spans(question, ftype):
@@ -583,17 +674,17 @@ def extract(question: str) -> Entities:
         e.ev_role_list = matched_roles
     e.exclude_ev_role_list = excluded_roles
 
-    if not e.ev_role and not e.ev_role_list:
-        thermal_match = re.search(r"\bthermal[-\s]?related\b", question, re.IGNORECASE)
-        if (
-            thermal_match
-            and any(role.lower() == "thermal management" for role in roles)
-            and not _is_hypothetical_company_filter(question, thermal_match.start(), thermal_match.end())
-        ):
-            e.ev_role = "Thermal Management"
+    # NOTE: previous code hardcoded a specific KB role value when the
+    # question contained a related fuzzy phrase. That was a domain-fact
+    # injection — removed. If the question's role phrasing does not match
+    # any KB role value via the loop above, ev_role stays None and the
+    # downstream synonym_expander handles the residual term against
+    # gev_domain_mapping_rules.
 
     # Words already captured as tier/role — OEM extractor must skip these
-    # e.g. 'battery' is in 'Battery Cell' role → must not match 'SK Battery' OEM
+    # Words appearing in role tokens must not also be matched as OEM tokens
+    # (otherwise an OEM whose name shares a generic word with a role would
+    # spuriously trigger a tier/role-driven branch).
     role_words: set[str] = set()
     for role in (e.ev_role_list or ([e.ev_role] if e.ev_role else [])):
         role_words.update(role.lower().split())
@@ -629,9 +720,10 @@ def extract(question: str) -> Entities:
                 oem_word_map[part_clean] = part_clean
 
     # Collect ALL OEMs mentioned in the question (multi-OEM support).
-    # WHY: Questions like "Kia or Rivian suppliers" previously only extracted
-    # the first OEM (break-on-first) and missed the second.
-    # Now extracts all, sets e.oem = first for backward-compat with single-OEM code paths.
+    # WHY: Questions naming two OEMs ("<OEM1> or <OEM2> suppliers") previously
+    # only extracted the first OEM (break-on-first) and missed the second.
+    # Now extracts all, sets e.oem = first for backward-compat with
+    # single-OEM code paths.
     matched_oems: list[str] = []
     for word in oem_word_map:
         if re.search(r'\b' + re.escape(word) + r'\b', question, re.IGNORECASE):
@@ -734,6 +826,17 @@ def extract(question: str) -> Entities:
             unique_terms.append(t)
 
     e.product_keywords = unique_terms[:10]
+
+    # ── 9. Residual abstract-term capture ─────────────────────────────────────
+    # Generic noun-phrase extraction: any 1- to 3-word adjective+noun chunk
+    # that is NOT already captured as an entity, NOT a stop word, and NOT
+    # part of a known KB value. The synonym_expander resolves these against
+    # gev_domain_mapping_rules; only approved rules turn into filters.
+    #
+    # No hardcoded phrase list. If the noun chunk has no approved mapping
+    # AND the KB has no values containing it, the term contributes nothing —
+    # the question is treated as fallback semantic.
+    e.residual_abstract_terms = _extract_residual_terms(question, e, known_extracted)
 
     logger.info(
         "Extracted: tier=%s tiers=%s county=%s company=%s oem=%s role=%s exclude_roles=%s keywords=%s aggregate=%s",

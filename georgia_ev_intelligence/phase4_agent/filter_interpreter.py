@@ -257,3 +257,64 @@ def interpret_soft_filters(question: str, entities: Entities, companies: list[di
     except Exception as exc:
         logger.warning("Soft filter interpretation failed: %s", exc)
         return SoftFilterPlan()
+
+
+# ── New retrieval pipeline: demoted suggester ────────────────────────────────
+# In the V4 retrieval architecture this module is no longer in the main path.
+# It is invoked only by synonym_expander as a last-resort *suggester* when
+# no rule and no schema match was found for a residual abstract term.
+# Suggestions are recorded with confidence capped at 0.50 so the validator
+# always has the final say.
+
+def suggest_mapping(question: str, entities: Entities, companies: list[dict] | None = None):
+    """
+    Wrap the existing LLM soft-filter call but return its output as a list
+    of CandidateMapping objects (suitable for synonym_expander to merge).
+
+    Returns an empty list on any failure or when the LLM output is empty.
+    Confidence is fixed at 0.50 so the orchestrator never picks an LLM
+    suggestion over a KB-grounded heuristic or a human-approved rule.
+    """
+    from phase4_agent.retrieval_types import CandidateMapping
+
+    if not companies:
+        return []
+
+    plan = interpret_soft_filters(question, entities, companies)
+    if not plan.active:
+        return []
+
+    suggestions: list[CandidateMapping] = []
+    if plan.require_ev_battery_relevant:
+        suggestions.append(CandidateMapping(
+            mapping=f"ev_battery_relevant = '{plan.require_ev_battery_relevant}'",
+            mapped_column="ev_battery_relevant",
+            mapped_value=plan.require_ev_battery_relevant,
+            support_basis="llm_suggestion",
+            confidence=0.50,
+        ))
+    for role in plan.include_roles:
+        suggestions.append(CandidateMapping(
+            mapping=f"ev_supply_chain_role contains '{role}'",
+            mapped_column="ev_supply_chain_role",
+            mapped_value=role,
+            support_basis="llm_suggestion",
+            confidence=0.50,
+        ))
+    for industry in plan.include_industry_groups:
+        suggestions.append(CandidateMapping(
+            mapping=f"industry_group = '{industry}'",
+            mapped_column="industry_group",
+            mapped_value=industry,
+            support_basis="llm_suggestion",
+            confidence=0.50,
+        ))
+    for facility in plan.include_facility_types:
+        suggestions.append(CandidateMapping(
+            mapping=f"facility_type = '{facility}'",
+            mapped_column="facility_type",
+            mapped_value=facility,
+            support_basis="llm_suggestion",
+            confidence=0.50,
+        ))
+    return suggestions

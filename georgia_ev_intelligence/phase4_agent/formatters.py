@@ -3,24 +3,29 @@ phase4_agent/formatters.py
 ==============================================================
 Template-based response formatters — zero LLM calls.
 
+Added in V4: format_branched_answer() wraps existing per-class formatters
+into the two-section "Two KB-supported interpretations of <term>" template
+required when an ambiguity branch produces 2 RetrievalBranch outputs.
+
 WHY TEMPLATES INSTEAD OF LLM SYNTHESIS:
-  When data is already structured, LLM synthesis adds:
-    - 8-20s latency
-    - RAM pressure
-    - Risk of hallucination ("The database does not contain...")
+  When data is already structured, LLM synthesis adds latency, RAM
+  pressure, and hallucination risk. Python templates are 0ms, 0 RAM, and
+  100% deterministic.
 
-  Python templates:
-    - 0ms latency
-    - 0 RAM
-    - 100% deterministic — always correct format
+WHAT EACH FORMATTER HANDLES (output shape only — no domain values
+appear here; rows are populated by the upstream retriever):
+  aggregate    → "<county> has the highest total employment ..."
+  company_list → ranked list with company / tier / role / employment
+  county_top   → "<company> has the highest employment in <county> ..."
+  oem_network  → "<n> Georgia suppliers linked to <oem> ..."
+  facility     → "<n> Georgia companies with <facility_type> facilities ..."
+  top_n        → "Top <n> Georgia EV supply chain companies by employment ..."
 
-WHAT EACH FORMATTER HANDLES:
-  aggregate  → "Troup County has 2,280 employees across 7 Tier 1 companies"
-  company_list → Ranked list with company / tier / role / employment
-  county_top   → "SungEel has 650 employees in Gwinnett County. Role: Materials"
-  oem_network  → "6 suppliers linked to Rivian Automotive: [list]"
-  facility     → "1 R&D facility found: Racemark International LLC..."
-  top_n        → "Top 5 Georgia EV companies by employment: [ranked list]"
+INVARIANT: every row passed to a formatter must have already been
+validated by phase4_agent/evidence_validator (it sets
+`row['validated'] = True`). Formatters assert this on entry to catch
+pipeline mistakes. Pre-validated rows protect against the formatter
+silently echoing un-checked text.
 
 FALLBACK:
   If none of the structured templates apply (free-form question),
@@ -29,20 +34,37 @@ FALLBACK:
 from __future__ import annotations
 
 
+def _assert_validated(rows: list[dict]) -> None:
+    """
+    Defensive: refuse to format rows that did not pass evidence_validator.
+
+    Aggregate rows (county / role / count outputs) are SQL-deterministic
+    and may not carry the per-row validated flag — they're allowed through
+    when they look like aggregates (no `company_name`).
+    """
+    for r in rows or []:
+        if "company_name" not in r:
+            continue  # aggregate row — SQL-authoritative, not a per-company row
+        if not r.get("validated", False):
+            raise AssertionError(
+                "formatter received un-validated row: "
+                f"{r.get('company_name', '<no name>')!r}"
+            )
+
+
 # ── Aggregate (GROUP BY county, SUM employment) ────────────────────────────────
 
 def format_aggregate(rows: list[dict], tier: str | None = None) -> str | None:
     """
     Format employment-by-county aggregate results.
-    rows: [{"county": ..., "total_employment": ..., "company_count": ...}]
 
-    Returns:
-        "Troup County has the highest total employment among Tier 1 suppliers
-         with 2,280 employees across 7 companies.
-         Full ranking: ..."
+    Input rows come straight from sql_retriever.aggregate_employment_by_county
+    and have shape:
+        {"county": str, "total_employment": int, "company_count": int}
     """
     if not rows:
         return "No employment data found for the requested filters."
+    _assert_validated(rows)
 
     top = rows[0]
     county   = top.get("county") or top.get("location_county") or "Unknown County"
@@ -72,13 +94,14 @@ def format_company_list(companies: list[dict], context_label: str = "") -> str |
     """
     Format a list of companies as a ranked readable list.
 
-    Returns:
-        "6 Georgia companies found [context]:
-         1. Hitachi Astemo Americas Inc. | Tier 1/2 | Battery Cell | Harris County | 723 emp
-         ..."
+    Output shape (no domain values appear in source):
+        "<n> Georgia companies found [<context>]:
+           1. <name> | <tier> | <role> | <county> | <emp> employees
+           ..."
     """
     if not companies:
         return "No matching companies found in the Georgia EV supply chain database."
+    _assert_validated(companies)
 
     label = f" {context_label}" if context_label else ""
     lines = [f"{len(companies)} Georgia compan{'y' if len(companies)==1 else 'ies'} found{label}:", ""]
@@ -106,12 +129,15 @@ def format_county_top(rows: list[dict], county: str) -> str | None:
     """
     Format "which company has highest employment in [county]?" result.
 
-    Returns:
-        "SungEel Recycling Park Georgia has the highest employment in Gwinnett County
-         with 650 employees. EV Supply Chain Role: Materials."
+    Output shape:
+        "<top company> has the highest employment in <county> with <n> employees.
+           EV Supply Chain Role : <role>
+           Tier                 : <tier>
+           Facility Type        : <facility_type>"
     """
     if not rows:
         return f"No companies found in {county} in the Georgia EV supply chain database."
+    _assert_validated(rows)
 
     # rows already sorted by employment desc by the SQL
     top = rows[0]
@@ -150,13 +176,14 @@ def format_oem_network(rows: list[dict], oem: str) -> str | None:
     """
     Format "show supplier network linked to [OEM]" result.
 
-    Returns:
-        "6 Georgia suppliers linked to Rivian Automotive:
-         1. Duckyang | Tier 2/3 | General Automotive | Jackson County | 250 emp
-         ..."
+    Output shape:
+        "<n> Georgia suppliers linked to <oem> Automotive:
+           1. <name> | <tier> | <role> | <county> | <n> emp
+           ..."
     """
     if not rows:
         return f"No Georgia suppliers linked to {oem.title()} found in the database."
+    _assert_validated(rows)
 
     # Sort by employment desc
     rows_sorted = sorted(rows, key=lambda x: float(x.get("employment") or 0), reverse=True)
@@ -190,6 +217,7 @@ def format_top_n(rows: list[dict], n: int, tier: str | None = None) -> str | Non
     """
     if not rows:
         return f"No companies found for the requested filters."
+    _assert_validated(rows)
 
     tier_str = f" {tier}" if tier else ""
     lines = [
@@ -216,6 +244,7 @@ def format_facility(companies: list[dict], facility_type: str) -> str | None:
     """
     if not companies:
         return f"No Georgia companies with {facility_type} facilities found in the database."
+    _assert_validated(companies)
 
     lines = [
         f"{len(companies)} Georgia compan{'y' if len(companies)==1 else 'ies'} "
@@ -235,3 +264,53 @@ def format_facility(companies: list[dict], facility_type: str) -> str | None:
             lines.append(f"     ↳ {product[:100]}")
 
     return "\n".join(lines)
+
+
+# ── Branched answer (ambiguity top-2) ─────────────────────────────────────────
+
+def format_branch_section(branch) -> str:
+    """
+    Render one RetrievalBranch as a labelled section.
+
+    Uses format_company_list() under the hood so the format is consistent
+    with other deterministic outputs. When the branch has zero evidence
+    rows, the placeholder line is explicit so the user can see that a
+    KB-grounded interpretation was tried but returned nothing.
+    """
+    rows = [c.row for c in (branch.evidence or []) if getattr(c, "row", None)]
+    label = f"Branch {branch.branch_id} — {branch.interpreted_meaning}"
+    if not rows:
+        return f"{label}\n(No KB rows matched this interpretation.)\n"
+    body = format_company_list(rows, context_label="for this interpretation") or ""
+    return f"{label}\n{body}\n"
+
+
+def format_branched_answer(branches) -> str | None:
+    """
+    Compose the final two-section answer when ambiguity branching produced
+    two RetrievalBranch objects. Returns None when there is at most one
+    branch (caller falls through to the single-branch formatter or LLM
+    synthesis).
+
+    Output template:
+
+        Two KB-supported interpretations of "<term>" were considered.
+
+        Branch A — <interpretation A>
+        <evidence rows>
+
+        Branch B — <interpretation B>
+        <evidence rows>
+    """
+    if not branches or len(branches) < 2:
+        return None
+
+    # Best-effort term extraction — interpretation strings begin with
+    # "<term> → <mapping>"; we use the substring before the first arrow.
+    first = branches[0].interpreted_meaning or ""
+    term = first.split("→", 1)[0].strip() or "the abstract term"
+
+    parts = [f'Two KB-supported interpretations of "{term}" were considered.', ""]
+    for branch in branches:
+        parts.append(format_branch_section(branch))
+    return "\n".join(parts)

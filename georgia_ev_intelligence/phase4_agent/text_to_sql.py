@@ -1,36 +1,34 @@
 """
 phase4_agent/text_to_sql.py
 ==============================================================
-Text-to-SQL: LLM generates SQL directly from the question + schema.
+Text-to-SQL: LLM generates SQL directly from the question + a runtime-built
+schema block.
 
-WHY THIS REPLACES entity_extractor + sql_retriever rules:
+WHY THIS REPLACES entity_extractor + sql_retriever rules for some queries:
   Rules break for edge cases:
     "Tier 1 only"       → needs exact match, not ilike
     "at least 500 emp"  → needs >= filter
     "top 5 by county"   → needs LIMIT 5
     "excluding OEMs"    → needs NOT LIKE filter
 
-  The LLM already knows SQL. It reads the question AND the schema,
+  The LLM already knows SQL. It reads the question AND the schema block
   and generates the correct SQL for any phrasing — no rules needed.
 
 SCHEMA PROVIDED TO LLM:
-  The full gev_companies table schema with real example values.
-  This grounds the LLM in actual column names and value formats.
+  Built at runtime from CANONICAL_FIELDS + FIELD_TYPES + a small sample of
+  distinct values per column from metadata_loader. NOTHING in source code
+  hardcodes a real company / county / OEM / tier / role / facility value.
+  All example values shown to the LLM are sampled from the live KB.
+
+  Few-shot Q&A pairs that previously appeared in this file have been
+  removed: every pair encoded a domain-specific question wording and the
+  expected SQL, which was the most direct form of golden-question shape
+  leakage in the codebase.
 
 SAFETY:
   - Read-only: only SELECT queries allowed (validated before execution)
-  - Schema-locked: LLM only sees gev_companies table
+  - Schema-locked: LLM only sees gev_companies columns
   - Result-capped: LIMIT 200 max
-
-WHEN USED:
-  For aggregate/filter questions where SQL genuinely wins over Cypher:
-    - GROUP BY county/tier/role
-    - SUM/COUNT employment
-    - ORDER BY / LIMIT (top-N)
-    - Complex WHERE with multiple filters
-
-WHEN NOT USED:
-  Graph relationship questions (SUPPLIES_TO, IN_TIER) → Cypher handles those.
 """
 from __future__ import annotations
 
@@ -38,95 +36,58 @@ import re
 
 import httpx
 
+from phase4_agent.metadata_loader import loader as kb_loader
 from shared.config import Config
 from shared.db import get_session
 from shared.logger import get_logger
+from shared.metadata_schema import (
+    CANONICAL_FIELDS,
+    FIELD_TYPES,
+    SUPPORTED_OPERATORS,
+)
 
 logger = get_logger("phase4.text_to_sql")
 
-# ── Schema description given to the LLM ──────────────────────────────────────
-# Real column names + real example values from the actual database.
-# No guessing — LLM generates SQL that will execute correctly.
 
-_SCHEMA = """
-TABLE: gev_companies
-COLUMNS and real example values:
-  id                      INTEGER  (primary key)
-  company_name            TEXT     e.g. 'Hyundai Motor Group', 'SK Battery America'
-  tier                    TEXT     EXACT values: 'Tier 1', 'Tier 2/3', 'Tier 1/2',
-                                   'OEM (Footprint)', 'OEM Supply Chain'
-  ev_supply_chain_role    TEXT     e.g. 'Battery Cell', 'Thermal Management', 'Charging Infrastructure'
-  ev_battery_relevant     TEXT     values: 'Yes', 'No', 'Indirect'
-  industry_group          TEXT     e.g. 'Electronic and Other Electrical', 'Transportation Equipment'
-  facility_type           TEXT     e.g. 'Manufacturing Plant', 'R&D', 'Headquarters'
-  location_city           TEXT     e.g. 'LaGrange', 'Cartersville'
-  location_county         TEXT     e.g. 'Troup County', 'Gwinnett County', 'Hall County'
-  employment              FLOAT    number of employees at Georgia facility (not global headcount)
-  products_services       TEXT     free text e.g. 'Lithium-ion battery materials'
-  primary_oems            TEXT     OEM names e.g. 'Hyundai', 'Rivian', 'BMW'
-  supplier_affiliation_type TEXT
-  classification_method   TEXT
+def _build_schema_block(per_field: int = 5) -> str:
+    """
+    Compose the schema description shown to the LLM.
 
-IMPORTANT NOTES:
-  - 'Tier 1' is DIFFERENT from 'Tier 1/2'. Use exact match (=) when question says 'only'.
-  - Use ILIKE '%value%' only when question asks for broad/inclusive matching.
-  - employment <= 100000 to exclude global headcount outliers.
-  - Always include ORDER BY for ranked results.
-  - Always add LIMIT (default 50, max 200).
-"""
+    Column names come from CANONICAL_FIELDS (approved hardcoding). Example
+    values for each column are sampled from the live KB via metadata_loader
+    so the prompt always reflects current data and never carries a literal
+    company/county/OEM string in source code.
+    """
+    samples = kb_loader.sample_distinct_values(per_field=per_field)
+    lines: list[str] = ["TABLE: gev_companies", "COLUMNS:"]
+    lines.append("  id                      INTEGER  (primary key)")
+    for col in CANONICAL_FIELDS.values():
+        ftype = FIELD_TYPES.get(col, "text").upper()
+        examples = samples.get(col, [])
+        ex_str = ", ".join(repr(v) for v in examples[:per_field]) if examples else ""
+        ex_clause = f"  e.g. {ex_str}" if ex_str else ""
+        lines.append(f"  {col:<25} {ftype:<8}{ex_clause}")
+    lines.append("")
+    lines.append(f"OPERATORS (use only these): {', '.join(sorted(SUPPORTED_OPERATORS))}")
+    lines.append("")
+    lines.append("RULES:")
+    lines.append("  - Use exact match (=) when the question says 'only', 'strictly', 'exactly'.")
+    lines.append("  - Use ILIKE '%value%' when the question says 'including', 'or higher', 'broad'.")
+    lines.append("  - Always add ORDER BY for ranked / top-N questions.")
+    lines.append("  - Always add LIMIT (default 50, max 200).")
+    lines.append("  - Do NOT invent column names or values that are not present above.")
+    return "\n".join(lines)
 
-_FEW_SHOT = """
-EXAMPLES — notice how SQL matches the question's intent exactly:
-
-Q: Which county has the highest total employment among Tier 1 suppliers only?
-SQL: SELECT location_county, SUM(employment) AS total_employment, COUNT(*) AS company_count
-     FROM gev_companies
-     WHERE tier = 'Tier 1'
-       AND employment IS NOT NULL AND employment <= 100000
-     GROUP BY location_county ORDER BY total_employment DESC LIMIT 10;
-
-Q: List the top 5 counties by employment for Tier 1/2 suppliers.
-SQL: SELECT location_county, SUM(employment) AS total_employment, COUNT(*) AS company_count
-     FROM gev_companies
-     WHERE tier ILIKE '%Tier 1/2%'
-       AND employment IS NOT NULL AND employment <= 100000
-     GROUP BY location_county ORDER BY total_employment DESC LIMIT 5;
-
-Q: How many companies are in each EV supply chain role?
-SQL: SELECT ev_supply_chain_role, COUNT(*) AS company_count
-     FROM gev_companies
-     WHERE ev_supply_chain_role IS NOT NULL
-     GROUP BY ev_supply_chain_role ORDER BY company_count DESC LIMIT 50;
-
-Q: Which companies have more than 1000 employees and are EV battery relevant?
-SQL: SELECT company_name, tier, employment, location_county, ev_supply_chain_role
-     FROM gev_companies
-     WHERE employment > 1000
-       AND ev_battery_relevant ILIKE '%Yes%'
-     ORDER BY employment DESC LIMIT 50;
-
-Q: Show all companies in Hall County with their tier and role.
-SQL: SELECT company_name, tier, ev_supply_chain_role, employment, facility_type
-     FROM gev_companies
-     WHERE location_county ILIKE '%Hall%'
-     ORDER BY employment DESC NULLS LAST LIMIT 50;
-"""
 
 _SQL_PROMPT = """You are a PostgreSQL expert. Generate a single SQL SELECT query for the question below.
 
 DATABASE SCHEMA:
 {schema}
 
-EXAMPLES:
-{examples}
-
-RULES:
+OUTPUT RULES:
 1. Use ONLY the gev_companies table.
-2. Use exact match (=) when question says 'only', 'strictly', 'exactly'.
-3. Use ILIKE '%value%' when question says 'including', 'at least', 'or higher'.
-4. Always add LIMIT (use question's number or default 50).
-5. Always add ORDER BY for ranked/top-N questions.
-6. Output ONLY the SQL query. No explanation. No markdown. No backticks.
+2. Use ONLY the columns and operators listed in the schema above.
+3. Output ONLY the SQL query — no explanation, no markdown, no backticks.
 
 QUESTION: {question}
 SQL:"""
@@ -135,37 +96,36 @@ SQL:"""
 def generate_sql(question: str) -> str:
     """
     Use the LLM to generate a SQL query from the question.
-    Phase 5: injects dynamically retrieved few-shot examples from Qdrant.
-    Returns the raw SQL string, or empty string on failure.
+
+    Few-shot examples are no longer hardcoded in source. If a Phase-5
+    few-shot store is configured, KB-grounded examples are injected at
+    runtime; otherwise the LLM reasons from the schema block alone.
     """
     cfg = Config.get()
+    schema_block = _build_schema_block()
 
-    # ── Phase 5: Dynamic few-shot injection ───────────────────────────────────
-    # Try to retrieve similar verified SQL examples from the Qdrant store.
-    # Falls back to static examples if store is empty or unavailable.
-    dynamic_examples = _FEW_SHOT   # default: static examples
+    fewshot_block = ""
     try:
         from phase5_fewshot.few_shot_retriever import get_few_shot_block
         block = get_few_shot_block(question, query_type="sql", top_k=3)
         if block:
-            dynamic_examples = block + "\n\n" + _FEW_SHOT   # prepend dynamic, keep static as fallback
-            logger.info("Phase 5: injected %d dynamic SQL examples", block.count("Example "))
+            fewshot_block = "\n\nEXAMPLES (retrieved from approved store):\n" + block
+            logger.info("Phase 5: injected dynamic SQL examples")
     except Exception as exc:
-        logger.debug("Phase 5 few-shot unavailable (%s) — using static examples", exc)
+        logger.debug("Phase 5 few-shot unavailable (%s) — proceeding with schema-only prompt", exc)
 
     prompt = _SQL_PROMPT.format(
-        schema=_SCHEMA,
-        examples=dynamic_examples,
+        schema=schema_block + fewshot_block,
         question=question,
     )
 
     payload = {
-        "model":  cfg.ollama_cypher_model,   # same fast model used for Cypher
+        "model":  cfg.ollama_cypher_model,
         "prompt": prompt,
         "stream": False,
         "options": {
-            "temperature": 0.0,   # deterministic
-            "num_predict": 300,   # SQL is short
+            "temperature": 0.0,
+            "num_predict": 300,
             "num_ctx":     4096,
         },
     }
@@ -185,9 +145,7 @@ def generate_sql(question: str) -> str:
 
 def _clean_sql(raw: str) -> str:
     """Strip markdown fences and extract the SELECT statement."""
-    # Remove ```sql ... ``` fences
     raw = re.sub(r"```(?:sql)?", "", raw, flags=re.IGNORECASE).strip("`").strip()
-    # Extract only the SELECT statement (safety: ignore any trailing text)
     match = re.search(r"(SELECT\b.*?)(?:;|$)", raw, re.IGNORECASE | re.DOTALL)
     if match:
         return match.group(1).strip() + ";"
@@ -220,7 +178,6 @@ def execute_sql_safe(sql: str) -> list[dict]:
     if not sql or not _is_safe_sql(sql):
         return []
 
-    # Enforce max LIMIT for safety
     if "LIMIT" not in sql.upper():
         sql = sql.rstrip(";") + " LIMIT 200;"
 
