@@ -49,7 +49,7 @@ from neo4j import GraphDatabase, Driver
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase3.graph_loader")
+logger = get_logger("db_storage.graph_loader")
 
 _driver: Driver | None = None
 

@@ -35,7 +35,7 @@ from core_agent.retrieval_types import (
 from shared.logger import get_logger
 from shared.metadata_schema import FINAL_SCORE_WEIGHTS
 
-logger = get_logger("phase4.retrieval_fusion")
+logger = get_logger("retrievals.retrieval_fusion")
 
 
 # Score weights are owned by shared/metadata_schema.py (single source of
@@ -233,20 +233,6 @@ def apply_reranker_if_needed(
 
 # ── Evidence selection ───────────────────────────────────────────────────────
 
-_DEFAULT_EVIDENCE_LIMIT: dict[QueryClass, int] = {
-    QueryClass.EXACT_FILTER:        18,
-    QueryClass.AGGREGATE:           15,
-    QueryClass.COUNT:               18,
-    QueryClass.RANK:                10,
-    QueryClass.TOP_N:               10,
-    QueryClass.NETWORK:             20,
-    QueryClass.PRODUCT_CAPABILITY:  18,
-    QueryClass.RISK:                30,
-    QueryClass.AMBIGUOUS_SEMANTIC:  12,
-    QueryClass.FALLBACK_SEMANTIC:   12,
-}
-
-
 def select(
     candidates: list[Candidate],
     query_class: QueryClass,
@@ -260,32 +246,29 @@ def select(
     if not candidates:
         return []
 
-    if limit is None:
-        limit = _DEFAULT_EVIDENCE_LIMIT.get(query_class, 18)
-
     chosen: list[Candidate]
     if query_class in (QueryClass.EXACT_FILTER, QueryClass.NETWORK):
         # Take all SQL/Cypher-validated rows; sort by employment desc when
         # available so the answer surfaces the largest first.
         rows = [c for c in candidates if c.hard_filter_passed]
         rows.sort(key=lambda c: float(c.row.get("employment") or 0), reverse=True)
-        chosen = rows[:limit]
+        chosen = rows
 
     elif query_class in (QueryClass.RANK, QueryClass.TOP_N):
         rows = [c for c in candidates if c.hard_filter_passed]
         rows.sort(key=lambda c: float(c.row.get("employment") or 0), reverse=True)
-        chosen = rows[:limit]
+        chosen = rows
 
     elif query_class == QueryClass.RISK:
-        chosen = [c for c in candidates if c.hard_filter_passed][:limit]
+        chosen = [c for c in candidates if c.hard_filter_passed]
 
     elif query_class in (QueryClass.AGGREGATE, QueryClass.COUNT):
-        chosen = [c for c in candidates if c.hard_filter_passed][:limit]
+        chosen = [c for c in candidates if c.hard_filter_passed]
 
     else:
         # PRODUCT_CAPABILITY, AMBIGUOUS_SEMANTIC, FALLBACK_SEMANTIC: rely on
         # fused score (which already incorporates rerank when applicable).
-        chosen = [c for c in candidates if c.hard_filter_passed][:limit]
+        chosen = [c for c in candidates if c.hard_filter_passed]
 
     for c in chosen:
         c.final_selected = True

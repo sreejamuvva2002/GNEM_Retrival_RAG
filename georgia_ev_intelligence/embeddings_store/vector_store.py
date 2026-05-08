@@ -44,7 +44,7 @@ from chunking.chunker import Chunk
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase2.vector_store")
+logger = get_logger("embeddings_store.vector_store")
 
 # How many points to upload in one Qdrant batch
 UPLOAD_BATCH_SIZE = 100
@@ -80,6 +80,7 @@ def ensure_payload_indexes() -> None:
     client = get_qdrant_client()
     collection_name = get_collection_name()
     index_fields = {
+        # Legacy fields
         "source_type": models.PayloadSchemaType.KEYWORD,
         "chunk_type": models.PayloadSchemaType.KEYWORD,
         "chunk_view": models.PayloadSchemaType.KEYWORD,
@@ -100,6 +101,20 @@ def ensure_payload_indexes() -> None:
         "ev_supply_chain_role": models.PayloadSchemaType.KEYWORD,
         "ev_battery_relevant": models.PayloadSchemaType.KEYWORD,
         "employment": models.PayloadSchemaType.FLOAT,
+        # Schema-aligned fields (data dictionary)
+        "Record_ID":       models.PayloadSchemaType.KEYWORD,
+        "Company":         models.PayloadSchemaType.KEYWORD,
+        "Company_Clean":   models.PayloadSchemaType.KEYWORD,
+        "County":          models.PayloadSchemaType.KEYWORD,
+        "Tier_Level":      models.PayloadSchemaType.KEYWORD,
+        "Tier_Confidence": models.PayloadSchemaType.KEYWORD,
+        "OEM_GA":          models.PayloadSchemaType.KEYWORD,
+        "Industry_Group":  models.PayloadSchemaType.KEYWORD,
+        "Industry_Code":   models.PayloadSchemaType.INTEGER,
+        "Industry_Name":   models.PayloadSchemaType.KEYWORD,
+        "Is_Announcement": models.PayloadSchemaType.KEYWORD,
+        "Chunk_ID":        models.PayloadSchemaType.KEYWORD,
+        "Employment":      models.PayloadSchemaType.INTEGER,
     }
 
     for field_name, schema in index_fields.items():
@@ -358,12 +373,17 @@ def _build_metadata_filter(filters: dict[str, Any]) -> Filter | None:
     must_conditions = []
 
     str_fields = [
+        # Legacy fields
         "company_name", "tier", "location_county", "location_city",
         "ev_battery_relevant", "source_type", "chunk_type",
         "document_type", "ev_supply_chain_role", "facility_type",
         "industry_group", "chunk_view", "company_row_id",
         "kb_schema_version", "source_row_hash", "embed_model",
         "classification_method", "supplier_affiliation_type", "primary_oems",
+        # Schema-aligned fields
+        "Record_ID", "Company", "Company_Clean", "County",
+        "Tier_Level", "Tier_Confidence", "Industry_Group", "Industry_Name",
+        "Chunk_ID",
     ]
     for field in str_fields:
         if field in filters:
@@ -371,9 +391,22 @@ def _build_metadata_filter(filters: dict[str, Any]) -> Filter | None:
                 FieldCondition(key=field, match=MatchValue(value=filters[field]))
             )
 
-    # Employment range
-    min_emp = filters.get("min_employment")
-    max_emp = filters.get("max_employment")
+    # Boolean fields (OEM_GA, Is_Announcement) — stored as Python bool, match directly
+    for bool_field in ("OEM_GA", "Is_Announcement"):
+        if bool_field in filters:
+            must_conditions.append(
+                FieldCondition(key=bool_field, match=MatchValue(value=filters[bool_field]))
+            )
+
+    # Industry_Code — integer exact match
+    if "Industry_Code" in filters:
+        must_conditions.append(
+            FieldCondition(key="Industry_Code", match=MatchValue(value=int(filters["Industry_Code"])))
+        )
+
+    # Employment range — support both legacy and schema-aligned key prefixes
+    min_emp = filters.get("min_employment") or filters.get("min_Employment")
+    max_emp = filters.get("max_employment") or filters.get("max_Employment")
     if min_emp is not None or max_emp is not None:
         must_conditions.append(
             FieldCondition(

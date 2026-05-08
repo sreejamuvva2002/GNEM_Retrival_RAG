@@ -25,7 +25,7 @@ import httpx
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase5.embedder")
+logger = get_logger("embeddings_store.embedder")
 
 _EMBED_MODEL = "nomic-embed-text"
 _EMBED_DIM   = 768

@@ -17,7 +17,7 @@ import httpx
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase1.searcher")
+logger = get_logger("web_extraction.searcher")
 
 # Domains known to have high-quality EV supply chain content
 # Tavily will still search all domains, but we log when these appear

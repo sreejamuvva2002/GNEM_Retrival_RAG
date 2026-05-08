@@ -49,7 +49,7 @@ from shared.db import DomainMappingRule, get_session
 from shared.logger import get_logger
 from shared.metadata_schema import CANONICAL_FIELDS, HARD_FILTER_FIELDS
 
-logger = get_logger("phase4.synonym_expander")
+logger = get_logger("filters_and_validation.synonym_expander")
 
 
 # Approved rule-status values. The schema's column default is "active" for

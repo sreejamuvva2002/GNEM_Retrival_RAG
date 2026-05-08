@@ -14,7 +14,7 @@ from shared.config import Config
 from shared.db import Company, create_tables, get_session
 from shared.logger import get_logger
 
-logger = get_logger("phase1.kb_loader")
+logger = get_logger("db_storage.kb_loader")
 
 # ── Employment overrides: loaded from CSV, not hardcoded ──────────────────────
 # File: kb/employment_overrides.csv
@@ -69,6 +69,8 @@ _COL_MAP = {
     "supplier or affiliation type": "supplier_affiliation_type",
     "latitude": "latitude",
     "longitude": "longitude",
+    "pdf page": "pdf_page",
+    "page": "pdf_page",
 }
 
 
@@ -159,6 +161,13 @@ def _row_to_company_dict(row: pd.Series) -> dict[str, Any]:
     result["latitude"] = _parse_float(row.get("latitude"))
     result["longitude"] = _parse_float(row.get("longitude"))
     result["employment"] = _parse_employment(row.get("employment"))
+
+    # PDF page reference (int or None)
+    raw_page = row.get("pdf page") or row.get("page")
+    try:
+        result["pdf_page"] = int(float(str(raw_page))) if raw_page is not None and not (isinstance(raw_page, float) and pd.isna(raw_page)) else None
+    except (ValueError, TypeError):
+        result["pdf_page"] = None
 
     # Parse 'updated location' column: e.g. 'Savannah, Chatham County'
     # Split on first comma: city, county

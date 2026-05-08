@@ -18,7 +18,7 @@ from filters_and_validation.query_entity_extractor import Entities
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase4.filter_interpreter")
+logger = get_logger("filters_and_validation.filter_interpreter")
 
 _MAX_SAMPLE_ROWS = 12
 _MAX_FIELD_VALUES = 10

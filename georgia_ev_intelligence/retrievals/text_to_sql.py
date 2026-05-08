@@ -46,7 +46,7 @@ from shared.metadata_schema import (
     SUPPORTED_OPERATORS,
 )
 
-logger = get_logger("phase4.text_to_sql")
+logger = get_logger("retrievals.text_to_sql")
 
 
 def _build_schema_block(per_field: int = 5) -> str:

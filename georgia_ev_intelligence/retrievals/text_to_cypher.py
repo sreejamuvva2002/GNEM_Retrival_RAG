@@ -46,7 +46,7 @@ from shared.metadata_schema import (
     GRAPH_RELATIONSHIPS,
 )
 
-logger = get_logger("phase4.text_to_cypher")
+logger = get_logger("retrievals.text_to_cypher")
 
 
 # Mapping from gev_companies column name to the Company node property name.

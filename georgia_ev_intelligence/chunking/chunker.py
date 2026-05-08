@@ -26,7 +26,7 @@ from typing import Any
 
 from shared.logger import get_logger
 
-logger = get_logger("phase2.chunker")
+logger = get_logger("chunking.chunker")
 
 # ── Token size targets ────────────────────────────────────────────────────────
 CHILD_TOKEN_TARGET = 256    # Chunk size for semantic search
@@ -145,6 +145,74 @@ def _company_source_hash(company: dict[str, Any]) -> str:
 def _company_chunk_id(row_id: str, view_name: str) -> str:
     """Deterministic UUID so repeated company indexing upserts instead of duplicating."""
     return str(uuid.uuid5(_COMPANY_CHUNK_NAMESPACE, f"{row_id}:{view_name}"))
+
+
+def _parse_record_id(company: dict[str, Any]) -> str:
+    """MD5 hash of stable identity fields, first 12 hex chars — matches schema example a1b2c3d4e5f6."""
+    identity = "|".join([
+        str(company.get("company_name", "") or "").strip(),
+        str(company.get("location_county", "") or "").strip(),
+        str(company.get("employment", "") or "").strip(),
+        str(company.get("industry_group", "") or "").strip(),
+    ])
+    return hashlib.md5(identity.encode("utf-8")).hexdigest()[:12]
+
+
+def _clean_company_name(name: str) -> str:
+    """Strip * announcement markers: '*Rivian' → 'Rivian'."""
+    return name.strip("* ").strip()
+
+
+def _is_announcement(name: str) -> bool:
+    """Company name with leading/trailing * = announced, not yet operational."""
+    s = name.strip()
+    return s.startswith("*") or s.endswith("*")
+
+
+def _parse_tier(tier_str: str) -> tuple[str, str]:
+    """
+    Returns (tier_level, tier_confidence).
+    'Tier 1 (likely)'   → ('1', 'likely')
+    'Tier 2/3 (likely)' → ('2/3', 'likely')
+    'OEM'               → ('OEM', '')
+    'Tier 1'            → ('1', '')
+    """
+    s = tier_str.strip()
+    confidence = ""
+    m = re.search(r"\(([^)]+)\)", s)
+    if m:
+        confidence = m.group(1).strip().lower()
+        s = s[:m.start()].strip()
+    level = re.sub(r"(?i)^tier\s*", "", s).strip()
+    return level, confidence
+
+
+def _is_oem_ga(company: dict[str, Any]) -> bool:
+    """True if this company is a Georgia OEM (tier == OEM or role mentions OEM)."""
+    tier = str(company.get("tier", "") or "").strip().lower()
+    role = str(company.get("ev_supply_chain_role", "") or "").strip().lower()
+    return tier == "oem" or "oem" in role
+
+
+def _parse_industry_group(industry_str: str) -> tuple[int | None, str, str]:
+    """
+    Returns (code, name, full_string).
+    '37: Transportation Equipment' → (37, 'Transportation Equipment', '37: Transportation Equipment')
+    'Textile Products'             → (None, 'Textile Products', 'Textile Products')
+    """
+    s = industry_str.strip()
+    m = re.match(r"^(\d+)\s*[:\-]\s*(.+)$", s)
+    if m:
+        return int(m.group(1)), m.group(2).strip(), s
+    m2 = re.match(r"^(\d+)$", s)
+    if m2:
+        return int(m2.group(1)), "", s
+    return None, s, s
+
+
+def _normalize_county(county_str: str) -> str:
+    """'Gordon County' → 'Gordon', 'Troup County' → 'Troup', 'Troup' → 'Troup'."""
+    return re.sub(r"\s+[Cc]ounty$", "", county_str.strip()).strip()
 
 
 def _nonempty_parts(parts: list[str]) -> list[str]:
@@ -365,55 +433,78 @@ def chunk_company_record(
     row_id = _company_row_id(company)
     source_hash = _company_source_hash(company)
     company_context = _company_context_text(company, master_text)
-    products_services = company.get("products_services") or ""
+
+    raw_name     = str(company.get("company_name", "") or "").strip()
+    tier_raw     = str(company.get("tier", "") or "").strip()
+    industry_raw = str(company.get("industry_group", "") or "").strip()
+    county_raw   = str(company.get("location_county", "") or "").strip()
+    products     = str(company.get("products_services", "") or "").strip()
+
+    tier_level, tier_confidence = _parse_tier(tier_raw)
+    industry_code, industry_name, industry_full = _parse_industry_group(industry_raw)
 
     metadata = {
-        # Core identity
-        "company_name": company.get("company_name", ""),
-        "company_id": company.get("id"),
-        "company_row_id": row_id,
-        # Supply chain classification
-        "tier": company.get("tier", ""),
-        "ev_supply_chain_role": company.get("ev_supply_chain_role", ""),
-        "primary_oems": company.get("primary_oems", ""),
-        "ev_battery_relevant": company.get("ev_battery_relevant", ""),
-        "industry_group": company.get("industry_group", ""),
-        "facility_type": company.get("facility_type", ""),
-        # Location (critical for geo queries)
-        "location_city": company.get("location_city", ""),
-        "location_county": company.get("location_county", ""),
-        "location_state": company.get("location_state", "Georgia"),
-        "latitude": company.get("latitude"),
-        "longitude": company.get("longitude"),
-        # Size
-        "employment": company.get("employment"),
-        # Products / classification
-        "products_services": products_services,
-        "products_services_full": products_services,
-        "classification_method": company.get("classification_method", ""),
+        # ── Schema-aligned fields (exact names from data dictionary) ──────
+        "Record_ID":               _parse_record_id(company),
+        "Company":                 raw_name,
+        "Company_Clean":           _clean_company_name(raw_name),
+        "Employment":              int(company["employment"]) if company.get("employment") is not None else None,
+        "Product_Service":         products,
+        "County":                  _normalize_county(county_raw),
+        "Tier_Category_heuristic": tier_raw,
+        "Tier_Level":              tier_level,
+        "Tier_Confidence":         tier_confidence,
+        "OEM_GA":                  _is_oem_ga(company),
+        "Industry_Group":          industry_full,
+        "Industry_Code":           industry_code,
+        "Industry_Name":           industry_name,
+        "PDF_Page":                company.get("pdf_page"),
+        "Is_Announcement":         _is_announcement(raw_name),
+        # Chunk_ID and Embedding_Text are injected per-view in the loop below
+        # ── Legacy/internal fields (kept for backward compatibility) ──────
+        "company_name":            _clean_company_name(raw_name),
+        "company_id":              company.get("id"),
+        "company_row_id":          row_id,
+        "tier":                    tier_raw,
+        "ev_supply_chain_role":    company.get("ev_supply_chain_role", ""),
+        "primary_oems":            company.get("primary_oems", ""),
+        "ev_battery_relevant":     company.get("ev_battery_relevant", ""),
+        "industry_group":          industry_raw,
+        "facility_type":           company.get("facility_type", ""),
+        "location_city":           str(company.get("location_city", "") or "").strip(),
+        "location_county":         county_raw,
+        "location_state":          company.get("location_state", "Georgia"),
+        "latitude":                company.get("latitude"),
+        "longitude":               company.get("longitude"),
+        "employment":              company.get("employment"),
+        "products_services":       products,
+        "products_services_full":  products,
+        "classification_method":   company.get("classification_method", ""),
         "supplier_affiliation_type": company.get("supplier_affiliation_type", ""),
-        # Chunk metadata
-        "source_type": "gnem_excel",
-        "chunk_type": "company",
-        "kb_schema_version": COMPANY_CHUNK_SCHEMA_VERSION,
-        "source_row_hash": source_hash,
-        "company_context_text": company_context,
-        "master_text": master_text,
-        "document_id": None,
+        "source_type":             "gnem_excel",
+        "chunk_type":              "company",
+        "kb_schema_version":       COMPANY_CHUNK_SCHEMA_VERSION,
+        "source_row_hash":         source_hash,
+        "company_context_text":    company_context,
+        "master_text":             master_text,
+        "document_id":             None,
     }
 
     chunks: list[Chunk] = []
     for view_name, view_text in _company_view_texts(company, master_text):
+        chunk_id = _company_chunk_id(row_id, view_name)
         chunk = Chunk(
-            chunk_id=_company_chunk_id(row_id, view_name),
+            chunk_id=chunk_id,
             chunk_type="company",
             parent_id=None,
             text=view_text,
             token_estimate=_estimate_tokens(view_text),
             metadata={
                 **metadata,
-                "chunk_view": view_name,
-                "text_preview": view_text[:200],
+                "Chunk_ID":       chunk_id,
+                "Embedding_Text": view_text,
+                "chunk_view":     view_name,
+                "text_preview":   view_text[:200],
             },
         )
         chunks.append(chunk)

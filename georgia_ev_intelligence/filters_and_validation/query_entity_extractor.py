@@ -31,7 +31,7 @@ from functools import lru_cache
 
 from shared.logger import get_logger
 
-logger = get_logger("phase4.entity_extractor")
+logger = get_logger("filters_and_validation.entity_extractor")
 
 
 # ── Load KB values from the GNEM workbook (cached per session) ───────────────

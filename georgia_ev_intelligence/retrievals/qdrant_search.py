@@ -1,28 +1,29 @@
 """
 Phase 4 — Qdrant search helper.
 
-Thin wrapper around `embeddings_store.vector_store` (search_hybrid,
-search_dense, scroll_points) that:
+This module is a candidate-retrieval wrapper around embeddings_store.vector_store.
 
-  - translates a deterministic `Entities` object plus an ambiguity-branch
-    filter overlay into Qdrant payload-pushdown filters (only safe exact-
-    match fields — county/city/industry_group/facility_type/classification_
-    method/supplier_affiliation_type/ev_battery_relevant/employment range),
-  - emits Candidate objects keyed by `company_row_id` (or canonical name as
-    fallback) so the fusion layer can merge them with SQL/Cypher candidates,
-  - keeps the existing `_load_all_companies` cached scroll helper available
-    for fallback paths.
+It provides:
+  - dense()  : true dense-vector retrieval using search_dense
+  - hybrid() : dense + sparse/RRF retrieval using search_hybrid
+  - sparse() : true sparse/BM25 retrieval only if vector_store.search_sparse exists;
+               otherwise explicit hybrid fallback with audit metadata
 
-Why the pushdown is conservative: payload index `MatchValue` is exact, so
-pushing down a tier value would over-filter (an exact-tier predicate would
-exclude compound-tier rows). Tier and OEM/role matches are deferred to
-evidence_validator, which has variant-tolerant `_tier_matches` and OEM
-substring logic.
+Important:
+Qdrant retrieval is only a candidate-recall layer.
+Final candidates must still pass:
+  - deduplication
+  - hard-filter validation
+  - reranking
+  - evidence validation
+before answer generation.
 """
+
 from __future__ import annotations
 
+import os
 from functools import lru_cache
-from typing import Any
+from typing import Any, Callable
 
 from embeddings_store.doc_embedder import embed_single
 from embeddings_store.vector_store import (
@@ -30,198 +31,458 @@ from embeddings_store.vector_store import (
     search_dense as _vs_dense,
     search_hybrid as _vs_hybrid,
 )
+
+try:
+    from embeddings_store.vector_store import search_sparse as _vs_sparse  # type: ignore
+except Exception:
+    _vs_sparse = None  # type: ignore
+
 from filters_and_validation.query_entity_extractor import Entities
 from core_agent.retrieval_types import Candidate
 from shared.logger import get_logger
 
-logger = get_logger("phase4.qdrant_search")
+logger = get_logger("retrievals.qdrant_search")
 
 
 _BASE_COMPANY_FILTERS = {
     "chunk_type": "company",
     "source_type": "gnem_excel",
 }
+
 _MASTER_COMPANY_FILTERS = {
     **_BASE_COMPANY_FILTERS,
     "chunk_view": "master",
 }
 
-# Maximum candidates fetched per Qdrant search before fusion + reranker.
-DEFAULT_K = 120
+DEFAULT_K = int(os.getenv("QDRANT_SEARCH_DEFAULT_K", "120"))
+FULL_SCROLL_LIMIT = int(os.getenv("QDRANT_MASTER_SCROLL_LIMIT", "5000"))
 
 
-# ── Payload mapping ──────────────────────────────────────────────────────────
+def _get_entity_value(entities: Entities, *names: str) -> Any:
+    for name in names:
+        value = getattr(entities, name, None)
+        if value not in (None, "", [], {}):
+            return value
+    return None
 
-def _safe_pushdown_filters(entities: Entities, branch_filters: dict | None) -> dict[str, Any]:
+
+def _embed_query(query_text: str) -> list[float] | None:
+    try:
+        qvec = embed_single(query_text)
+    except Exception as exc:
+        logger.exception("embed_single failed for query=%r: %s", query_text[:120], exc)
+        return None
+
+    if qvec is None:
+        logger.warning("embed_single returned None for query=%r", query_text[:120])
+        return None
+
+    return qvec
+
+
+def _safe_pushdown_filters(
+    entities: Entities,
+    branch_filters: dict | None,
+) -> dict[str, Any]:
     """
-    Build the dict of payload filters that are safe to push down to Qdrant.
+    Build safe Qdrant payload filters.
 
-    Excluded on purpose:
-      - tier        : exact MatchValue would over-filter compound tiers
-      - primary_oems: exact MatchValue, but DB stores comma-separated lists
-      - ev_supply_chain_role : multi-role lists need OR, not exact
-      - company_name (unless explicitly specified)
+    Safe pushdown:
+      - source_type
+      - chunk_type
+      - location_county
+      - location_city
+      - industry_group
+      - facility_type
+      - classification_method
+      - supplier_affiliation_type
+      - ev_battery_relevant
+      - min_employment
+      - max_employment
 
-    The evidence_validator handles all of the above with variant-tolerant
-    logic so candidates are not silently dropped at retrieval time.
+    Not pushed down:
+      - tier
+      - primary_oems
+      - ev_supply_chain_role
+      - products_services
+      - company_name by default
+
+    Reason:
+    Qdrant MatchValue filtering is exact. Fields like tier/OEM/role often
+    contain compound strings, so exact pushdown can wrongly remove valid rows.
+    These must be checked later by evidence_validator.
     """
     f: dict[str, Any] = dict(_BASE_COMPANY_FILTERS)
 
-    if entities.county:
-        f["location_county"] = entities.county
-    if entities.industry_group:
-        f["industry_group"] = entities.industry_group
-    if entities.facility_type:
-        f["facility_type"] = entities.facility_type
-    if entities.classification_method:
-        f["classification_method"] = entities.classification_method
-    if entities.supplier_affiliation_type:
-        f["supplier_affiliation_type"] = entities.supplier_affiliation_type
-    if entities.ev_relevance_value:
-        f["ev_battery_relevant"] = entities.ev_relevance_value
-    if entities.min_employment is not None:
-        f["min_employment"] = float(entities.min_employment)
-    if entities.max_employment is not None:
-        f["max_employment"] = float(entities.max_employment)
+    county = _get_entity_value(entities, "county", "location_county")
+    city = _get_entity_value(entities, "city", "location_city")
+    industry_group = _get_entity_value(entities, "industry_group")
+    facility_type = _get_entity_value(entities, "facility_type")
+    classification_method = _get_entity_value(entities, "classification_method")
+    supplier_affiliation_type = _get_entity_value(
+        entities,
+        "supplier_affiliation_type",
+        "supplier_type",
+    )
+    ev_relevance_value = _get_entity_value(
+        entities,
+        "ev_relevance_value",
+        "ev_battery_relevant",
+        "ev_relevant",
+    )
+
+    if county:
+        f["location_county"] = county
+    if city:
+        f["location_city"] = city
+    if industry_group:
+        f["industry_group"] = industry_group
+    if facility_type:
+        f["facility_type"] = facility_type
+    if classification_method:
+        f["classification_method"] = classification_method
+    if supplier_affiliation_type:
+        f["supplier_affiliation_type"] = supplier_affiliation_type
+    if ev_relevance_value:
+        f["ev_battery_relevant"] = ev_relevance_value
+
+    min_employment = _get_entity_value(entities, "min_employment")
+    max_employment = _get_entity_value(entities, "max_employment")
+
+    if min_employment is not None:
+        f["min_employment"] = float(min_employment)
+    if max_employment is not None:
+        f["max_employment"] = float(max_employment)
 
     if branch_filters:
         for k, v in branch_filters.items():
-            # Only overlay keys that _build_metadata_filter understands.
             if k in {
-                "location_county", "location_city", "industry_group",
-                "facility_type", "classification_method",
-                "supplier_affiliation_type", "ev_battery_relevant",
-                "min_employment", "max_employment",
+                "location_county",
+                "location_city",
+                "industry_group",
+                "facility_type",
+                "classification_method",
+                "supplier_affiliation_type",
+                "ev_battery_relevant",
+                "min_employment",
+                "max_employment",
             } and v is not None:
                 f[k] = v
 
     return f
 
 
-# ── Result wrapping ──────────────────────────────────────────────────────────
-
 def _payload_to_candidate_row(payload: dict[str, Any]) -> dict[str, Any]:
-    """Project a Qdrant payload onto the canonical company-row shape."""
     return {
-        "company_row_id":  payload.get("company_row_id"),
-        "company_name":    payload.get("company_name", ""),
-        "tier":            payload.get("tier", ""),
+        "company_row_id": payload.get("company_row_id"),
+        "company_name": payload.get("company_name", ""),
+        "tier": payload.get("tier", ""),
         "ev_supply_chain_role": payload.get("ev_supply_chain_role", ""),
-        "primary_oems":    payload.get("primary_oems", ""),
+        "primary_oems": payload.get("primary_oems", ""),
         "ev_battery_relevant": payload.get("ev_battery_relevant", ""),
-        "industry_group":  payload.get("industry_group", ""),
-        "facility_type":   payload.get("facility_type", ""),
-        "location_city":   payload.get("location_city", ""),
+        "industry_group": payload.get("industry_group", ""),
+        "facility_type": payload.get("facility_type", ""),
+        "location_city": payload.get("location_city", ""),
         "location_county": payload.get("location_county", ""),
-        "employment":      payload.get("employment"),
-        "products_services": payload.get("products_services_full") or payload.get("products_services", ""),
+        "employment": payload.get("employment"),
+        "products_services": (
+            payload.get("products_services_full")
+            or payload.get("products_services")
+            or ""
+        ),
         "classification_method": payload.get("classification_method", ""),
         "supplier_affiliation_type": payload.get("supplier_affiliation_type", ""),
-        "chunk_view":      payload.get("chunk_view", ""),
+        "chunk_view": payload.get("chunk_view", ""),
+        "chunk_type": payload.get("chunk_type", ""),
+        "source_type": payload.get("source_type", ""),
         "source_row_hash": payload.get("source_row_hash", ""),
+        "kb_schema_version": payload.get("kb_schema_version", ""),
         "text": (
             payload.get("company_context_text")
             or payload.get("master_text")
+            or payload.get("parent_text")
             or payload.get("text", "")
         ),
     }
 
 
-def _wrap_results(results: list[dict[str, Any]], source_name: str) -> list[Candidate]:
+def _wrap_results(
+    results: list[dict[str, Any]],
+    actual_source_name: str,
+    requested_source_name: str | None = None,
+) -> list[Candidate]:
     """
-    Convert Qdrant search results into Candidate objects.
+    Convert Qdrant results into Candidate objects.
 
-    Multiple chunks can map to the same canonical company; the fusion
-    layer merges by canonical key. Here we keep one Candidate per result
-    chunk and let retrieval_fusion.merge collapse duplicates.
+    actual_source_name:
+      The actual retriever used: dense, hybrid, sparse.
+
+    requested_source_name:
+      The retriever requested by caller. Useful when sparse() falls back to hybrid.
     """
     out: list[Candidate] = []
+
     for r in results:
-        payload = r.get("metadata") or {}
+        payload = r.get("metadata") or r.get("payload") or {}
+        if not isinstance(payload, dict):
+            continue
+
         row = _payload_to_candidate_row(payload)
         name = (row.get("company_name") or r.get("company_name") or "").strip()
+
         if not name:
             continue
+
+        raw_score = float(r.get("score") or 0.0)
+
+        row["_retrieval_actual_source"] = actual_source_name
+        row["_retrieval_requested_source"] = requested_source_name or actual_source_name
+        row["_raw_retrieval_score"] = raw_score
+        row["_qdrant_point_id"] = (
+            r.get("id")
+            or r.get("point_id")
+            or payload.get("point_id")
+            or ""
+        )
+
         cand = Candidate(
             canonical_name=name,
             company_row_id=row.get("company_row_id") or None,
             source_row_hash=row.get("source_row_hash") or None,
             row=row,
         )
-        cand.add_source(source_name, float(r.get("score") or 0.0))
+
+        source_label = actual_source_name
+        if requested_source_name and requested_source_name != actual_source_name:
+            source_label = f"{requested_source_name}_via_{actual_source_name}"
+
+        cand.add_source(source_label, raw_score)
         out.append(cand)
+
     return out
 
 
-# ── Public API ───────────────────────────────────────────────────────────────
-
-def dense(query_text: str, entities: Entities, branch_filters: dict | None = None,
-          k: int = DEFAULT_K) -> list[Candidate]:
-    """Dense-vector search with safe payload pushdown."""
-    if not query_text.strip():
+def _run_search(
+    *,
+    query_text: str,
+    entities: Entities,
+    branch_filters: dict | None,
+    k: int,
+    search_fn: Callable[..., list[dict[str, Any]]],
+    actual_source_name: str,
+    requested_source_name: str | None = None,
+    needs_query_vector: bool,
+    pass_query_text: bool,
+) -> list[Candidate]:
+    if not query_text or not query_text.strip():
         return []
+
     qfilter = _safe_pushdown_filters(entities, branch_filters)
-    qvec = embed_single(query_text)
-    if qvec is None:
-        logger.warning("dense: embed_single returned None for query=%r", query_text[:80])
+
+    qvec: list[float] | None = None
+    if needs_query_vector:
+        qvec = _embed_query(query_text)
+        if qvec is None:
+            return []
+
+    try:
+        if pass_query_text and needs_query_vector:
+            results = search_fn(query_text, qvec, top_k=k, filters=qfilter)
+        elif pass_query_text and not needs_query_vector:
+            results = search_fn(query_text, top_k=k, filters=qfilter)
+        else:
+            results = search_fn(qvec, top_k=k, filters=qfilter)
+    except Exception as exc:
+        logger.exception(
+            "Qdrant %s search failed for query=%r: %s",
+            actual_source_name,
+            query_text[:120],
+            exc,
+        )
         return []
-    results = _vs_dense(qvec, top_k=k, filters=qfilter)
-    return _wrap_results(results, "dense")
+
+    return _wrap_results(
+        results,
+        actual_source_name=actual_source_name,
+        requested_source_name=requested_source_name,
+    )
 
 
-def hybrid(query_text: str, entities: Entities, branch_filters: dict | None = None,
-           k: int = DEFAULT_K) -> list[Candidate]:
-    """Hybrid dense+sparse RRF search with safe payload pushdown.
-
-    Use this when you want a single fused score blending semantic and BM25
-    matching. The two sub-scores are rolled into one via Qdrant's RRF and
-    surfaced under the source name 'hybrid'. retrieval_fusion treats this
-    as a stand-in for both 'dense' and 'sparse'.
+def dense(
+    query_text: str,
+    entities: Entities,
+    branch_filters: dict | None = None,
+    k: int = DEFAULT_K,
+) -> list[Candidate]:
     """
-    if not query_text.strip():
-        return []
-    qfilter = _safe_pushdown_filters(entities, branch_filters)
-    qvec = embed_single(query_text)
-    if qvec is None:
-        logger.warning("hybrid: embed_single returned None for query=%r", query_text[:80])
-        return []
-    results = _vs_hybrid(query_text, qvec, top_k=k, filters=qfilter)
-    return _wrap_results(results, "hybrid")
+    True dense-vector search.
 
-
-def sparse(query_text: str, entities: Entities, branch_filters: dict | None = None,
-           k: int = DEFAULT_K) -> list[Candidate]:
+    Uses:
+      embeddings_store.vector_store.search_dense(query_vector, top_k, filters)
     """
-    Sparse / BM25-style retrieval.
+    return _run_search(
+        query_text=query_text,
+        entities=entities,
+        branch_filters=branch_filters,
+        k=k,
+        search_fn=_vs_dense,
+        actual_source_name="dense",
+        requested_source_name="dense",
+        needs_query_vector=True,
+        pass_query_text=False,
+    )
 
-    Note: embeddings_store.vector_store does not expose a pure-sparse helper
-    today; the underlying collection has a sparse index used inside
-    search_hybrid via RRF. We implement sparse() as 'hybrid with the same
-    query', which gives BM25 plus dense recall and avoids degraded recall
-    when a question word never appeared in the dense vocabulary.
 
-    The fusion layer's normalisation handles the score scaling.
+def hybrid(
+    query_text: str,
+    entities: Entities,
+    branch_filters: dict | None = None,
+    k: int = DEFAULT_K,
+) -> list[Candidate]:
     """
-    return hybrid(query_text, entities, branch_filters, k=k)
+    True hybrid search.
+
+    Uses:
+      embeddings_store.vector_store.search_hybrid(query_text, query_vector, top_k, filters)
+
+    This should represent Qdrant RRF fusion between dense and sparse/BM25.
+    """
+    return _run_search(
+        query_text=query_text,
+        entities=entities,
+        branch_filters=branch_filters,
+        k=k,
+        search_fn=_vs_hybrid,
+        actual_source_name="hybrid",
+        requested_source_name="hybrid",
+        needs_query_vector=True,
+        pass_query_text=True,
+    )
 
 
-# ── Cached full-scroll fallback ──────────────────────────────────────────────
+def sparse(
+    query_text: str,
+    entities: Entities,
+    branch_filters: dict | None = None,
+    k: int = DEFAULT_K,
+) -> list[Candidate]:
+    """
+    Sparse/BM25 retrieval.
 
-@lru_cache(maxsize=1)
-def load_all_master_companies() -> list[dict[str, Any]]:
-    """Load every master-view company chunk (one per company) once per session."""
-    records = scroll_points(filters=_MASTER_COMPANY_FILTERS, limit=600)
+    If vector_store.search_sparse exists:
+      uses true sparse search.
+
+    If vector_store.search_sparse does not exist:
+      uses hybrid search as an explicit fallback and labels the candidate source
+      as sparse_via_hybrid.
+
+    This avoids pretending hybrid fallback is pure sparse retrieval.
+    """
+    if _vs_sparse is not None:
+        return _run_search(
+            query_text=query_text,
+            entities=entities,
+            branch_filters=branch_filters,
+            k=k,
+            search_fn=_vs_sparse,
+            actual_source_name="sparse",
+            requested_source_name="sparse",
+            needs_query_vector=False,
+            pass_query_text=True,
+        )
+
+    logger.warning(
+        "sparse() requested but embeddings_store.vector_store.search_sparse "
+        "is not available. Falling back to hybrid search and labeling source "
+        "as sparse_via_hybrid."
+    )
+
+    return _run_search(
+        query_text=query_text,
+        entities=entities,
+        branch_filters=branch_filters,
+        k=k,
+        search_fn=_vs_hybrid,
+        actual_source_name="hybrid",
+        requested_source_name="sparse",
+        needs_query_vector=True,
+        pass_query_text=True,
+    )
+
+
+def _scroll_company_records_best_effort(
+    filters: dict[str, Any],
+    limit: int,
+) -> list[dict[str, Any]]:
+    records = scroll_points(filters=filters, limit=limit)
+
+    if len(records) >= limit:
+        logger.warning(
+            "scroll_points returned %d records, equal to or above limit=%d. "
+            "Fallback company cache may be truncated. Increase "
+            "QDRANT_MASTER_SCROLL_LIMIT or implement paginated scroll.",
+            len(records),
+            limit,
+        )
+
+    return records
+
+
+@lru_cache(maxsize=4)
+def load_all_master_companies(limit: int = FULL_SCROLL_LIMIT) -> list[dict[str, Any]]:
+    """
+    Load all master-view company chunks once per session.
+
+    This is a fallback helper for validation/complete-list paths.
+    It is not the preferred semantic retrieval path.
+    """
+    records = _scroll_company_records_best_effort(
+        filters=_MASTER_COMPANY_FILTERS,
+        limit=limit,
+    )
+
     if not records:
-        records = scroll_points(filters=_BASE_COMPANY_FILTERS, limit=600)
-    rows = [_payload_to_candidate_row(r["payload"]) for r in records]
-    rows = [r for r in rows if r.get("company_name")]
+        records = _scroll_company_records_best_effort(
+            filters=_BASE_COMPANY_FILTERS,
+            limit=limit,
+        )
+
+    rows: list[dict[str, Any]] = []
+
+    for record in records:
+        payload = record.get("payload") or record.get("metadata") or {}
+        if not isinstance(payload, dict):
+            continue
+
+        row = _payload_to_candidate_row(payload)
+        if row.get("company_name"):
+            rows.append(row)
+
     seen_keys: set[Any] = set()
     deduped: list[dict[str, Any]] = []
+
     for row in rows:
-        key = row.get("company_row_id") or row.get("company_name")
-        if key in seen_keys:
+        key = (
+            row.get("company_row_id")
+            or row.get("source_row_hash")
+            or row.get("company_name")
+        )
+
+        if not key or key in seen_keys:
             continue
+
         seen_keys.add(key)
         deduped.append(row)
+
     logger.info("load_all_master_companies cached %d rows", len(deduped))
     return deduped
+
+
+__all__ = [
+    "DEFAULT_K",
+    "FULL_SCROLL_LIMIT",
+    "dense",
+    "hybrid",
+    "sparse",
+    "load_all_master_companies",
+]

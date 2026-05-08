@@ -90,7 +90,7 @@ from core_agent.streaming import stream_answer_collected
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase4.agent")
+logger = get_logger("core_agent.agent")
 
 _PRODUCT_CONTEXT_CHARS = 180
 
@@ -239,35 +239,38 @@ def _retrieve_for_branch(
     entities: Entities,
     qclass: QueryClass,
     question: str,
+    allowed_retrievers: set[str] | None = None,
 ) -> list[Candidate]:
     """Run all enabled retrievers for one branch and return raw candidates."""
     per_source: list[list[Candidate]] = []
 
-    if branch.sql_plan is not None:
+    if branch.sql_plan is not None and (allowed_retrievers is None or "sql" in allowed_retrievers):
         try:
             per_source.append(run_sql_plan(branch.sql_plan, branch.filters, entities))
         except Exception as exc:
             logger.warning("SQL retrieval failed: %s", exc)
 
-    if branch.cypher_plan is not None:
+    if branch.cypher_plan is not None and (allowed_retrievers is None or "cypher" in allowed_retrievers):
         try:
             per_source.append(run_cypher_plan(branch.cypher_plan))
         except Exception as exc:
             logger.warning("Cypher retrieval failed: %s", exc)
 
     if branch.qdrant_plan is not None:
-        try:
-            dense_q = branch.qdrant_plan.semantic_query or question
-            per_source.append(qdrant_dense(dense_q, entities, branch.filters,
-                                           k=branch.qdrant_plan.k))
-        except Exception as exc:
-            logger.warning("Qdrant dense retrieval failed: %s", exc)
-        try:
-            sparse_q = branch.qdrant_plan.keyword_query or question
-            per_source.append(qdrant_sparse(sparse_q, entities, branch.filters,
-                                            k=branch.qdrant_plan.k))
-        except Exception as exc:
-            logger.warning("Qdrant sparse retrieval failed: %s", exc)
+        if allowed_retrievers is None or "dense" in allowed_retrievers:
+            try:
+                dense_q = branch.qdrant_plan.semantic_query or question
+                per_source.append(qdrant_dense(dense_q, entities, branch.filters,
+                                               k=branch.qdrant_plan.k))
+            except Exception as exc:
+                logger.warning("Qdrant dense retrieval failed: %s", exc)
+        if allowed_retrievers is None or "sparse" in allowed_retrievers:
+            try:
+                sparse_q = branch.qdrant_plan.keyword_query or question
+                per_source.append(qdrant_sparse(sparse_q, entities, branch.filters,
+                                                k=branch.qdrant_plan.k))
+            except Exception as exc:
+                logger.warning("Qdrant sparse retrieval failed: %s", exc)
 
     return merge(per_source)
 
@@ -277,11 +280,15 @@ def _process_branch(
     entities: Entities,
     qclass: QueryClass,
     question: str,
+    allowed_retrievers: set[str] | None = None,
+    bypass_reranker: bool = False,
+    bypass_validator: bool = False,
 ) -> RetrievalBranch:
     """End-to-end branch processing: retrieve → validate → rerank → fuse → select."""
-    candidates = _retrieve_for_branch(branch, entities, qclass, question)
-    candidates = validate_all(candidates, entities, qclass, branch.filters)
-    candidates = apply_reranker_if_needed(question, candidates, qclass)
+    candidates = _retrieve_for_branch(branch, entities, qclass, question, allowed_retrievers)
+    candidates = validate_all(candidates, entities, qclass, branch.filters, bypass=bypass_validator)
+    if not bypass_reranker:
+        candidates = apply_reranker_if_needed(question, candidates, qclass)
     candidates = fuse(candidates, qclass)
     branch.evidence = select(candidates, qclass)
     branch.support_level = (
@@ -336,7 +343,7 @@ class EVAgent:
             return f"[LLM unavailable] Retrieved data: {context[:500]}"
 
     # ── Inspect: full retrieval, no synthesis ─────────────────────────────
-    def inspect(self, question: str) -> dict[str, Any]:
+    def inspect(self, question: str, allowed_retrievers: set[str] | None = None, bypass_reranker: bool = False, bypass_validator: bool = False) -> dict[str, Any]:
         start = time.monotonic()
         run_id = str(uuid.uuid4())
         logger.info("Question: %s", question[:100])
@@ -356,7 +363,7 @@ class EVAgent:
         # Run branches in parallel — IO-bound, threads are sufficient.
         with ThreadPoolExecutor(max_workers=max(1, len(branches_))) as pool:
             futures = [
-                pool.submit(_process_branch, b, entities, qclass, question)
+                pool.submit(_process_branch, b, entities, qclass, question, allowed_retrievers, bypass_reranker, bypass_validator)
                 for b in branches_
             ]
             for fut in futures:
@@ -436,9 +443,9 @@ class EVAgent:
         }
 
     # ── Ask: inspect + synthesise + verify + audit ────────────────────────
-    def ask(self, question: str) -> dict[str, Any]:
+    def ask(self, question: str, allowed_retrievers: set[str] | None = None, bypass_reranker: bool = False, bypass_validator: bool = False) -> dict[str, Any]:
         start = time.monotonic()
-        result = self.inspect(question)
+        result = self.inspect(question, allowed_retrievers=allowed_retrievers, bypass_reranker=bypass_reranker, bypass_validator=bypass_validator)
         context = result["retrieved_context"]
 
         if context.startswith("__DIRECT_ANSWER__:"):
@@ -513,15 +520,29 @@ def main() -> None:
         "--context-only", action="store_true",
         help="Print only the exact retrieved context block inserted into the synthesis prompt.",
     )
+    parser.add_argument(
+        "--retrievers", default=None,
+        help="Comma-separated list of retrievers to run (e.g. sql,cypher,dense,sparse). If omitted, all enabled retrievers run."
+    )
+    parser.add_argument(
+        "--bypass-reranker", action="store_true",
+        help="Skip the cross-encoder reranking step to speed up retrieval."
+    )
+    parser.add_argument(
+        "--bypass-validator", action="store_true",
+        help="Skip the hard-filtering evidence validation step (allows raw vector results through)."
+    )
     args = parser.parse_args()
 
     agent = EVAgent(model_override=args.model)
+    allowed_retrievers = set(r.strip().lower() for r in args.retrievers.split(",")) if args.retrievers else None
+
     if args.context_only:
-        result = agent.inspect(args.question)
+        result = agent.inspect(args.question, allowed_retrievers=allowed_retrievers, bypass_reranker=args.bypass_reranker, bypass_validator=args.bypass_validator)
         print(result["prompt_context"] or result["retrieved_context"], end="")
         return
 
-    result = agent.ask(args.question)
+    result = agent.ask(args.question, allowed_retrievers=allowed_retrievers, bypass_reranker=args.bypass_reranker, bypass_validator=args.bypass_validator)
     print(result["answer"])
 
 

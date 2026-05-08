@@ -30,7 +30,7 @@ from embeddings_store.few_shot_embedder import embed_text, check_embed_model_ava
 from embeddings_store.qdrant_store import upsert_example, count_examples, delete_collection
 from shared.logger import get_logger
 
-logger = get_logger("phase5.seed")
+logger = get_logger("embeddings_store.seed")
 
 
 # ── Verified SQL examples ─────────────────────────────────────────────────────

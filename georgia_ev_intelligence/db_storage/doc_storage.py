@@ -15,7 +15,7 @@ from shared.logger import get_logger
 from shared.storage import key_exists, make_document_key, upload_bytes
 from web_extraction.extractor import ExtractedDocument
 
-logger = get_logger("phase1.doc_storage")
+logger = get_logger("db_storage.doc_storage")
 
 
 def save_document(

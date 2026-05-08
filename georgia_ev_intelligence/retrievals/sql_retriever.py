@@ -19,7 +19,7 @@ from shared.db import get_session, Company
 from shared.logger import get_logger
 from shared.metadata_schema import CANONICAL_FIELDS, SUPPORTED_OPERATORS
 
-logger = get_logger("phase4.sql_retriever")
+logger = get_logger("retrievals.sql_retriever")
 
 
 def _employment_outlier_cap() -> float:

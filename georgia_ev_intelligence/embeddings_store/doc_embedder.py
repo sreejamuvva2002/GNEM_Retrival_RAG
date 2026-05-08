@@ -24,7 +24,7 @@ from chunking.chunker import Chunk
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase2.embedder")
+logger = get_logger("embeddings_store.embedder")
 
 # Batch size for Ollama embedding calls
 # 32 is a conservative default for local Ollama embedding

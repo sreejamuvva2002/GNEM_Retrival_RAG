@@ -45,7 +45,7 @@ import httpx
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase4.streaming")
+logger = get_logger("core_agent.streaming")
 
 _ANSWER_PROMPT_TEMPLATE = """You are an expert analyst for the Georgia EV Supply Chain Intelligence System.
 

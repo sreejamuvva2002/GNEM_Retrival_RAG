@@ -29,7 +29,7 @@ from db_storage.graph_loader import (
 from db_storage.kb_loader import get_all_companies_from_db
 from shared.logger import get_logger
 
-logger = get_logger("phase3.pipeline")
+logger = get_logger("core_agent.pipeline")
 SEP = "=" * 55
 
 

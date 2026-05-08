@@ -49,7 +49,7 @@ from web_extraction.query_generator import build_queries, estimate_query_count
 from web_extraction.searcher import search_company
 from shared.logger import get_logger
 
-logger = get_logger("phase1.pipeline")
+logger = get_logger("core_agent.pipeline")
 
 # How many companies to process in parallel
 # 3 = safe concurrency for Tavily on one machine (no Ollama blocking now)

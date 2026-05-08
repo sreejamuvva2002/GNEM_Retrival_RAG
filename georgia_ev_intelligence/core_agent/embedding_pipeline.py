@@ -62,7 +62,7 @@ from shared.db import (
 from shared.logger import get_logger
 from sqlalchemy import text
 
-logger = get_logger("phase2.pipeline")
+logger = get_logger("core_agent.pipeline")
 
 SEPARATOR = "=" * 60
 

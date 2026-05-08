@@ -15,7 +15,7 @@ from typing import Any
 
 from shared.logger import get_logger
 
-logger = get_logger("phase5.qdrant_store")
+logger = get_logger("embeddings_store.qdrant_store")
 
 _COLLECTION_NAME = "gev_fewshot"
 _STORE_PATH      = Path("outputs/fewshot_store")

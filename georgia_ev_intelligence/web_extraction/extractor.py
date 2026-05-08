@@ -19,7 +19,7 @@ import httpx
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase1.extractor")
+logger = get_logger("web_extraction.extractor")
 
 # PDF mime types and extensions
 _PDF_CONTENT_TYPES = {"application/pdf", "application/x-pdf"}

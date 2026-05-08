@@ -13,7 +13,7 @@ from typing import Any
 from db_storage.graph_loader import get_driver
 from shared.logger import get_logger
 
-logger = get_logger("phase4.cypher_retriever")
+logger = get_logger("retrievals.cypher_retriever")
 
 
 def query_companies_by_tier(tier: str) -> list[dict]:

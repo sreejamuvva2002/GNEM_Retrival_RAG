@@ -20,7 +20,7 @@ from shared.db import Company, get_session
 from shared.logger import get_logger
 from shared.metadata_schema import CANONICAL_FIELDS, HARD_FILTER_FIELDS
 
-logger = get_logger("phase4.metadata_loader")
+logger = get_logger("filters_and_validation.metadata_loader")
 
 _CACHE_TTL_SEC = 600  # 10 minutes — KB rarely changes during a session
 

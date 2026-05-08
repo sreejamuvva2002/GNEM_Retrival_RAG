@@ -24,7 +24,7 @@ from core_agent.retrieval_types import AuditRecord, Candidate
 from shared.db import RetrievalAudit, RetrievalCandidate, get_session
 from shared.logger import get_logger
 
-logger = get_logger("phase4.audit_logger")
+logger = get_logger("db_storage.audit_logger")
 
 
 def _serialise(value: Any) -> Any:

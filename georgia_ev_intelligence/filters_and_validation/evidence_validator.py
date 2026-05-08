@@ -36,7 +36,7 @@ from core_agent.retrieval_types import (
 from retrievals.sql_retriever import find_company_by_name
 from shared.logger import get_logger
 
-logger = get_logger("phase4.evidence_validator")
+logger = get_logger("filters_and_validation.evidence_validator")
 
 
 # ── Local match helpers (deliberately not imported from vector_retriever
@@ -215,6 +215,7 @@ def validate_candidate(
     entities: Entities,
     query_class: QueryClass,
     branch_filters: dict[str, Any] | None = None,
+    bypass: bool = False,
 ) -> bool:
     """
     Apply hard-filter validation. Mutates `cand` to record the result.
@@ -237,10 +238,11 @@ def validate_candidate(
     row = _kb_row_for(cand)
 
     if row is None:
-        if query_class in ALLOW_VECTOR_ONLY:
+        if bypass or query_class in ALLOW_VECTOR_ONLY:
             cand.hard_filter_passed = True
-            if cand.row is not None:
-                cand.row["validated"] = True
+            if cand.row is None:
+                cand.row = {}
+            cand.row["validated"] = True
             return True
         cand.hard_filter_passed = False
         cand.rejection_reason = "no canonical gev_companies row found"
@@ -252,7 +254,7 @@ def validate_candidate(
     cand.company_row_id = row.get("id") or cand.company_row_id
 
     reason = _check_entity_against_row(entities, bf, row, query_class)
-    if reason is None:
+    if bypass or reason is None:
         cand.hard_filter_passed = True
         cand.row["validated"] = True
         return True
@@ -267,12 +269,13 @@ def validate_all(
     entities: Entities,
     query_class: QueryClass,
     branch_filters: dict[str, Any] | None = None,
+    bypass: bool = False,
 ) -> list[Candidate]:
     """Filter candidates in-place. Returns the surviving list."""
     survivors: list[Candidate] = []
     rejected = 0
     for cand in candidates:
-        if validate_candidate(cand, entities, query_class, branch_filters):
+        if validate_candidate(cand, entities, query_class, branch_filters, bypass=bypass):
             survivors.append(cand)
         else:
             rejected += 1

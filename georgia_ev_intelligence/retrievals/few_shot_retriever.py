@@ -21,7 +21,7 @@ from shared.logger import get_logger
 from embeddings_store.few_shot_embedder import embed_text
 from embeddings_store.qdrant_store import search_similar, count_examples
 
-logger = get_logger("phase5.retriever")
+logger = get_logger("retrievals.retriever")
 
 # Similarity threshold — only inject examples with cosine score >= threshold
 # Below this: the examples are probably not helpful and may confuse the LLM

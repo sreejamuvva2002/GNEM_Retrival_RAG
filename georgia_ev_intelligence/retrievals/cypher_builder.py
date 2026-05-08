@@ -31,7 +31,7 @@ from __future__ import annotations
 from filters_and_validation.query_entity_extractor import Entities
 from shared.logger import get_logger
 
-logger = get_logger("phase4.cypher_builder")
+logger = get_logger("retrievals.cypher_builder")
 
 
 def build_cypher(e: Entities, question: str) -> str | None:

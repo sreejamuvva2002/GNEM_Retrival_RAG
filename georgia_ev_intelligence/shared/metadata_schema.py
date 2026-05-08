@@ -23,6 +23,7 @@ from typing import Final
 
 # ── Canonical field names (logical key → KB column name) ─────────────────────
 CANONICAL_FIELDS: Final[dict[str, str]] = {
+    # Legacy internal names
     "company":        "company_name",
     "tier":           "tier",
     "role":           "ev_supply_chain_role",
@@ -35,11 +36,23 @@ CANONICAL_FIELDS: Final[dict[str, str]] = {
     "industry_group": "industry_group",
     "ev_relevant":    "ev_battery_relevant",
     "supplier_type":  "supplier_affiliation_type",
+    # Schema-aligned field names (data dictionary)
+    "record_id":            "Record_ID",
+    "company_clean":        "Company_Clean",
+    "tier_level":           "Tier_Level",
+    "tier_confidence":      "Tier_Confidence",
+    "oem_ga":               "OEM_GA",
+    "industry_code":        "Industry_Code",
+    "industry_name":        "Industry_Name",
+    "is_announcement":      "Is_Announcement",
+    "chunk_id":             "Chunk_ID",
+    "embedding_text":       "Embedding_Text",
 }
 
 
 # ── Field type tags for filter dispatch ──────────────────────────────────────
 FIELD_TYPES: Final[dict[str, str]] = {
+    # Legacy internal names
     "company_name":              "keyword",
     "tier":                      "keyword",
     "ev_supply_chain_role":      "text",
@@ -52,11 +65,30 @@ FIELD_TYPES: Final[dict[str, str]] = {
     "industry_group":            "keyword",
     "ev_battery_relevant":       "keyword",
     "supplier_affiliation_type": "keyword",
+    # Schema-aligned field types (data dictionary)
+    "Record_ID":          "keyword",
+    "Company":            "keyword",
+    "Company_Clean":      "keyword",
+    "Employment":         "integer",
+    "Product_Service":    "text",
+    "County":             "keyword",
+    "Tier_Category_heuristic": "keyword",
+    "Tier_Level":         "keyword",
+    "Tier_Confidence":    "keyword",
+    "OEM_GA":             "boolean",
+    "Industry_Group":     "keyword",
+    "Industry_Code":      "integer",
+    "Industry_Name":      "keyword",
+    "PDF_Page":           "integer",
+    "Is_Announcement":    "boolean",
+    "Chunk_ID":           "keyword",
+    "Embedding_Text":     "text",
 }
 
 
 # ── Fields that may appear as a hard filter on a candidate ───────────────────
 HARD_FILTER_FIELDS: Final[frozenset[str]] = frozenset({
+    # Legacy
     "tier",
     "company_name",
     "location_county",
@@ -68,6 +100,16 @@ HARD_FILTER_FIELDS: Final[frozenset[str]] = frozenset({
     "industry_group",
     "supplier_affiliation_type",
     "ev_battery_relevant",
+    # Schema-aligned
+    "Tier_Level",
+    "Tier_Confidence",
+    "County",
+    "Company_Clean",
+    "OEM_GA",
+    "Industry_Code",
+    "Industry_Name",
+    "Is_Announcement",
+    "Employment",
 })
 
 
@@ -123,6 +165,7 @@ COMPANY_CHUNK_VIEWS: Final[tuple[str, ...]] = (
 
 # ── Required keys on every Qdrant company-chunk payload ──────────────────────
 REQUIRED_QDRANT_PAYLOAD: Final[frozenset[str]] = frozenset({
+    # Legacy fields (backward compat)
     "company_name",
     "tier",
     "ev_supply_chain_role",
@@ -138,6 +181,20 @@ REQUIRED_QDRANT_PAYLOAD: Final[frozenset[str]] = frozenset({
     "company_row_id",
     "source_row_hash",
     "kb_schema_version",
+    # Schema-aligned fields (data dictionary)
+    "Record_ID",
+    "Company",
+    "Company_Clean",
+    "County",
+    "Tier_Level",
+    "Tier_Confidence",
+    "OEM_GA",
+    "Industry_Group",
+    "Industry_Code",
+    "Industry_Name",
+    "Is_Announcement",
+    "Chunk_ID",
+    "Embedding_Text",
 })
 
 

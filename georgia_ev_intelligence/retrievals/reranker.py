@@ -15,7 +15,7 @@ from sentence_transformers import CrossEncoder
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase4.reranker")
+logger = get_logger("retrievals.reranker")
 
 
 def _candidate_text(company: dict[str, Any]) -> str:

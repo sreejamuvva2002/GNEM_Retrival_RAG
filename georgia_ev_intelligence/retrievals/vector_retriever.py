@@ -34,7 +34,7 @@ from retrievals.reranker import rerank_companies
 from shared.config import Config
 from shared.logger import get_logger
 
-logger = get_logger("phase4.vector_retriever")
+logger = get_logger("retrievals.vector_retriever")
 
 _BASE_COMPANY_FILTERS = {
     "chunk_type": "company",

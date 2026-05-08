@@ -23,7 +23,7 @@ from typing import Any
 
 from shared.logger import get_logger
 
-logger = get_logger("phase4.normalizer")
+logger = get_logger("filters_and_validation.normalizer")
 
 
 # ── Load real values from graph/DB (cached per session) ───────────────────────

@@ -22,7 +22,7 @@ from shared.config import Config
 from shared.db import ExtractedFact, get_session
 from shared.logger import get_logger
 
-logger = get_logger("phase1.entity_extractor")
+logger = get_logger("web_extraction.entity_extractor")
 
 # Prompt for Ollama — extract structured facts from document text
 _EXTRACTION_PROMPT = """\
