@@ -272,11 +272,47 @@ def retrieve(
 
     total_matched = len(filtered)
 
-    # Apply intent-specific operations
+    # Delegate intent-specific transformation to standalone apply_intent()
+    result, intent = apply_intent(filtered, question, df, intent=intent)
+
+    support_level = _support_level(total_matched, match_result.unmatched_words, active_filters)
+
+    return RetrievalResult(
+        rows=result,
+        intent=intent,
+        total_matched=total_matched,
+        filters_applied=active_filters,
+        support_level=support_level,
+    )
+
+
+# ── Standalone intent application (used by ReAct pipeline) ───────────────────
+
+def apply_intent(
+    filtered: pd.DataFrame,
+    question: str,
+    full_df: pd.DataFrame,
+    intent: dict | None = None,
+) -> tuple[pd.DataFrame, dict]:
+    """
+    Apply intent-specific transformation to an already-filtered DataFrame.
+
+    Separated from retrieve() so the ReAct pipeline can call it independently
+    after accumulating evidence rows via tool calls.
+
+    Parameters
+    ----------
+    filtered : pre-filtered DataFrame (rows selected by ReAct tool calls)
+    question : original question string (used for intent detection + column inference)
+    full_df  : complete KB DataFrame (needed for SPOF group-by fallback)
+    intent   : if None, detected from question automatically
+    """
+    if intent is None:
+        intent = _detect_intent(question)
     itype = intent["type"]
 
     if itype == "count":
-        result = pd.DataFrame([{"count": total_matched}])
+        return pd.DataFrame([{"count": len(filtered)}]), intent
 
     elif itype == "rank":
         num_col = _numeric_col(filtered, question)
@@ -288,17 +324,16 @@ def retrieve(
                 result = filtered.nlargest(n, num_col)
         else:
             result = filtered.head(1)
+        return result, intent
 
     elif itype == "aggregate_sum":
         num_col = _numeric_col(filtered, question)
-        group_col = _group_col(filtered, question) or _group_col(df, question)
-
+        group_col = _group_col(filtered, question) or _group_col(full_df, question)
         if num_col and group_col and not filtered.empty:
             if "location" in group_col:
                 groupby_series = _extract_county(filtered[group_col])
             else:
                 groupby_series = filtered[group_col].astype(str)
-
             agg = (
                 filtered.assign(_group=groupby_series)
                 .groupby("_group")[num_col]
@@ -307,14 +342,13 @@ def retrieve(
                 .rename(columns={"_group": group_col, num_col: f"total_{num_col}"})
             )
             ascending = intent["direction"] == "asc"
-            result = agg.sort_values(f"total_{num_col}", ascending=ascending)
-        else:
-            result = filtered
+            return agg.sort_values(f"total_{num_col}", ascending=ascending), intent
+        return filtered, intent
 
     elif itype == "spof":
-        role_col = next((c for c in df.columns if "role" in c), None)
+        role_col = next((c for c in full_df.columns if "role" in c), None)
         if role_col:
-            base = filtered if not filtered.empty else df
+            base = filtered if not filtered.empty else full_df
             counts = (
                 base.groupby(role_col)["company"]
                 .count()
@@ -322,28 +356,17 @@ def retrieve(
                 .rename(columns={"company": "company_count"})
             )
             spof_roles = counts[counts["company_count"] == 1][role_col].tolist()
-            result = base[base[role_col].isin(spof_roles)].copy()
-        else:
-            result = filtered
+            return base[base[role_col].isin(spof_roles)].copy(), intent
+        return filtered, intent
 
     else:
-        result = filtered
-
-    support_level = _support_level(total_matched, match_result, active_filters)
-
-    return RetrievalResult(
-        rows=result,
-        intent=intent,
-        total_matched=total_matched,
-        filters_applied=active_filters,
-        support_level=support_level,
-    )
+        return filtered, intent
 
 
-def _support_level(total: int, match_result: MatchResult, active_filters: dict) -> str:
+def _support_level(total: int, unmatched_words: list[str], active_filters: dict) -> str:
     if total == 0 and not active_filters:
         return "Not Supported by KB"
-    if total >= 3 and active_filters and not match_result.unmatched_words:
+    if total >= 3 and active_filters and not unmatched_words:
         return "Fully Supported by KB"
     if total >= 2 and active_filters:
         return "Mostly Supported by KB"
