@@ -9,6 +9,7 @@ import requests
 
 from . import config
 from .schema_index import ColumnMeta
+from .operation_detector import detect_operation, is_analytical_phrase
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -198,6 +199,235 @@ def _normalise_target_columns(value: Any, schema_index: dict[str, ColumnMeta]) -
         if mapped:
             cols.append(mapped)
     return _dedupe_preserve(cols)
+
+
+# ── Column-name / KB-term validation helpers ─────────────────────────────────
+
+def _is_column_name_or_metadata_token(
+    term: str,
+    schema_index: dict[str, ColumnMeta],
+) -> bool:
+    """
+    Check whether *term* is a column name or normalised column key.
+
+    Column names are valid as target_columns but must NOT be treated as
+    KB keywords or filter values.
+    """
+    if not term or not term.strip():
+        return False
+    low = term.strip().lower()
+    norm = _norm_key(term)
+    for col in schema_index:
+        if low == col.lower() or norm == _norm_key(col):
+            return True
+    return False
+
+
+def _is_valid_kb_term(term: str, kb_terms: dict) -> bool:
+    """
+    Check whether *term* is an actual dynamically discovered KB term.
+
+    Only terms present in kb_discovered_terms are valid.
+    Column names are NOT valid even if the model reported them.
+    """
+    if not term or not term.strip():
+        return False
+    discovered = {t.lower() for t in _as_str_list(kb_terms.get("kb_discovered_terms", []), max_items=300)}
+    return term.strip().lower() in discovered
+
+
+# ── Phrase-type classification & column compatibility ─────────────────────
+
+_TIER_PHRASE_RE = re.compile(
+    r"\b(tier\s*\d|tier\s+\d+\s*/\s*\d+|tier\s+\d+\s+(?:and|or|&)\s+\d+|tier\s+\d+\s+supplier)",
+    re.IGNORECASE,
+)
+
+_PRODUCT_COMPONENT_RE = re.compile(
+    r"\b(battery\s+cell|battery\s+pack|thermal\s+management|power\s+electronics|"
+    r"charging\s+infrastructure|battery\s+module|electric\s+motor|ev\s+component|wiring\s+harness)",
+    re.IGNORECASE,
+)
+
+_LOCATION_PHRASE_RE = re.compile(
+    r"\b(county|city|location|georgia|state|region|address|zip)\b",
+    re.IGNORECASE,
+)
+
+_ANALYTICAL_PHRASE_RE = re.compile(
+    r"\b(single\s+point\s+of\s+failure|sole\s+supplier|only\s+one|how\s+many|"
+    r"count|number\s+of|total|sum|combined|highest|lowest|maximum|minimum|"
+    r"most|least|top|bottom|aggregate|average|rank|ranking)\b",
+    re.IGNORECASE,
+)
+
+
+def _classify_phrase_type(phrase: str) -> str:
+    """
+    Classify a user phrase as one of:
+      tier, product_component, location, analytical_operation, general
+    """
+    if not phrase or not phrase.strip():
+        return "general"
+    p = phrase.strip()
+    if _TIER_PHRASE_RE.search(p):
+        return "tier"
+    if _ANALYTICAL_PHRASE_RE.fullmatch(p) or is_analytical_phrase(p):
+        return "analytical_operation"
+    if _PRODUCT_COMPONENT_RE.search(p):
+        return "product_component"
+    if _LOCATION_PHRASE_RE.search(p) and len(p.split()) <= 3:
+        return "location"
+    return "general"
+
+
+# Column-compatibility patterns (schema-level, not data-level)
+_TIER_COMPATIBLE_PATTERNS = frozenset({
+    "category", "tier", "supplier_type",
+    "supplier_or_affiliation_type", "affiliation", "classification",
+})
+
+_PRODUCT_COMPATIBLE_PATTERNS = frozenset({
+    "ev_supply_chain_role", "role", "product_service", "product",
+    "service", "industry_group", "primary_facility_type",
+})
+
+_LOCATION_COMPATIBLE_PATTERNS = frozenset({
+    "location", "updated_location", "county", "city", "state",
+    "address", "region",
+})
+
+
+def _is_column_compatible_with_phrase_type(phrase_type: str, col: str) -> bool:
+    """
+    Validate that a phrase type is compatible with a specific column.
+
+    E.g. tier phrases can only target tier-compatible columns;
+    product phrases can target role/product columns.
+    """
+    norm = _norm_key(col)
+
+    if phrase_type == "tier":
+        return any(p in norm for p in _TIER_COMPATIBLE_PATTERNS)
+    if phrase_type == "product_component":
+        return any(p in norm for p in _PRODUCT_COMPATIBLE_PATTERNS)
+    if phrase_type == "location":
+        return any(p in norm for p in _LOCATION_COMPATIBLE_PATTERNS)
+    if phrase_type == "analytical_operation":
+        return False  # analytical phrases are operations, not column filters
+
+    # "general" phrases have no restriction
+    return True
+
+
+def _validate_mapped_phrases_against_kb_terms(
+    mapped_phrases: list[dict],
+    kb_terms: dict,
+    schema_index: dict[str, ColumnMeta],
+) -> tuple[list[dict], list[str]]:
+    """
+    Post-process Stage 2 mapped_user_phrases:
+      1. Remove terms that are only column names (not KB values).
+      2. Remove terms whose source columns are incompatible with phrase type.
+      3. Remove analytical operation phrases.
+      4. Downgrade confidence when terms are removed.
+
+    Returns (cleaned_phrases, warnings).
+    """
+    warnings: list[str] = []
+    cleaned: list[dict] = []
+
+    # Build term → source_columns lookup from kb_terms
+    term_sources: dict[str, list[str]] = {}
+    for src in kb_terms.get("term_sources", []):
+        if isinstance(src, dict):
+            t = str(src.get("term", "")).lower()
+            term_sources[t] = _as_str_list(src.get("source_columns", []))
+
+    for item in mapped_phrases:
+        phrase = str(item.get("user_phrase", "")).strip()
+        phrase_type = _classify_phrase_type(phrase)
+        kb_supported = list(item.get("kb_supported_terms", []))
+        conf = str(item.get("confidence", "low")).strip().lower()
+
+        # Skip analytical operation phrases entirely
+        if phrase_type == "analytical_operation":
+            warnings.append(f"removed_analytical_phrase_as_keyword={phrase}")
+            continue
+
+        # Filter individual supported terms
+        valid_terms: list[str] = []
+        for term in kb_supported:
+            term_str = str(term).strip()
+
+            # Remove column-name-only terms
+            if _is_column_name_or_metadata_token(term_str, schema_index):
+                if not _is_valid_kb_term(term_str, kb_terms):
+                    warnings.append(f"removed_column_name_as_keyword={term_str}")
+                    continue
+
+            # Check column compatibility for the term
+            source_cols = term_sources.get(term_str.lower(), [])
+            if source_cols and phrase_type != "general":
+                compatible = any(
+                    _is_column_compatible_with_phrase_type(phrase_type, col)
+                    for col in source_cols
+                )
+                if not compatible:
+                    warnings.append(
+                        f"removed_incompatible_{phrase_type}_column="
+                        f"{term_str} (sources: {source_cols})"
+                    )
+                    continue
+
+            valid_terms.append(term_str)
+
+        # Downgrade confidence if terms were removed
+        if len(valid_terms) < len(kb_supported) and kb_supported:
+            if not valid_terms:
+                conf = "low"
+                warnings.append(f"downgraded_confidence_no_valid_kb_terms={phrase}")
+            elif conf == "high":
+                conf = "medium"
+
+        cleaned.append({
+            "user_phrase": phrase,
+            "kb_supported_terms": _dedupe_preserve(valid_terms),
+            "mapping_source": item.get("mapping_source", "kb_discovered_terms"),
+            "confidence": conf,
+        })
+
+    return cleaned, warnings
+
+
+def _downgrade_confidence_if_only_column_terms(
+    mapped_phrases: list[dict],
+    confidence: str,
+    schema_index: dict[str, ColumnMeta],
+    kb_terms: dict,
+) -> tuple[str, list[str]]:
+    """
+    If ALL remaining mapped terms are column-name-only (not real KB values),
+    downgrade overall confidence to low.
+    """
+    warnings: list[str] = []
+    all_terms: list[str] = []
+    for item in mapped_phrases:
+        all_terms.extend(item.get("kb_supported_terms", []))
+
+    if not all_terms:
+        return confidence, warnings
+
+    all_are_column_only = all(
+        _is_column_name_or_metadata_token(t, schema_index)
+        and not _is_valid_kb_term(t, kb_terms)
+        for t in all_terms
+    )
+    if all_are_column_only:
+        warnings.append("downgraded_confidence_all_terms_are_column_names")
+        return "low", warnings
+
+    return confidence, warnings
 
 
 def _normalise_explicit_filters(
@@ -456,7 +686,7 @@ EXPLICIT FILTERS:
 STRICT RULES:
 1. final_rewritten_queries must use only:
    - words from the original user question,
-   - column names / metadata wording,
+   - column names / metadata wording (for readability only),
    - explicit filter values,
    - dynamically discovered KB terms.
 2. Do NOT use a Stage 1 probe term unless that term is also in the original question or dynamically discovered KB terms.
@@ -465,6 +695,16 @@ STRICT RULES:
 5. If the question asks all/every/complete/full list/how many/count/total/highest/lowest/group/single point of failure, set requires_exhaustive_retrieval=true.
 6. If "Georgia" is dataset scope, keep it in natural-language queries but do not force exact location match to the literal word Georgia.
 7. negative_queries_or_terms_to_avoid should include obvious false-positive concepts only if supported by discovered terms or the question.
+8. Column names and metadata descriptions are for selecting target_columns ONLY.
+   Column names must NOT be reported as kb_supported_terms.
+   Do NOT call a column name a keyword.
+9. mapped_user_phrases.kb_supported_terms must contain ONLY discovered KB terms, NOT column names.
+   Example: "EV Supply Chain Role" is a column name — do not put it in kb_supported_terms.
+10. Analytical phrases such as "highest", "count", "total", "single point of failure"
+    are operation instructions, NOT KB terms. Do not include them in kb_supported_terms.
+11. For Tier 1/2 questions, prefer tier/classification columns such as Category or
+    Supplier/Affiliation Type. Do NOT map Tier 1/2 to EV Supply Chain Role unless the
+    exact KB value in that column is explicitly present in the user question.
 
 OUTPUT RULES:
 Return a valid JSON object only.
@@ -989,6 +1229,13 @@ def stage2_kb_grounded_rewrite(
         kb_terms or {},
     )
 
+    # ── Post-parse validation: column-name/compatibility/operation checks ──
+    validated_phrases, validation_warnings = _validate_mapped_phrases_against_kb_terms(
+        mapped_phrases,
+        kb_terms or {},
+        schema_index,
+    )
+
     confidence = str(result.get("confidence", "low")).strip().lower()
     if confidence not in _VALID_CONFIDENCE:
         confidence = "low"
@@ -996,16 +1243,34 @@ def stage2_kb_grounded_rewrite(
     warnings = _as_str_list(result.get("warnings", []), max_items=30)
     warnings.extend(query_warnings)
     warnings.extend(mapping_warnings)
-    warnings = _dedupe_preserve(warnings)
+    warnings.extend(validation_warnings)
 
     # If we dropped unsupported terms or have no discovered terms, lower confidence.
     if query_warnings or len(_as_str_list((kb_terms or {}).get("kb_discovered_terms", []))) == 0:
         confidence = "low"
 
+    # Downgrade confidence if all remaining mapped terms are column-name-only
+    confidence, col_warnings = _downgrade_confidence_if_only_column_terms(
+        validated_phrases, confidence, schema_index, kb_terms or {},
+    )
+    warnings.extend(col_warnings)
+
+    # Integrate deterministic operation detection
+    operation = detect_operation(user_question)
+    if operation["type"] != "none":
+        warnings.append(f"deterministic_operation_detected={operation['type']}")
+        # For analytical operations, confidence depends on operation detection,
+        # not LLM term confidence
+        if operation["type"] in {"spof", "aggregate_sum", "count"}:
+            warnings.append("analytical_operation_ignores_llm_keyword_confidence")
+
+    warnings = _dedupe_preserve(warnings)
+
     requires_exhaustive = (
         _normalise_bool(result.get("requires_exhaustive_retrieval"), default=False)
         or _is_exhaustive_question(user_question)
         or intent in {"count", "group"}
+        or operation.get("requires_exhaustive_retrieval", False)
     )
 
     negative_terms = _as_str_list(result.get("negative_queries_or_terms_to_avoid", []), max_items=20)
@@ -1015,12 +1280,13 @@ def stage2_kb_grounded_rewrite(
         "intent": intent,
         "explicit_filters": safe_filters,
         "target_columns": target_columns,
-        "mapped_user_phrases": mapped_phrases,
+        "mapped_user_phrases": validated_phrases,
         "final_rewritten_queries": rewritten_queries,
         "negative_queries_or_terms_to_avoid": negative_terms,
         "requires_exhaustive_retrieval": bool(requires_exhaustive),
         "confidence": confidence,
         "warnings": warnings,
+        "deterministic_operation": operation,
     }
 
 

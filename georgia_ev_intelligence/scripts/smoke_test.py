@@ -81,10 +81,12 @@ def _save_excel(rows: list[dict]) -> Path:
     df = pd.DataFrame(rows, columns=[
         "#",
         "Question",
+        "Perfect Keywords (Resolver)",
+        "Candidate Keywords",
         "Ambiguous Words Identified",
         "DeepSeek Guesses on Ambiguous Words",
         "Identified Argument Operations",
-        "Perfect Keywords Identified",
+        "Deterministic Filters",
         "Retrieved Filters",
         "Modified Question",
         "Final Answer",
@@ -119,6 +121,18 @@ def main():
         print(f"  Risk          : {result.hallucination_risk}")
         print(f"  Answer        : {result.answer[:200]}{'...' if len(result.answer) > 200 else ''}")
 
+        # Keyword resolution debug output
+        kw_res = getattr(result, "keyword_resolution", {})
+        perfect_kws = kw_res.get("perfect", [])
+        candidate_kws = kw_res.get("candidate", [])
+        rejected_kws = kw_res.get("rejected", [])
+        det_filters = kw_res.get("deterministic_filters", {})
+        print(f"  KW Perfect    : {[k['value'] + ' [' + k['col'] + ']' for k in perfect_kws] or '(none)'}")
+        print(f"  KW Candidate  : {[k['value'] + ' [' + k['col'] + ']' for k in candidate_kws[:5]] or '(none)'}")
+        print(f"  KW Rejected   : {[k['value'] + ' (' + k['reason'] + ')' for k in rejected_kws[:3]] or '(none)'}")
+        print(f"  Det Filters   : {det_filters or '(none)'}")
+        print(f"  All Filters   : {result.filters_applied or '(none)'}")
+
         if result.evidence_count > 0:
             passed += 1
         else:
@@ -127,13 +141,25 @@ def main():
         human_answer = _best_human_answer(q, qa_pairs)
         f1 = round(token_f1(result.answer, human_answer), 4) if human_answer != "(not in QA set)" else 0.0
 
+        # Format perfect keywords for Excel
+        perfect_kw_str = "; ".join(
+            f"{k['value']} [{k['col']}] ({k['type']})"
+            for k in perfect_kws
+        ) or "(none)"
+        candidate_kw_str = "; ".join(
+            f"{k['value']} [{k['col']}]"
+            for k in candidate_kws[:5]
+        ) or "(none)"
+
         excel_rows.append({
             "#": i,
             "Question": result.question,
+            "Perfect Keywords (Resolver)": perfect_kw_str,
+            "Candidate Keywords": candidate_kw_str,
             "Ambiguous Words Identified": ", ".join(result.unmatched_words) or "(none)",
             "DeepSeek Guesses on Ambiguous Words": _format_mapped_phrases(result),
             "Identified Argument Operations": _format_intent(result.intent),
-            "Perfect Keywords Identified": ", ".join(result.key_terms_matched) or "(none)",
+            "Deterministic Filters": "; ".join(f"{c}: {', '.join(v)}" for c, v in det_filters.items()) or "(none)",
             "Retrieved Filters": _format_filters(result),
             "Modified Question": result.rewritten_question or "(no rewrite)",
             "Final Answer": result.answer,
@@ -177,5 +203,187 @@ def main():
         print("\nZero-hardcoding check: PASSED (no domain data values found in source files)")
 
 
+# ── Structural assertion tests ────────────────────────────────────────────────
+
+STRUCTURAL_TESTS = [
+    {
+        "question": "Show all Tier 1/2 suppliers in Georgia",
+        "checks": {
+            "requires_exhaustive": True,
+            "no_tier_in_role_column": True,
+            "georgia_is_scope": True,
+        },
+    },
+    {
+        "question": "Which roles are single point of failure?",
+        "checks": {
+            "operation_type": "spof",
+            "no_county_keyword": True,
+            "no_location_filter": True,
+        },
+    },
+    {
+        "question": "Show Battery Cell or Battery Pack companies",
+        "checks": {
+            "both_terms_in_filters_or_queries": ["Battery Cell", "Battery Pack"],
+        },
+    },
+    {
+        "question": "Thermal Management suppliers",
+        "checks": {
+            "term_in_valid_column": {"term": "Thermal Management", "valid_columns": ["ev_supply_chain_role", "product_service"]},
+        },
+    },
+    {
+        "question": "Which county has the highest total employment?",
+        "checks": {
+            "operation_type": "aggregate_sum",
+        },
+    },
+]
+
+
+def _norm_col(col: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", col.lower()).strip("_")
+
+
+def _run_structural_tests():
+    """
+    Run structural assertion tests.
+
+    These tests validate correct pipeline behavior without hardcoding
+    specific company names, row counts, or answer text.
+    """
+    from georgia_ev_intelligence.operation_detector import detect_operation
+    from georgia_ev_intelligence.term_matcher import _is_tier_compatible_column
+
+    print(f"\n{'='*70}")
+    print("STRUCTURAL ASSERTION TESTS")
+    print("="*70)
+
+    passed = 0
+    failed = 0
+
+    for test in STRUCTURAL_TESTS:
+        q = test["question"]
+        checks = test["checks"]
+        print(f"\n  TEST: {q}")
+
+        result = pipeline.run(q)
+        det_op = detect_operation(q)
+        failures: list[str] = []
+
+        # Check: requires_exhaustive
+        if "requires_exhaustive" in checks:
+            debug = getattr(result, "debug_info", {})
+            is_exhaustive = debug.get("requires_exhaustive_retrieval", False)
+            if is_exhaustive != checks["requires_exhaustive"]:
+                failures.append(
+                    f"requires_exhaustive: expected={checks['requires_exhaustive']}, got={is_exhaustive}"
+                )
+
+        # Check: no tier-derived filter in non-tier-compatible column
+        if checks.get("no_tier_in_role_column"):
+            for col, vals in result.filters_applied.items():
+                if not _is_tier_compatible_column(col):
+                    for v in vals:
+                        if re.search(r"\btier\s*\d", v.lower()):
+                            failures.append(
+                                f"tier filter in incompatible column: {col}={v}"
+                            )
+
+        # Check: Georgia is dataset scope, not exact location filter
+        if checks.get("georgia_is_scope"):
+            for col, vals in result.filters_applied.items():
+                norm = _norm_col(col)
+                if any(x in norm for x in ("location", "county", "city")):
+                    for v in vals:
+                        if v.lower().strip() in ("georgia", "ga"):
+                            failures.append(
+                                f"Georgia used as exact location filter: {col}={v}"
+                            )
+
+        # Check: operation type
+        if "operation_type" in checks:
+            expected_op = checks["operation_type"]
+            actual_op = det_op.get("type", "none")
+            if actual_op != expected_op:
+                failures.append(
+                    f"operation_type: expected={expected_op}, got={actual_op}"
+                )
+
+        # Check: no county keyword for SPOF
+        if checks.get("no_county_keyword"):
+            for col in result.filters_applied:
+                if "county" in col.lower():
+                    failures.append(f"unexpected county filter: {col}")
+
+        # Check: no location filter for SPOF
+        if checks.get("no_location_filter"):
+            for col in result.filters_applied:
+                norm = _norm_col(col)
+                if any(x in norm for x in ("location", "county", "city", "state")):
+                    failures.append(f"unexpected location filter: {col}")
+
+        # Check: both terms present in filters or rewritten queries
+        if "both_terms_in_filters_or_queries" in checks:
+            terms = checks["both_terms_in_filters_or_queries"]
+            all_filter_vals = " ".join(
+                v for vals in result.filters_applied.values() for v in vals
+            ).lower()
+            all_queries = " ".join(
+                stage2_q for stage2_q in (
+                    [result.rewritten_question, result.question]
+                    if result.rewritten_question else [result.question]
+                )
+            ).lower()
+            search_text = all_filter_vals + " " + all_queries
+            for term in terms:
+                if term.lower() not in search_text:
+                    failures.append(f"missing term in filters/queries: {term}")
+
+        # Check: term in valid column
+        if "term_in_valid_column" in checks:
+            spec = checks["term_in_valid_column"]
+            term = spec["term"].lower()
+            valid_cols = spec["valid_columns"]
+            found_in_valid = False
+            for col, vals in result.filters_applied.items():
+                if _norm_col(col) in valid_cols:
+                    if any(term in v.lower() for v in vals):
+                        found_in_valid = True
+            # Also check evidence rows
+            if not found_in_valid and result.evidence_count > 0:
+                for row in result.evidence_rows[:5]:
+                    for vc in valid_cols:
+                        for col_name, col_val in row.items():
+                            if _norm_col(col_name) == vc and term in str(col_val).lower():
+                                found_in_valid = True
+                                break
+            if not found_in_valid:
+                failures.append(
+                    f"term '{spec['term']}' not found in valid columns: {valid_cols}"
+                )
+
+        if failures:
+            failed += 1
+            print(f"    \u274c FAILED:")
+            for f in failures:
+                print(f"       - {f}")
+        else:
+            passed += 1
+            print(f"    \u2705 PASSED")
+
+        # Print debug info
+        print(f"    Operation: {det_op.get('type', 'none')}")
+        print(f"    Filters: {result.filters_applied}")
+        print(f"    Intent: {result.intent.get('type', 'unknown')}")
+
+    print(f"\n{'='*70}")
+    print(f"STRUCTURAL TESTS: {passed} passed, {failed} failed out of {len(STRUCTURAL_TESTS)}")
+    return failed == 0
+
+
 if __name__ == "__main__":
     main()
+    _run_structural_tests()

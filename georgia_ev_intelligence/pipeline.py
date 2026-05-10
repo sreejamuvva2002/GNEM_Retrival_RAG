@@ -31,14 +31,17 @@ from . import (
     kb_term_extractor,
     evidence_selector,
     synthesizer,
+    operation_detector,
 )
 from .schema_index import ColumnMeta
+from .keyword_resolver import resolve_keywords, KeywordResolution
 from .semantic_retriever import (
     SemanticRetriever,
     build_semantic_retriever,
     retriever_backend_label,
 )
 from .retriever import apply_intent, _support_level, _detect_intent, _build_and_mask
+from .term_matcher import _is_tier_compatible_column
 
 
 @dataclass
@@ -61,6 +64,9 @@ class PipelineResult:
     stage2_explicit_filters: dict = field(default_factory=dict)
     stage2_target_columns: list[str] = field(default_factory=list)
     stage2_mapped_phrases: list[dict] = field(default_factory=list)
+    deterministic_operation: dict = field(default_factory=dict)
+    keyword_resolution: dict = field(default_factory=dict)
+    debug_info: dict = field(default_factory=dict)
 
 
 # ── Cached singletons ─────────────────────────────────────────────────────────
@@ -110,6 +116,51 @@ def _dedupe(values: list[str]) -> list[str]:
             seen.add(key)
             out.append(s)
     return out
+
+
+def _validate_filters_column_compatibility(
+    filters: dict[str, list[str]],
+    question: str,
+) -> tuple[dict[str, list[str]], list[str]]:
+    """
+    Validate that term_matcher filters are column-compatible.
+
+    For tier-related questions, remove tier-derived filter values from
+    non-tier-compatible columns (e.g., EV Supply Chain Role).
+    """
+    from .term_matcher import _extract_requested_tiers
+
+    warnings: list[str] = []
+    requested_tiers = _extract_requested_tiers(question)
+
+    if not requested_tiers:
+        return filters, warnings
+
+    cleaned: dict[str, list[str]] = {}
+    for col, vals in filters.items():
+        if _is_tier_compatible_column(col):
+            cleaned[col] = vals
+        else:
+            # Check if any values in this column were tier-derived
+            non_tier_vals = []
+            for v in vals:
+                v_lower = v.lower()
+                is_tier_value = any(
+                    re.search(rf"\btier\s*{re.escape(t)}\b", v_lower)
+                    for t in requested_tiers
+                )
+                if is_tier_value:
+                    warnings.append(
+                        f"removed_tier_filter_from_incompatible_column="
+                        f"{col}:{v}"
+                    )
+                else:
+                    non_tier_vals.append(v)
+
+            if non_tier_vals:
+                cleaned[col] = non_tier_vals
+
+    return cleaned, warnings
 
 
 def _merge_filters(
@@ -406,7 +457,13 @@ def run(question: str) -> PipelineResult:
     semantic_retriever = _get_semantic_retriever()
     bm25 = _get_bm25_index()
 
-    # Two-stage query rewriting
+    # ── Step 0: Deterministic keyword resolution (BEFORE LLM rewriter) ──
+    kw_resolution = resolve_keywords(question, schema)
+
+    # ── Step 1: Detect deterministic operation from original question ──
+    det_operation = operation_detector.detect_operation(question)
+
+    # ── Step 2: Two-stage query rewriting ──
     stage2, _probe_candidates = _run_two_stage_rewriter(
         question,
         df,
@@ -420,6 +477,10 @@ def run(question: str) -> PipelineResult:
         rewritten_queries = [question]
 
     exhaustive = _is_exhaustive_request(question, stage2)
+    # Operation detector can also require exhaustive retrieval
+    if det_operation.get("requires_exhaustive_retrieval", False):
+        exhaustive = True
+
     top_k = 100 if exhaustive else config.RAG_TOP_K
     threshold = 0.0 if exhaustive else config.SEMANTIC_THRESHOLD
 
@@ -428,6 +489,7 @@ def run(question: str) -> PipelineResult:
     result_frames: list[pd.DataFrame] = []
     all_filters: dict[str, list[str]] = {}
     all_unmatched: list[str] = []
+    pre_compat_filters: dict[str, list[str]] = {}  # For debug logging
 
     for q in rewritten_queries:
         match = term_matcher.match(q, schema)
@@ -438,6 +500,32 @@ def run(question: str) -> PipelineResult:
 
         all_filters = _merge_filters(all_filters, rag_r.filters_applied, df=df)
         all_unmatched.extend(match.unmatched_words)
+
+    # Snapshot pre-compatibility filters for debug logging
+    pre_compat_filters = {col: list(vals) for col, vals in all_filters.items()}
+
+    # ── Column-compatibility validation for filters ──
+    all_filters, compat_warnings = _validate_filters_column_compatibility(
+        all_filters, question,
+    )
+
+    # ── Merge perfect keyword deterministic filters ──
+    # Perfect keywords from the keyword resolver take precedence.
+    # They represent exact live KB value matches in compatible columns.
+    if kw_resolution.has_perfect:
+        # Merge perfect keyword filters INTO all_filters.
+        # Perfect keywords override any conflicting term_matcher results
+        # for the same column.
+        for col, vals in kw_resolution.deterministic_filters.items():
+            if col in all_filters:
+                # Keep only values that are either from the resolver or
+                # independently confirmed by term_matcher
+                existing = set(v.lower() for v in all_filters[col])
+                for v in vals:
+                    if v.lower() not in existing:
+                        all_filters[col].append(v)
+            else:
+                all_filters[col] = list(vals)
 
     # When term_matcher found no filters, apply LLM-identified explicit filters.
     # Keep only filters that correspond to real dataframe columns.
@@ -463,9 +551,17 @@ def run(question: str) -> PipelineResult:
         else:
             result_frames = [pd.DataFrame()]
 
-    # Keep original user wording first for intent detection.
+    # ── Intent detection ──
+    # Operation detector takes priority over LLM-derived intent.
     effective_question = rewritten_queries[0] if rewritten_queries else question
-    intent_hint = _detect_effective_intent(question, effective_question)
+    if det_operation["type"] != "none":
+        # Use deterministic operation for intent
+        intent_hint = {"type": det_operation["type"]}
+        if det_operation.get("direction"):
+            intent_hint["direction"] = det_operation["direction"]
+    else:
+        # Keep original user wording first for intent detection.
+        intent_hint = _detect_effective_intent(question, effective_question)
 
     # Analytical intents must never operate on RRF-capped evidence.
     # Exhaustive list questions should use deterministic filters when filters exist.
@@ -535,6 +631,22 @@ def run(question: str) -> PipelineResult:
     else:
         method = f"RAG (Two-Stage Fallback + {retriever_backend_label()})"
 
+    # ── Build debug info ──
+    debug_info = {
+        "original_question": question,
+        "keyword_resolution": kw_resolution.to_debug_dict(),
+        "deterministic_operation": det_operation,
+        "stage2_confidence": confidence,
+        "requires_exhaustive_retrieval": exhaustive,
+        "stage2_final_queries": rewritten_queries,
+        "raw_mapped_phrases": stage2.get("mapped_user_phrases", []),
+        "term_matcher_filters_before_compat": pre_compat_filters,
+        "term_matcher_filters_after_compat": all_filters,
+        "compat_filter_warnings": compat_warnings,
+        "stage2_warnings": stage2.get("warnings", []),
+        "intent_used": intent,
+    }
+
     return PipelineResult(
         question=question,
         key_terms_matched=list(all_filters.keys()),
@@ -554,4 +666,7 @@ def run(question: str) -> PipelineResult:
         stage2_explicit_filters=stage2.get("explicit_filters", {}),
         stage2_target_columns=stage2.get("target_columns", []),
         stage2_mapped_phrases=stage2.get("mapped_user_phrases", []),
+        deterministic_operation=det_operation,
+        keyword_resolution=kw_resolution.to_debug_dict(),
+        debug_info=debug_info,
     )
