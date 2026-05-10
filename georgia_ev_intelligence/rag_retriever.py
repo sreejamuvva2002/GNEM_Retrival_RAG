@@ -1,8 +1,8 @@
 """
 RAG retrieval utilities.
 
-The existing `run()` function (single-query keyword + dense) is unchanged and
-used for the final per-query retrieval step in the pipeline.
+The existing `run()` function combines single-query keyword filtering with the
+shared semantic vector retriever used by the final pipeline retrieval step.
 
 New utilities support the two-stage query rewriter's high-recall probe phase:
   bm25_search()           — BM25 sparse keyword search
@@ -21,8 +21,8 @@ import numpy as np
 import pandas as pd
 
 from . import config
-from .dense_retriever import DenseRetriever
 from .schema_index import ColumnMeta, SKIP_COLUMNS
+from .semantic_retriever import SemanticRetriever
 from .term_matcher import MatchResult
 from .retriever import _build_and_mask, _best_single_filter
 
@@ -45,12 +45,12 @@ def run(
     question: str,
     df: pd.DataFrame,
     schema_index: dict[str, ColumnMeta],
-    dense_retriever: DenseRetriever,
+    semantic_retriever: SemanticRetriever,
     match: MatchResult,
 ) -> RAGResult:
     """
-    Single-query retrieval: keyword filtering (from term_matcher) + dense
-    semantic search.  Used for the final retrieval step after rewriting.
+    Single-query retrieval: keyword filtering (from term_matcher) + semantic
+    vector search. Used for the final retrieval step after rewriting.
     """
     frames: list[pd.DataFrame] = []
     filters_applied: dict[str, list[str]] = {}
@@ -68,14 +68,14 @@ def run(
                 frames.append(fallback_df)
                 filters_applied = fallback_filters
 
-    semantic_df = dense_retriever.search(
+    semantic_df = semantic_retriever.search(
         question, top_k=config.RAG_TOP_K, threshold=config.SEMANTIC_THRESHOLD
     )
     if not semantic_df.empty:
         frames.append(semantic_df.drop(columns=["_score"], errors="ignore"))
 
     if not frames:
-        fallback = dense_retriever.search(question, top_k=config.RAG_TOP_K, threshold=0.0)
+        fallback = semantic_retriever.search(question, top_k=config.RAG_TOP_K, threshold=0.0)
         return RAGResult(
             accumulated_df=fallback.drop(columns=["_score"], errors="ignore"),
             filters_applied={},

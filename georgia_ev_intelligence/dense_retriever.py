@@ -10,7 +10,8 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from sentence_transformers import SentenceTransformer
+
+from .embedding_model import as_document_text, as_query_text, load_sentence_transformer
 
 
 class DenseRetriever:
@@ -30,7 +31,7 @@ class DenseRetriever:
     ) -> None:
         self._df = df.reset_index(drop=True)
         self._skip_cols = skip_cols
-        self._model = SentenceTransformer(model_name)
+        self._model = load_sentence_transformer(model_name)
         self._embeddings: np.ndarray = self._build_embeddings()
 
     # ── Row text construction ─────────────────────────────────────────────────
@@ -58,7 +59,7 @@ class DenseRetriever:
         Encode all rows. Returns float32 L2-normalised matrix of shape (n_rows, dim).
         L2-normalisation means cosine similarity == dot product — no scipy needed.
         """
-        texts = [self._row_to_text(row) for _, row in self._df.iterrows()]
+        texts = [as_document_text(self._row_to_text(row)) for _, row in self._df.iterrows()]
         embeddings = self._model.encode(
             texts,
             batch_size=64,
@@ -91,7 +92,7 @@ class DenseRetriever:
                        with an added '_score' column (float).
         """
         query_vec = self._model.encode(
-            [query],
+            [as_query_text(query)],
             convert_to_numpy=True,
             normalize_embeddings=True,
         ).astype(np.float32)[0]

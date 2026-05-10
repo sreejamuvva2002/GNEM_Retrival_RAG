@@ -9,6 +9,7 @@ GNEM_EXCEL = KB_DIR / "GNEM - Auto Landscape Lat Long Updated.xlsx"
 HUMAN_QA_EXCEL = KB_DIR / "Human validated 50 questions.xlsx"
 EMPLOYMENT_OVERRIDES = KB_DIR / "employment_overrides.csv"
 OUTPUTS_DIR = Path(__file__).parent / "outputs"
+SMOKE_TEST_OUTPUTS_DIR = OUTPUTS_DIR / "smoke_test"
 
 load_dotenv(Path(__file__).parent / ".env")
 
@@ -24,15 +25,34 @@ SEMANTIC_THRESHOLD = float(os.getenv("SEMANTIC_THRESHOLD", "0.65"))
 MAX_EVIDENCE_ROWS = int(os.getenv("MAX_EVIDENCE_ROWS", "50"))
 
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "sentence-transformers/all-MiniLM-L6-v2")
+EMBEDDING_LOCAL_FILES_ONLY = os.getenv("EMBEDDING_LOCAL_FILES_ONLY", "false").lower() == "true"
+EMBEDDING_TRUST_REMOTE_CODE = os.getenv("EMBEDDING_TRUST_REMOTE_CODE", "false").lower() == "true"
+EMBEDDING_DOCUMENT_PREFIX = os.getenv(
+    "EMBEDDING_DOCUMENT_PREFIX",
+    "search_document: " if "nomic" in EMBEDDING_MODEL.lower() else "",
+)
+EMBEDDING_QUERY_PREFIX = os.getenv(
+    "EMBEDDING_QUERY_PREFIX",
+    "search_query: " if "nomic" in EMBEDDING_MODEL.lower() else "",
+)
 RAG_TOP_K       = int(os.getenv("RAG_TOP_K", "15"))
 
-QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "rwan2/DeepSeek-R1-Distill-Qwen-7B")
+# Qdrant parent-child chunk index
+QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+QDRANT_PATH = os.getenv("QDRANT_PATH", "")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
+QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "georgia_ev_kb_chunks")
+QDRANT_TIMEOUT = int(os.getenv("QDRANT_TIMEOUT", "30"))
+QDRANT_BATCH_SIZE = int(os.getenv("QDRANT_BATCH_SIZE", "64"))
+USE_QDRANT_RETRIEVER = os.getenv("USE_QDRANT_RETRIEVER", "true").lower() == "true"
+
+QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "erwan2/DeepSeek-R1-Distill-Qwen-7B")
 QUERY_REWRITER_TIMEOUT = int(os.getenv("QUERY_REWRITER_TIMEOUT", "60"))
 QUERY_REWRITER_ENABLED = os.getenv("QUERY_REWRITER_ENABLED", "true").lower() == "true"
 MAX_REWRITER_RETRIES   = int(os.getenv("MAX_REWRITER_RETRIES", "2"))
 
 # Probe retrieval (Stage 1 multi-probe, high-recall)
-PROBE_TOP_K_DENSE    = int(os.getenv("PROBE_TOP_K_DENSE", "50"))
+PROBE_TOP_K_SEMANTIC = int(os.getenv("PROBE_TOP_K_SEMANTIC", os.getenv("PROBE_TOP_K_DENSE", "50")))
 PROBE_TOP_K_BM25     = int(os.getenv("PROBE_TOP_K_BM25", "50"))
 PROBE_TOP_K_COLUMN   = int(os.getenv("PROBE_TOP_K_COLUMN", "50"))
 PROBE_FUSED_TOP_K    = int(os.getenv("PROBE_FUSED_TOP_K", "150"))

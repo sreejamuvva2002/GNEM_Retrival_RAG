@@ -13,6 +13,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from . import pipeline, synthesizer, config
+from .semantic_retriever import retriever_backend_label
 
 app = FastAPI(title="Georgia EV Intelligence", version="2.0")
 
@@ -23,7 +24,11 @@ class AskRequest(BaseModel):
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "llm_backend": "anthropic" if config.USE_ANTHROPIC else "ollama"}
+    return {
+        "status": "ok",
+        "llm_backend": "anthropic" if config.USE_ANTHROPIC else "ollama",
+        "retriever_backend": retriever_backend_label(),
+    }
 
 
 @app.post("/ask")
