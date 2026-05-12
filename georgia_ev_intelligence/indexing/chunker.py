@@ -348,3 +348,4 @@ def _json_safe(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             safe[key] = str(value)
     return safe
+

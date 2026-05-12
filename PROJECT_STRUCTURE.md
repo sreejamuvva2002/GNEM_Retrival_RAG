@@ -23,6 +23,124 @@ The main application flow is:
 10. Send evidence to the final answer generator.
 11. Return API, eval, smoke-test, or Excel output.
 
+## Detailed Question-To-Answer Order
+
+This is the exact conceptual order from the first active code path to final
+answer generation.
+
+1. **Configuration loads**
+   - Module: `georgia_ev_intelligence/config/settings.py`
+   - Loads `.env`, model names, Qdrant settings, KB paths, thresholds, and
+     output paths.
+
+2. **User question enters**
+   - API path: `georgia_ev_intelligence/api/app.py`
+   - Evaluation path: `georgia_ev_intelligence/evaluation/evaluator.py`
+   - Both call `pipeline.run(question)`.
+
+3. **Pipeline starts**
+   - Module: `georgia_ev_intelligence/pipeline/runner.py`
+   - Main function: `run(question)`.
+
+4. **KB Excel loads**
+   - Module: `georgia_ev_intelligence/data/loader.py`
+   - Loads `kb/GNEM - Auto Landscape Lat Long Updated.xlsx`.
+
+5. **Schema metadata builds**
+   - Module: `georgia_ev_intelligence/data/schema.py`
+   - Builds column metadata, unique values, filterability, and exact/partial
+     matching rules.
+
+6. **Semantic retriever initializes**
+   - Factory: `georgia_ev_intelligence/retrieval/semantic.py`
+   - Qdrant backend: `georgia_ev_intelligence/retrieval/qdrant.py`
+   - In-memory fallback: `georgia_ev_intelligence/retrieval/dense.py`
+
+7. **BM25 index builds**
+   - Module: `georgia_ev_intelligence/retrieval/rag.py`
+   - Builds sparse keyword search over KB rows.
+
+8. **Deterministic keyword resolution runs**
+   - Module: `georgia_ev_intelligence/query/keyword_resolver.py`
+   - Finds exact live-KB values in the user question.
+
+9. **Operation detection runs**
+   - Module: `georgia_ev_intelligence/query/operation_detector.py`
+   - Detects count, ranking, aggregate sum, exhaustive list, and
+     single-point-of-failure style questions.
+
+10. **Stage 1 query rewriting runs**
+    - Module: `georgia_ev_intelligence/query/rewriter.py`
+    - Uses the configured LLM to generate semantic probe queries from the
+      original question and schema metadata.
+
+11. **Probe retrieval runs**
+    - Orchestrated by `georgia_ev_intelligence/pipeline/runner.py`
+    - Uses semantic search, BM25 search, column-targeted search, and exact
+      entity search to collect high-recall candidate rows.
+
+12. **KB term extraction runs**
+    - Module: `georgia_ev_intelligence/query/kb_term_extractor.py`
+    - Extracts real KB-supported terms from the candidate rows.
+
+13. **Stage 2 query rewriting runs**
+    - Module: `georgia_ev_intelligence/query/rewriter.py`
+    - Rewrites the question using discovered KB terms and validated filters.
+
+14. **Term matching runs**
+    - Module: `georgia_ev_intelligence/query/term_matcher.py`
+    - Converts rewritten queries into dataframe filters.
+
+15. **Final retrieval runs**
+    - Module: `georgia_ev_intelligence/retrieval/rag.py`
+    - Combines keyword filters, semantic search, exact search, fallback search,
+      and reciprocal-rank fusion.
+
+16. **Reasoning and intent transformations run**
+    - Module: `georgia_ev_intelligence/reasoning/retriever.py`
+    - Applies deterministic count, rank, aggregate, and single-point-of-failure
+      logic when required.
+
+17. **Evidence formatting runs**
+    - Module: `georgia_ev_intelligence/retrieval/evidence.py`
+    - Converts final rows into compact evidence strings.
+
+18. **Final answer generation runs**
+    - Module: `georgia_ev_intelligence/generation/synthesizer.py`
+    - Sends the original question, evidence rows, and exhaustive flag to
+      Ollama or Anthropic.
+
+19. **Risk and support metadata are added**
+    - `generation/synthesizer.py` estimates hallucination risk.
+    - `pipeline/runner.py` computes support level and returns `PipelineResult`.
+
+20. **Output is returned or written**
+    - API returns JSON/SSE.
+    - Evaluation scripts write JSON, Excel, or smoke-test outputs.
+
+Short form:
+
+```text
+config
+→ API / evaluation script
+→ pipeline.run()
+→ load KB
+→ build schema
+→ build retriever
+→ resolve keywords
+→ detect operation
+→ Stage 1 rewrite
+→ probe retrieval
+→ extract KB terms
+→ Stage 2 rewrite
+→ term matching
+→ final retrieval
+→ reasoning / aggregation
+→ evidence formatting
+→ final LLM synthesis
+→ answer + metadata
+```
+
 ## Recommended Folder Responsibilities
 
 ```text
