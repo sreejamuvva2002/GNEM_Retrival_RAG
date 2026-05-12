@@ -11,15 +11,18 @@ EMPLOYMENT_OVERRIDES = KB_DIR / "employment_overrides.csv"
 OUTPUTS_DIR = Path(__file__).parent / "outputs"
 SMOKE_TEST_OUTPUTS_DIR = OUTPUTS_DIR / "smoke_test"
 
-load_dotenv(Path(__file__).parent / ".env")
+load_dotenv(ROOT / ".env")
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 
 OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5:14b")
+OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5:32b")
 
-USE_ANTHROPIC = bool(ANTHROPIC_API_KEY)
+USE_ANTHROPIC = (
+    os.getenv("USE_ANTHROPIC", "false").lower() == "true"
+    and bool(ANTHROPIC_API_KEY)
+)
 
 SEMANTIC_THRESHOLD = float(os.getenv("SEMANTIC_THRESHOLD", "0.65"))
 MAX_EVIDENCE_ROWS = int(os.getenv("MAX_EVIDENCE_ROWS", "50"))
@@ -38,15 +41,15 @@ EMBEDDING_QUERY_PREFIX = os.getenv(
 RAG_TOP_K       = int(os.getenv("RAG_TOP_K", "15"))
 
 # Qdrant parent-child chunk index
-QDRANT_URL = os.getenv("QDRANT_URL", "http://localhost:6333")
+QDRANT_URL = os.getenv("QDRANT_URL", "https://c4d6dfe9-77b3-48b7-bdd3-cb6dbaf9cdb8.us-east4-0.gcp.cloud.qdrant.io")
 QDRANT_PATH = os.getenv("QDRANT_PATH", "")
-QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "")
+QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6MTk5NjRkNWYtMTE2NC00ODFmLWI4YWItOWIwNmY2NTVkOTQxIn0.2RxGNGkawXV-hVocpKSKYKi1T7HOv0DjYFR02NFhEiI")
 QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "georgia_ev_kb_chunks")
 QDRANT_TIMEOUT = int(os.getenv("QDRANT_TIMEOUT", "30"))
 QDRANT_BATCH_SIZE = int(os.getenv("QDRANT_BATCH_SIZE", "64"))
 USE_QDRANT_RETRIEVER = os.getenv("USE_QDRANT_RETRIEVER", "true").lower() == "true"
 
-QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "erwan2/DeepSeek-R1-Distill-Qwen-7B")
+QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "qwen2.5:32b")
 QUERY_REWRITER_TIMEOUT = int(os.getenv("QUERY_REWRITER_TIMEOUT", "60"))
 QUERY_REWRITER_ENABLED = os.getenv("QUERY_REWRITER_ENABLED", "true").lower() == "true"
 MAX_REWRITER_RETRIES   = int(os.getenv("MAX_REWRITER_RETRIES", "2"))

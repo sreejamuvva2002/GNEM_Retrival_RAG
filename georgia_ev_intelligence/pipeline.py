@@ -3,11 +3,11 @@ Two-stage KB-grounded RAG pipeline.
 
 Steps:
   1. Load KB, schema, semantic retriever (all cached after first call)
-  2. Stage 1 — DeepSeek generates 5-10 semantic probes from question + schema metadata
+  2. Stage 1 — local LLM generates 5-10 semantic probes from question + schema metadata
   3. Probe retrieval — semantic vector + BM25 + column-targeted + exact entity search per probe;
      RRF fusion → 100-150 high-recall candidate rows
   4. KB term extraction — dynamically discover vocabulary from candidate rows
-  5. Stage 2 — DeepSeek rewrites the question using only discovered KB terms
+  5. Stage 2 — local LLM rewrites the question using only discovered KB terms
   6. Scoring & fallback — low-recall signals trigger safe fallback queries
   7. Final retrieval — term_matcher + rag_retriever.run() for each rewritten query;
      RRF fusion across queries
