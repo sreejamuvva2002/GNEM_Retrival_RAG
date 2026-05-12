@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from georgia_ev_intelligence.operation_detector import detect_operation, is_analytical_phrase
-from georgia_ev_intelligence.term_matcher import (
+from georgia_ev_intelligence.query.operation_detector import detect_operation, is_analytical_phrase
+from georgia_ev_intelligence.query.term_matcher import (
     _is_tier_compatible_column,
     _extract_slash_phrases,
     _resolve_slash_conflicts,
@@ -12,14 +12,14 @@ from georgia_ev_intelligence.term_matcher import (
     _extract_question_ngrams,
     find_best_live_value_matches,
 )
-from georgia_ev_intelligence.keyword_resolver import (
+from georgia_ev_intelligence.query.keyword_resolver import (
     resolve_keywords,
     KeywordResolution,
     _is_column_name,
     _classify_phrase_type,
     _is_column_compatible,
 )
-from georgia_ev_intelligence.schema_index import ColumnMeta
+from georgia_ev_intelligence.data.schema import ColumnMeta
 
 print("=" * 60)
 print("UNIT TESTS: operation_detector + term_matcher + keyword_resolver")

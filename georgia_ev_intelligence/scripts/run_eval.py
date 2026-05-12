@@ -7,7 +7,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from georgia_ev_intelligence import evaluator
+from georgia_ev_intelligence.evaluation import evaluator
 
 
 def main():

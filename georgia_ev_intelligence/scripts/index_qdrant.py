@@ -13,9 +13,10 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from georgia_ev_intelligence import config, kb_loader
-from georgia_ev_intelligence.kb_chunker import build_parent_child_chunks, chunks_to_dataframe
-from georgia_ev_intelligence.qdrant_store import build_client, index_kb_chunks
+from georgia_ev_intelligence import config
+from georgia_ev_intelligence.data import loader as kb_loader
+from georgia_ev_intelligence.indexing.chunker import build_parent_child_chunks, chunks_to_dataframe
+from georgia_ev_intelligence.indexing.qdrant_store import build_client, index_kb_chunks
 
 
 def main() -> None:

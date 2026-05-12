@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
 import pandas as pd
 from georgia_ev_intelligence import pipeline, config
-from georgia_ev_intelligence.evaluator import load_qa, token_f1
+from georgia_ev_intelligence.evaluation.evaluator import load_qa, token_f1
 
 QUESTIONS = [
     "Show all Tier 1/2 suppliers in Georgia, list their EV Supply Chain Role and Product/Service",
@@ -254,8 +254,8 @@ def _run_structural_tests():
     These tests validate correct pipeline behavior without hardcoding
     specific company names, row counts, or answer text.
     """
-    from georgia_ev_intelligence.operation_detector import detect_operation
-    from georgia_ev_intelligence.term_matcher import _is_tier_compatible_column
+    from georgia_ev_intelligence.query.operation_detector import detect_operation
+    from georgia_ev_intelligence.query.term_matcher import _is_tier_compatible_column
 
     print(f"\n{'='*70}")
     print("STRUCTURAL ASSERTION TESTS")
