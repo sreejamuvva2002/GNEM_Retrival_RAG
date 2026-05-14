@@ -8,7 +8,6 @@ KB_DIR = ROOT / "kb"
 
 GNEM_EXCEL = KB_DIR / "GNEM - Auto Landscape Lat Long Updated.xlsx"
 HUMAN_QA_EXCEL = KB_DIR / "Human validated 50 questions.xlsx"
-EMPLOYMENT_OVERRIDES = KB_DIR / "employment_overrides.csv"
 OUTPUTS_DIR = PACKAGE_DIR / "outputs"
 SMOKE_TEST_OUTPUTS_DIR = OUTPUTS_DIR / "smoke_test"
 
@@ -49,6 +48,9 @@ QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "georgia_ev_kb_chunks")
 QDRANT_TIMEOUT = int(os.getenv("QDRANT_TIMEOUT", "30"))
 QDRANT_BATCH_SIZE = int(os.getenv("QDRANT_BATCH_SIZE", "64"))
 USE_QDRANT_RETRIEVER = os.getenv("USE_QDRANT_RETRIEVER", "true").lower() == "true"
+
+# PostgreSQL parent chunk storage
+DATABASE_URL = os.getenv("DATABASE_URL", "")
 
 QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "qwen2.5:32b")
 QUERY_REWRITER_TIMEOUT = int(os.getenv("QUERY_REWRITER_TIMEOUT", "60"))

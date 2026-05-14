@@ -10,8 +10,8 @@ from qdrant_client import QdrantClient
 from qdrant_client.http import models
 
 from .. import config
+from .chunking import ChildChunk, build_parent_child_chunks
 from .embeddings import as_document_text, load_sentence_transformer
-from .chunker import ChildChunk, build_parent_child_chunks
 
 
 @dataclass(frozen=True)
