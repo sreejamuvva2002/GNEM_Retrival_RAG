@@ -17,7 +17,6 @@ from georgia_ev_intelligence.shared import config
 from georgia_ev_intelligence.shared.data import loader as kb_loader
 from georgia_ev_intelligence.offline_pipeline.chunking.operations import (
     build_parent_child_chunks,
-    chunks_to_dataframe,
 )
 from georgia_ev_intelligence.offline_pipeline.qdrant_store import build_client, index_kb_chunks
 
@@ -34,14 +33,22 @@ def main() -> None:
     args = parser.parse_args()
 
     df = kb_loader.load()
-    chunks = build_parent_child_chunks(df)
+    artifacts = build_parent_child_chunks(df)
 
     if args.preview:
-        preview_df = chunks_to_dataframe(chunks).head(args.preview)
-        print(preview_df.to_string(index=False))
+        print(f"Parents: {len(artifacts.parents)}  Children: {len(artifacts.children)}\n")
+        for child in artifacts.children[: args.preview]:
+            print(f"[{child.chunk_type.value}] {child.chunk_id}")
+            print(f"  Parent:  {child.parent_record_id}")
+            print(f"  Text:    {child.embedding_text[:120]}")
+            print()
 
     if args.dry_run:
-        print(f"Built {len(chunks)} chunks. Dry run only; Qdrant was not updated.")
+        print(
+            f"Built {len(artifacts.parents)} parents, "
+            f"{len(artifacts.children)} child chunks. "
+            "Dry run only; Qdrant was not updated."
+        )
         return
 
     client = build_client(url=args.url, path=args.local_path)

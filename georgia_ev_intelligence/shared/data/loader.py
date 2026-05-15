@@ -83,17 +83,17 @@ def load() -> pd.DataFrame:
     # Normalize column headings only
     df.columns = [_norm_column(c) for c in df.columns]
 
-    if "company" not in df.columns:
+    if KBColumns.COMPANY not in df.columns:
         raise ValueError(f"'company' column not found. Columns: {df.columns.tolist()}")
 
     # Keep existing behavior: remove rows without company identity
-    df = df.dropna(subset=["company"]).reset_index(drop=True)
+    df = df.dropna(subset=[KBColumns.COMPANY]).reset_index(drop=True)
 
     # Normalize values
     df = normalize_dataframe(df)
 
     # Add row id
-    df["_row_id"] = df.index
+    df[KBColumns.ROW_ID] = df.index
 
 
     # Final missing handling
@@ -112,6 +112,39 @@ def _norm_column(name: str) -> str:
     name = str(name).lower().strip()
     name = re.sub(r"[^a-z0-9]+", "_", name)
     return name.strip("_")
+
+
+class KBColumns:
+    """Column names after loader heading normalization."""
+
+    COMPANY = _norm_column("Company")
+    CATEGORY = _norm_column("Category")
+    INDUSTRY_GROUP = _norm_column("Industry Group")
+    UPDATED_LOCATION = _norm_column("Updated Location")
+    ADDRESS = _norm_column("Address")
+    LATITUDE = _norm_column("Latitude")
+    LONGITUDE = _norm_column("Longitude")
+    PRIMARY_FACILITY_TYPE = _norm_column("Primary Facility Type")
+    EV_SUPPLY_CHAIN_ROLE = _norm_column("EV Supply Chain Role")
+    PRIMARY_OEMS = _norm_column("Primary OEMs")
+    SUPPLIER_OR_AFFILIATION_TYPE = _norm_column("Supplier or Affiliation Type")
+    EMPLOYMENT = _norm_column("Employment")
+    PRODUCT_SERVICE = _norm_column("Product / Service")
+    EV_BATTERY_RELEVANT = _norm_column("EV / Battery Relevant")
+    CLASSIFICATION_METHOD = _norm_column("Classification Method")
+
+    COMPANY_CLEAN = _norm_column("Company Clean")
+    COUNTY = _norm_column("County")
+    TIER_CATEGORY_HEURISTIC = _norm_column("Tier Category Heuristic")
+    TIER_LEVEL = _norm_column("Tier Level")
+    TIER_CONFIDENCE = _norm_column("Tier Confidence")
+    OEM_GA = _norm_column("OEM GA")
+    INDUSTRY_CODE = _norm_column("Industry Code")
+    INDUSTRY_NAME = _norm_column("Industry Name")
+    PDF_PAGE = _norm_column("PDF Page")
+    IS_ANNOUNCEMENT = _norm_column("Is Announcement")
+
+    ROW_ID = "_row_id"
 
 
 # -------------------------------------------------------
@@ -257,33 +290,33 @@ def normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     for col in df.columns:
 
         # Numeric columns
-        if col in {"employment", "latitude", "longitude"}:
+        if col in {KBColumns.EMPLOYMENT, KBColumns.LATITUDE, KBColumns.LONGITUDE}:
             df[col] = df[col].apply(clean_numeric)
 
         # Company:
         # Do not change company names.
         # Only remove extra spaces and line breaks.
-        elif col == "company":
+        elif col == KBColumns.COMPANY:
             df[col] = df[col].apply(clean_text)
 
         # Product / Service:
         # Preserve original meaning. Only light cleaning.
-        elif col == "product_service":
+        elif col == KBColumns.PRODUCT_SERVICE:
             df[col] = df[col].apply(clean_product_service)
 
         # Primary OEMs:
         # Clean spaces and separators only.
-        elif col == "primary_oems":
+        elif col == KBColumns.PRIMARY_OEMS:
             df[col] = df[col].apply(clean_primary_oems)
 
         # Supplier / Affiliation Type:
         # Strong normalization to 3 allowed values.
-        elif col == "supplier_or_affiliation_type":
+        elif col == KBColumns.SUPPLIER_OR_AFFILIATION_TYPE:
             df[col] = df[col].apply(normalize_supplier_affiliation)
 
         # EV / Battery Relevant:
         # Strong normalization to 4 allowed values.
-        elif col == "ev_battery_relevant":
+        elif col == KBColumns.EV_BATTERY_RELEVANT:
             df[col] = df[col].apply(normalize_ev_battery)
 
         # All other columns:
@@ -317,22 +350,22 @@ def build_debug_report(df: pd.DataFrame) -> dict:
 
     sheets["missing_summary"] = missing_summary
 
-    if "supplier_or_affiliation_type" in df.columns:
+    if KBColumns.SUPPLIER_OR_AFFILIATION_TYPE in df.columns:
         supplier_counts = (
-            df["supplier_or_affiliation_type"]
+            df[KBColumns.SUPPLIER_OR_AFFILIATION_TYPE]
             .value_counts(dropna=False)
             .reset_index()
         )
-        supplier_counts.columns = ["supplier_or_affiliation_type", "count"]
+        supplier_counts.columns = [KBColumns.SUPPLIER_OR_AFFILIATION_TYPE, "count"]
         sheets["supplier_type_values"] = supplier_counts
 
-    if "ev_battery_relevant" in df.columns:
+    if KBColumns.EV_BATTERY_RELEVANT in df.columns:
         ev_counts = (
-            df["ev_battery_relevant"]
+            df[KBColumns.EV_BATTERY_RELEVANT]
             .value_counts(dropna=False)
             .reset_index()
         )
-        ev_counts.columns = ["ev_battery_relevant", "count"]
+        ev_counts.columns = [KBColumns.EV_BATTERY_RELEVANT, "count"]
         sheets["ev_battery_values"] = ev_counts
 
     return sheets

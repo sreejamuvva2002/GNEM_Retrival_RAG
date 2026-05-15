@@ -1,6 +1,13 @@
 """Offline parent-child chunking package."""
 
-from .child_chunk import ChildChunk, build_embedding_text  # noqa: F401
-from .operations import build_parent_child_chunks, chunks_to_dataframe  # noqa: F401
-from .parent_chunk import ParentRecord, build_parent_record  # noqa: F401
-from .relations import build_child_chunk  # noqa: F401
+from .operations import (  # noqa: F401
+    ChunkingArtifacts,
+    build_child_chunks_for_parents,
+    build_parent_child_chunks,
+    build_parent_chunks,
+    export_child_chunks_to_xlsx,
+    export_parent_chunks_to_xlsx,
+)
+from .parent_chunk import ParentRecord  # noqa: F401
+from .child_chunk import ChildChunk, ChildChunkType  # noqa: F401
+from .relationship import validate_relationships  # noqa: F401

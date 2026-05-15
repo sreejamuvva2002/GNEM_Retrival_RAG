@@ -14,7 +14,7 @@ from ..shared import config
 from ..shared.embeddings import as_document_text, load_sentence_transformer
 from ..shared.qdrant_client import build_client
 from .chunking.child_chunk import ChildChunk
-from .chunking.operations import build_parent_child_chunks
+from .chunking.operations import build_parent_child_chunks, ChunkingArtifacts
 
 
 @dataclass(frozen=True)
@@ -54,8 +54,8 @@ def index_kb_chunks(
 
     from qdrant_client.http import models
 
-    chunks = build_parent_child_chunks(df)
-    for batch in _batched(chunks, size):
+    artifacts = build_parent_child_chunks(df)
+    for batch in _batched(artifacts.children, size):
         texts = [as_document_text(chunk.embedding_text) for chunk in batch]
         vectors = model.encode(
             texts,
@@ -76,7 +76,7 @@ def index_kb_chunks(
 
     return QdrantIndexStats(
         collection_name=collection,
-        chunks_indexed=len(chunks),
+        chunks_indexed=len(artifacts.children),
         vector_size=vector_size,
         embedding_model=model_id,
     )
@@ -108,7 +108,7 @@ def _ensure_collection(
     )
 
 
-def _batched(chunks: list[ChildChunk], size: int) -> Iterable[list[ChildChunk]]:
+def _batched(chunks: list, size: int) -> Iterable[list]:
     for start in range(0, len(chunks), size):
         yield chunks[start : start + size]
 
