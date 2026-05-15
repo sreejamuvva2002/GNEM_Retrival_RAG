@@ -9,5 +9,5 @@ anthropic>=0.40
 sentence-transformers>=3.0
 numpy>=1.26
 rank-bm25>=0.2.2
-qdrant-client>=1.17
 einops>=0.8
+psycopg2-binary>=2.9
