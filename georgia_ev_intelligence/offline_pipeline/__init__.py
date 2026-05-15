@@ -6,7 +6,7 @@ _EXPORTS = {
     "build_parent_child_chunks": (
         "georgia_ev_intelligence.offline_pipeline.chunking.operations"
     ),
-    "index_kb_chunks": "georgia_ev_intelligence.offline_pipeline.qdrant_store",
+    "index_kb_children": "georgia_ev_intelligence.offline_pipeline.pgvector_store",
 }
 
 __all__ = list(_EXPORTS)

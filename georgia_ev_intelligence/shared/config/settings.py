@@ -14,6 +14,9 @@ SMOKE_TEST_OUTPUTS_DIR = OUTPUTS_DIR / "smoke_test"
 
 load_dotenv(ROOT / ".env")
 
+# Neon PostgreSQL (parent chunks storage)
+NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL", "")
+
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
 ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
 
@@ -41,14 +44,9 @@ EMBEDDING_QUERY_PREFIX = os.getenv(
 )
 RAG_TOP_K       = int(os.getenv("RAG_TOP_K", "15"))
 
-# Qdrant parent-child chunk index
-QDRANT_URL = os.getenv("QDRANT_URL", "https://c4d6dfe9-77b3-48b7-bdd3-cb6dbaf9cdb8.us-east4-0.gcp.cloud.qdrant.io")
-QDRANT_PATH = os.getenv("QDRANT_PATH", "")
-QDRANT_API_KEY = os.getenv("QDRANT_API_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIiwic3ViamVjdCI6ImFwaS1rZXk6MTk5NjRkNWYtMTE2NC00ODFmLWI4YWItOWIwNmY2NTVkOTQxIn0.2RxGNGkawXV-hVocpKSKYKi1T7HOv0DjYFR02NFhEiI")
-QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "georgia_ev_kb_chunks")
-QDRANT_TIMEOUT = int(os.getenv("QDRANT_TIMEOUT", "30"))
-QDRANT_BATCH_SIZE = int(os.getenv("QDRANT_BATCH_SIZE", "64"))
-USE_QDRANT_RETRIEVER = os.getenv("USE_QDRANT_RETRIEVER", "true").lower() == "true"
+# pgvector child chunk index (Neon PostgreSQL)
+PGVECTOR_BATCH_SIZE = int(os.getenv("PGVECTOR_BATCH_SIZE", "64"))
+USE_PGVECTOR_RETRIEVER = os.getenv("USE_PGVECTOR_RETRIEVER", "true").lower() == "true"
 
 QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "qwen2.5:32b")
 QUERY_REWRITER_TIMEOUT = int(os.getenv("QUERY_REWRITER_TIMEOUT", "60"))
