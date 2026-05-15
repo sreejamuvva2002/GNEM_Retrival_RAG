@@ -8,59 +8,71 @@ KB_DIR = ROOT / "kb"
 
 GNEM_EXCEL = KB_DIR / "GNEM - Auto Landscape Lat Long Updated.xlsx"
 HUMAN_QA_EXCEL = KB_DIR / "Human validated 50 questions.xlsx"
-EMPLOYMENT_OVERRIDES = KB_DIR / "employment_overrides.csv"
 OUTPUTS_DIR = PACKAGE_DIR / "outputs"
 SMOKE_TEST_OUTPUTS_DIR = OUTPUTS_DIR / "smoke_test"
 
 load_dotenv(ROOT / ".env")
 
+
+def _env(name: str) -> str:
+    if name not in os.environ:
+        raise RuntimeError(f"Missing required environment variable: {name}")
+    return os.environ[name]
+
+
+def _env_bool(name: str) -> bool:
+    return _env(name).lower() == "true"
+
+
+def _env_int(name: str) -> int:
+    return int(_env(name))
+
+
+def _env_float(name: str) -> float:
+    return float(_env(name))
+
+
 # Neon PostgreSQL (parent chunks storage)
-NEON_DATABASE_URL = os.getenv("NEON_DATABASE_URL", "")
+NEON_DATABASE_URL = _env("NEON_DATABASE_URL")
 
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+ANTHROPIC_API_KEY = _env("ANTHROPIC_API_KEY")
+ANTHROPIC_MODEL = _env("ANTHROPIC_MODEL")
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
-OLLAMA_LLM_MODEL = os.getenv("OLLAMA_LLM_MODEL", "qwen2.5:32b")
+OLLAMA_BASE_URL = _env("OLLAMA_BASE_URL")
+OLLAMA_LLM_MODEL = _env("OLLAMA_LLM_MODEL")
 
 USE_ANTHROPIC = (
-    os.getenv("USE_ANTHROPIC", "false").lower() == "true"
+    _env_bool("USE_ANTHROPIC")
     and bool(ANTHROPIC_API_KEY)
 )
 
-SEMANTIC_THRESHOLD = float(os.getenv("SEMANTIC_THRESHOLD", "0.65"))
-MAX_EVIDENCE_ROWS = int(os.getenv("MAX_EVIDENCE_ROWS", "50"))
+SEMANTIC_THRESHOLD = _env_float("SEMANTIC_THRESHOLD")
+MAX_EVIDENCE_ROWS = _env_int("MAX_EVIDENCE_ROWS")
 
-EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "nomic-ai/nomic-embed-text-v1.5")
-EMBEDDING_LOCAL_FILES_ONLY = os.getenv("EMBEDDING_LOCAL_FILES_ONLY", "false").lower() == "true"
-EMBEDDING_TRUST_REMOTE_CODE = os.getenv("EMBEDDING_TRUST_REMOTE_CODE", "true").lower() == "true"
-EMBEDDING_DOCUMENT_PREFIX = os.getenv(
-    "EMBEDDING_DOCUMENT_PREFIX",
-    "search_document: " if "nomic" in EMBEDDING_MODEL.lower() else "",
-)
-EMBEDDING_QUERY_PREFIX = os.getenv(
-    "EMBEDDING_QUERY_PREFIX",
-    "search_query: " if "nomic" in EMBEDDING_MODEL.lower() else "",
-)
-RAG_TOP_K       = int(os.getenv("RAG_TOP_K", "15"))
+EMBEDDING_MODEL = _env("EMBEDDING_MODEL")
+EMBEDDING_LOCAL_FILES_ONLY = _env_bool("EMBEDDING_LOCAL_FILES_ONLY")
+EMBEDDING_TRUST_REMOTE_CODE = _env_bool("EMBEDDING_TRUST_REMOTE_CODE")
+EMBEDDING_DOCUMENT_PREFIX = _env("EMBEDDING_DOCUMENT_PREFIX")
+EMBEDDING_QUERY_PREFIX = _env("EMBEDDING_QUERY_PREFIX")
+RAG_TOP_K = _env_int("RAG_TOP_K")
 
 # pgvector child chunk index (Neon PostgreSQL)
-PGVECTOR_BATCH_SIZE = int(os.getenv("PGVECTOR_BATCH_SIZE", "64"))
-USE_PGVECTOR_RETRIEVER = os.getenv("USE_PGVECTOR_RETRIEVER", "true").lower() == "true"
+PGVECTOR_BATCH_SIZE = _env_int("PGVECTOR_BATCH_SIZE")
+USE_PGVECTOR_RETRIEVER = _env_bool("USE_PGVECTOR_RETRIEVER")
 
-QUERY_REWRITER_MODEL   = os.getenv("QUERY_REWRITER_MODEL", "qwen2.5:32b")
-QUERY_REWRITER_TIMEOUT = int(os.getenv("QUERY_REWRITER_TIMEOUT", "60"))
-QUERY_REWRITER_ENABLED = os.getenv("QUERY_REWRITER_ENABLED", "true").lower() == "true"
-MAX_REWRITER_RETRIES   = int(os.getenv("MAX_REWRITER_RETRIES", "2"))
+QUERY_REWRITER_MODEL = _env("QUERY_REWRITER_MODEL")
+QUERY_REWRITER_TIMEOUT = _env_int("QUERY_REWRITER_TIMEOUT")
+QUERY_REWRITER_ENABLED = _env_bool("QUERY_REWRITER_ENABLED")
+MAX_REWRITER_RETRIES = _env_int("MAX_REWRITER_RETRIES")
 
 # Probe retrieval (Stage 1 multi-probe, high-recall)
-PROBE_TOP_K_SEMANTIC = int(os.getenv("PROBE_TOP_K_SEMANTIC", os.getenv("PROBE_TOP_K_DENSE", "50")))
-PROBE_TOP_K_BM25     = int(os.getenv("PROBE_TOP_K_BM25", "50"))
-PROBE_TOP_K_COLUMN   = int(os.getenv("PROBE_TOP_K_COLUMN", "50"))
-PROBE_FUSED_TOP_K    = int(os.getenv("PROBE_FUSED_TOP_K", "150"))
-PROBE_MIN_ROWS       = int(os.getenv("PROBE_MIN_ROWS", "10"))
+PROBE_TOP_K_SEMANTIC = _env_int("PROBE_TOP_K_SEMANTIC")
+PROBE_TOP_K_BM25 = _env_int("PROBE_TOP_K_BM25")
+PROBE_TOP_K_COLUMN = _env_int("PROBE_TOP_K_COLUMN")
+PROBE_FUSED_TOP_K = _env_int("PROBE_FUSED_TOP_K")
+PROBE_MIN_ROWS = _env_int("PROBE_MIN_ROWS")
 
 # KB term extraction
-KB_TERM_MIN_FREQUENCY  = int(os.getenv("KB_TERM_MIN_FREQUENCY", "2"))
-KB_TERM_TOP_N          = int(os.getenv("KB_TERM_TOP_N", "30"))
-KB_TERM_MIN_DISCOVERED = int(os.getenv("KB_TERM_MIN_DISCOVERED", "3"))
+KB_TERM_MIN_FREQUENCY = _env_int("KB_TERM_MIN_FREQUENCY")
+KB_TERM_TOP_N = _env_int("KB_TERM_TOP_N")
+KB_TERM_MIN_DISCOVERED = _env_int("KB_TERM_MIN_DISCOVERED")

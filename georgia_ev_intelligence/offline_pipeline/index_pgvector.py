@@ -3,6 +3,7 @@ Build parent-child KB chunks, store parents in PostgreSQL and child vectors in p
 
 Usage:
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector
+  python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --recreate-child-table
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --dry-run --preview 3
 """
 from __future__ import annotations
@@ -29,6 +30,14 @@ def main() -> None:
         description="Index Georgia EV KB chunks into PostgreSQL + pgvector."
     )
     parser.add_argument("--model", default=config.EMBEDDING_MODEL)
+    parser.add_argument(
+        "--recreate-child-table",
+        action="store_true",
+        help=(
+            "Drop and recreate the child_chunks pgvector table. Use this after "
+            "changing embedding model/vector dimension."
+        ),
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--preview", type=int, default=0)
     args = parser.parse_args()
@@ -62,7 +71,11 @@ def main() -> None:
     pg_count = store_parents_postgres(artifacts.parents)
     print(f"Stored {pg_count} parent chunks in PostgreSQL (parent_chunks table).")
 
-    stats = index_kb_children(artifacts, model_name=args.model)
+    stats = index_kb_children(
+        artifacts,
+        model_name=args.model,
+        recreate=args.recreate_child_table,
+    )
     print(
         f"Indexed {stats.chunks_indexed} child chunks into pgvector (child_chunks table) "
         f"with {stats.vector_size}-dim vectors from {stats.embedding_model}."

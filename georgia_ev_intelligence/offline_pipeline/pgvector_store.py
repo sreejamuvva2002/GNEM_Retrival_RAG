@@ -23,6 +23,8 @@ class PgVectorIndexStats:
 
 _CREATE_EXTENSION_SQL = "CREATE EXTENSION IF NOT EXISTS vector;"
 
+_DROP_TABLE_SQL = "DROP TABLE IF EXISTS child_chunks;"
+
 _CREATE_TABLE_SQL = """
 CREATE TABLE IF NOT EXISTS child_chunks (
     chunk_id           TEXT PRIMARY KEY,
@@ -68,9 +70,16 @@ def _get_connection() -> "psycopg2.extensions.connection":
     return psycopg2.connect(url)
 
 
-def _create_child_chunks_table(conn: "psycopg2.extensions.connection", vector_size: int) -> None:
+def _create_child_chunks_table(
+    conn: "psycopg2.extensions.connection",
+    vector_size: int,
+    *,
+    recreate: bool,
+) -> None:
     with conn.cursor() as cur:
         cur.execute(_CREATE_EXTENSION_SQL)
+        if recreate:
+            cur.execute(_DROP_TABLE_SQL)
         cur.execute(_CREATE_TABLE_SQL.format(vector_size=vector_size))
         cur.execute(_CREATE_INDEX_SQL)
 
@@ -89,6 +98,7 @@ def index_kb_children(
     artifacts: ChunkingArtifacts,
     model_name: str | None = None,
     batch_size: int | None = None,
+    recreate: bool = False,
 ) -> PgVectorIndexStats:
     """Encode child chunk embedding texts and upsert into the child_chunks pgvector table."""
     model_id = model_name or config.EMBEDDING_MODEL
@@ -105,7 +115,7 @@ def index_kb_children(
 
     conn = _get_connection()
     try:
-        _create_child_chunks_table(conn, vector_size)
+        _create_child_chunks_table(conn, vector_size, recreate=recreate)
 
         total = 0
         for batch in _batched(artifacts.children, size):
