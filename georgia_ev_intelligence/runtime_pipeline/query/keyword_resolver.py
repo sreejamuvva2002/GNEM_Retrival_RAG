@@ -34,16 +34,18 @@ from typing import Callable
 
 from ...shared.data.schema import ColumnMeta
 from .operation_detector import is_analytical_phrase
+from .text_utils import (
+    norm_text,
+    contains_phrase,
+    normalise_for_comparison,
+    extract_question_ngrams,
+    MIN_MATCH_LEN,
+)
 from .term_matcher import (
-    _norm_text,
-    _contains_phrase,
-    _normalise_for_comparison,
-    _extract_question_ngrams,
-    _is_tier_compatible_column,
-    _extract_requested_tiers,
-    _value_matches_requested_tier,
-    _extract_slash_phrases,
-    _MIN_MATCH_LEN,
+    is_tier_compatible_column,
+    extract_requested_tiers,
+    value_matches_requested_tier,
+    extract_slash_phrases,
 )
 
 
@@ -109,7 +111,7 @@ def _norm_key(name: str) -> str:
     return re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
 
 
-def _is_column_name(term: str, schema_index: dict[str, ColumnMeta]) -> bool:
+def is_column_name(term: str, schema_index: dict[str, ColumnMeta]) -> bool:
     """Check whether *term* is a column name or normalised column key."""
     if not term or not term.strip():
         return False
@@ -139,7 +141,7 @@ _LOCATION_COMPATIBLE_PATTERNS = frozenset({
 })
 
 
-def _classify_phrase_type(phrase: str) -> str:
+def classify_phrase_type(phrase: str) -> str:
     """Classify a user phrase as tier / product_component / location / analytical / general."""
     if not phrase or not phrase.strip():
         return "general"
@@ -160,7 +162,7 @@ def _classify_phrase_type(phrase: str) -> str:
     return "general"
 
 
-def _is_column_compatible(phrase_type: str, col: str) -> bool:
+def is_column_compatible(phrase_type: str, col: str) -> bool:
     """Validate that a phrase type is compatible with a specific column."""
     norm = _norm_key(col)
 
@@ -193,7 +195,7 @@ def resolve_keywords(
 
     Steps:
       1. Extract n-grams from the question (longest first).
-      2. For each n-gram, scan every filterable column's unique_values for
+      2. For each n-gram, scan every filterable column's unique_values for  -
          exact, normalised, or contains matches.
       3. Score matches: exact > normalised > contains.
       4. Also run tier expansion for tier-compatible columns.
@@ -205,13 +207,13 @@ def resolve_keywords(
     Returns KeywordResolution with all three categories populated.
     """
     q_lower = question.lower()
-    q_norm = _normalise_for_comparison(question)
-    ngrams = _extract_question_ngrams(question, max_ngram=max_ngram)
+    q_norm = normalise_for_comparison(question)
+    ngrams = extract_question_ngrams(question, max_ngram=max_ngram)
     ngram_lower_set = {ng.lower() for ng in ngrams}
-    ngram_norm_set = {_normalise_for_comparison(ng) for ng in ngrams}
+    ngram_norm_set = {normalise_for_comparison(ng) for ng in ngrams}
 
-    requested_tiers = _extract_requested_tiers(question)
-    slash_phrases = _extract_slash_phrases(question)
+    requested_tiers = extract_requested_tiers(question)
+    slash_phrases = extract_slash_phrases(question)
 
     # Collect all raw matches with scoring
     raw_matches: list[ResolvedKeyword] = []
@@ -222,11 +224,11 @@ def resolve_keywords(
 
         for val in meta.unique_values:
             val_str = str(val).strip()
-            if len(val_str) < _MIN_MATCH_LEN:
+            if len(val_str) < MIN_MATCH_LEN:
                 continue
 
             val_lower = val_str.lower()
-            val_norm = _normalise_for_comparison(val_str)
+            val_norm = normalise_for_comparison(val_str)
 
             best_type = None
             best_span = ""
@@ -246,7 +248,7 @@ def resolve_keywords(
 
             # Tier 3: KB value appears as phrase in the question
             if best_type is None:
-                if _contains_phrase(q_lower, val_str) or val_lower in q_lower:
+                if contains_phrase(q_lower, val_str) or val_lower in q_lower:
                     best_type = "contains"
                     best_span = val_lower
                     best_score = 1.0 + len(val_str) / 100.0
@@ -255,8 +257,8 @@ def resolve_keywords(
             if (
                 best_type is None
                 and requested_tiers
-                and _is_tier_compatible_column(col)
-                and _value_matches_requested_tier(val_str, requested_tiers)
+                and is_tier_compatible_column(col)
+                and value_matches_requested_tier(val_str, requested_tiers)
             ):
                 best_type = "tier_expanded"
                 best_span = f"tier expansion from: {', '.join(sorted(requested_tiers))}"
@@ -284,9 +286,9 @@ def resolve_keywords(
         for m in raw_matches:
             if m.match_type in ("exact", "normalised"):
                 v_lower = m.value.lower()
-                v_norm = _normalise_for_comparison(m.value)
+                v_norm = normalise_for_comparison(m.value)
                 for sp in slash_phrases:
-                    sp_norm = _normalise_for_comparison(sp)
+                    sp_norm = normalise_for_comparison(sp)
                     if v_lower == sp or v_norm == sp_norm or sp in v_lower or sp_norm in v_norm:
                         anchor_values.add(m.value)
                         anchor_norms.add(v_norm)
@@ -303,7 +305,7 @@ def resolve_keywords(
         # ── Rejection checks ──
 
         # Reject: column name used as value
-        if _is_column_name(m.value, schema_index):
+        if is_column_name(m.value, schema_index):
             m.reason = "column_name_not_a_value"
             rejected.append(m)
             continue
@@ -315,8 +317,8 @@ def resolve_keywords(
             continue
 
         # Classify phrase type and check column compatibility
-        phrase_type = _classify_phrase_type(m.user_span if m.match_type != "tier_expanded" else m.value)
-        if not _is_column_compatible(phrase_type, m.column):
+        phrase_type = classify_phrase_type(m.user_span if m.match_type != "tier_expanded" else m.value)
+        if not is_column_compatible(phrase_type, m.column):
             m.reason = f"incompatible_{phrase_type}_column={m.column}"
             rejected.append(m)
             continue
@@ -331,7 +333,7 @@ def resolve_keywords(
                 continue
 
             # Check if this value is a substring of an anchor
-            v_norm = _normalise_for_comparison(m.value)
+            v_norm = normalise_for_comparison(m.value)
             is_substring_of_anchor = any(
                 v_norm in anorm and v_norm != anorm
                 for anorm in anchor_norms

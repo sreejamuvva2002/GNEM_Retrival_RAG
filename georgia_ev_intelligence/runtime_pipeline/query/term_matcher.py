@@ -19,6 +19,16 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from ...shared.data.schema import ColumnMeta
+from .text_utils import (
+    MIN_MATCH_LEN,
+    norm_text,
+    tokens,
+    singularize_token,
+    token_set,
+    contains_phrase,
+    normalise_for_comparison,
+    extract_question_ngrams,
+)
 
 
 @dataclass
@@ -41,58 +51,6 @@ _STOPWORDS = {
     "entire", "total", "count", "number", "highest", "lowest", "most",
     "least", "top", "bottom",
 }
-
-# Minimum character length for a KB value/component to be considered a match.
-_MIN_MATCH_LEN = 3
-
-
-# ── Text normalization helpers ────────────────────────────────────────────────
-
-def _norm_text(text: str) -> str:
-    """Lowercase and normalize whitespace."""
-    return re.sub(r"\s+", " ", str(text).lower()).strip()
-
-
-def _tokens(text: str) -> list[str]:
-    """Tokenize while preserving slash-style tokens such as 1/2."""
-    return re.findall(r"[a-z0-9]+(?:/[a-z0-9]+)?", _norm_text(text))
-
-
-def _singularize_token(tok: str) -> str:
-    """
-    Very small singularization helper.
-
-    Enough for supplier/suppliers, companies/company, counties/county.
-    Avoids external dependencies.
-    """
-    tok = tok.lower()
-
-    if len(tok) > 4 and tok.endswith("ies"):
-        return tok[:-3] + "y"
-    if len(tok) > 3 and tok.endswith("s") and not tok.endswith("ss"):
-        return tok[:-1]
-    return tok
-
-
-def _token_set(text: str) -> set[str]:
-    toks = _tokens(text)
-    out = set(toks)
-    out.update(_singularize_token(t) for t in toks)
-    return {t for t in out if t}
-
-
-def _contains_phrase(text: str, phrase: str) -> bool:
-    """
-    Safer phrase containment with flexible spacing and word boundaries.
-
-    This avoids matching tiny substrings accidentally.
-    """
-    phrase = str(phrase).strip()
-    if not phrase:
-        return False
-
-    pattern = r"\b" + r"\s+".join(re.escape(p) for p in phrase.lower().split()) + r"\b"
-    return bool(re.search(pattern, text, flags=re.IGNORECASE))
 
 
 def _deduplicate(values: list[str]) -> list[str]:
@@ -125,7 +83,7 @@ def _add_match(
 
 # ── Column-compatibility helpers ──────────────────────────────────────────────
 
-def _is_tier_compatible_column(col: str) -> bool:
+def is_tier_compatible_column(col: str) -> bool:
     """
     Check whether a column is appropriate for tier/classification filtering.
 
@@ -146,7 +104,7 @@ def _is_tier_compatible_column(col: str) -> bool:
 
 # ── Tier/slash handling ───────────────────────────────────────────────────────
 
-def _extract_requested_tiers(question: str) -> set[str]:
+def extract_requested_tiers(question: str) -> set[str]:
     """
     Extract tier numbers from user shorthand without hardcoding KB values.
 
@@ -159,7 +117,7 @@ def _extract_requested_tiers(question: str) -> set[str]:
       - Tier 1, 2
       - Tier 1 and Tier 2
     """
-    q = _norm_text(question)
+    q = norm_text(question)
     tiers: set[str] = set()
 
     # Tier 1/2 or tier 1 / 2
@@ -179,7 +137,7 @@ def _extract_requested_tiers(question: str) -> set[str]:
     return tiers
 
 
-def _value_matches_requested_tier(val: str, requested_tiers: set[str]) -> bool:
+def value_matches_requested_tier(val: str, requested_tiers: set[str]) -> bool:
     """
     Check whether a KB value belongs to any requested tier number.
 
@@ -189,7 +147,7 @@ def _value_matches_requested_tier(val: str, requested_tiers: set[str]) -> bool:
     if not requested_tiers:
         return False
 
-    v = _norm_text(val)
+    v = norm_text(val)
 
     for tier in requested_tiers:
         if re.search(rf"\btier\s*{re.escape(tier)}\b", v):
@@ -203,8 +161,8 @@ def _slash_expanded_question(question: str) -> str:
     Build a forgiving string for slash notation:
       "tier 1/2 suppliers" → "tier 1 2 suppliers tier 1 tier 2"
     """
-    q = _norm_text(question)
-    requested = _extract_requested_tiers(q)
+    q = norm_text(question)
+    requested = extract_requested_tiers(q)
     pieces = [q, re.sub(r"(\w+)\s*/\s*(\w+)", r"\1 \2", q)]
 
     if requested:
@@ -220,15 +178,15 @@ def _value_soft_token_match(question: str, val: str) -> bool:
     It allows singular/plural tolerance and ignores generic trailing words
     like supplier/suppliers when the tier/category core already matches.
     """
-    q_tokens = _token_set(_slash_expanded_question(question))
-    v_tokens = _token_set(val)
+    q_tokens = token_set(_slash_expanded_question(question))
+    v_tokens = token_set(val)
 
     if not v_tokens:
         return False
 
     # If KB value is tier-like, rely on explicit tier number match.
-    requested_tiers = _extract_requested_tiers(question)
-    if requested_tiers and _value_matches_requested_tier(val, requested_tiers):
+    requested_tiers = extract_requested_tiers(question)
+    if requested_tiers and value_matches_requested_tier(val, requested_tiers):
         return True
 
     # General soft match: all meaningful value tokens are in question tokens.
@@ -247,30 +205,8 @@ def _value_soft_token_match(question: str, val: str) -> bool:
 
 # ── Generic live-value matching with exact-value precedence ───────────────────
 
-def _normalise_for_comparison(text: str) -> str:
-    """Normalise text for value comparison: lowercase, collapse whitespace/slashes."""
-    return re.sub(r"[\s/]+", " ", str(text).lower()).strip()
 
-
-def _extract_question_ngrams(question: str, max_ngram: int = 6) -> list[str]:
-    """
-    Extract word n-grams from the question for matching against live KB values.
-
-    Preserves slash notation (e.g. "1/2") as single tokens and generates
-    n-grams from 1 to max_ngram words, longest first.
-    """
-    # Tokenize preserving slashes inside words
-    tokens = re.findall(r"[A-Za-z0-9]+(?:/[A-Za-z0-9]+)*", question)
-    if not tokens:
-        return []
-
-    ngrams: list[str] = []
-    for n in range(min(max_ngram, len(tokens)), 0, -1):
-        for i in range(len(tokens) - n + 1):
-            phrase = " ".join(tokens[i : i + n])
-            if len(phrase) >= _MIN_MATCH_LEN:
-                ngrams.append(phrase)
-    return ngrams
+# normalise_for_comparison and extract_question_ngrams are now in text_utils.py
 
 
 def find_best_live_value_matches(
@@ -290,7 +226,7 @@ def find_best_live_value_matches(
       3. contains_match  — KB value is contained in the question as a phrase
 
     When an exact slash/compound value exists (e.g. "Tier 1/2"), its component
-    expansions ("Tier 1", "Tier 2") are suppressed by _resolve_slash_conflicts().
+    expansions ("Tier 1", "Tier 2") are suppressed by resolve_slash_conflicts().
 
     Parameters
     ----------
@@ -315,12 +251,12 @@ def find_best_live_value_matches(
       - ngram: str           (the question phrase that matched)
     """
     q_lower = question.lower()
-    q_norm = _normalise_for_comparison(question)
-    ngrams = _extract_question_ngrams(question, max_ngram=max_ngram)
+    q_norm = normalise_for_comparison(question)
+    ngrams = extract_question_ngrams(question, max_ngram=max_ngram)
 
     # Build lookup sets for fast matching
     ngram_lower_set = {ng.lower() for ng in ngrams}
-    ngram_norm_set = {_normalise_for_comparison(ng) for ng in ngrams}
+    ngram_norm_set = {normalise_for_comparison(ng) for ng in ngrams}
 
     matches: list[dict] = []
 
@@ -332,11 +268,11 @@ def find_best_live_value_matches(
 
         for val in meta.unique_values:
             val_str = str(val).strip()
-            if len(val_str) < _MIN_MATCH_LEN:
+            if len(val_str) < MIN_MATCH_LEN:
                 continue
 
             val_lower = val_str.lower()
-            val_norm = _normalise_for_comparison(val_str)
+            val_norm = normalise_for_comparison(val_str)
 
             best_tier = None
             best_ngram = None
@@ -357,7 +293,7 @@ def find_best_live_value_matches(
 
             # Tier 3: KB value appears as phrase in question
             if best_tier is None:
-                if _contains_phrase(q_lower, val_str) or val_lower in q_lower:
+                if contains_phrase(q_lower, val_str) or val_lower in q_lower:
                     best_tier = "contains_match"
                     best_ngram = val_lower
                     best_score = 1.0 + len(val_str) / 100.0
@@ -376,7 +312,7 @@ def find_best_live_value_matches(
     return matches[:top_n]
 
 
-def _extract_slash_phrases(question: str) -> list[str]:
+def extract_slash_phrases(question: str) -> list[str]:
     """
     Extract slash-containing phrases from the question.
 
@@ -384,7 +320,7 @@ def _extract_slash_phrases(question: str) -> list[str]:
          "Battery Cell/Pack" → ["battery cell/pack"]
     """
     # Match patterns like: <words> <digit/digit> or <word/word>
-    q = _norm_text(question)
+    q = norm_text(question)
     phrases: list[str] = []
 
     # Pattern: optional prefix word(s) + slash token
@@ -395,7 +331,7 @@ def _extract_slash_phrases(question: str) -> list[str]:
     return phrases
 
 
-def _resolve_slash_conflicts(
+def resolve_slash_conflicts(
     found: list[str],
     match_types: dict[str, str],
     col: str,
@@ -431,7 +367,7 @@ def _resolve_slash_conflicts(
     if not meta:
         return found
 
-    slash_phrases = _extract_slash_phrases(question)
+    slash_phrases = extract_slash_phrases(question)
     if not slash_phrases:
         return found
 
@@ -441,9 +377,9 @@ def _resolve_slash_conflicts(
 
     for val in found:
         val_lower = val.lower()
-        val_norm = _normalise_for_comparison(val)
+        val_norm = normalise_for_comparison(val)
         for sp in slash_phrases:
-            sp_norm = _normalise_for_comparison(sp)
+            sp_norm = normalise_for_comparison(sp)
             # Check: KB value matches the user's slash phrase
             if val_lower == sp or val_norm == sp_norm:
                 anchors.add(val)
@@ -473,7 +409,7 @@ def _resolve_slash_conflicts(
 
         # For Pass 1 exact/partial matches, keep only if the value is NOT
         # a component substring of any anchor
-        val_norm = _normalise_for_comparison(val)
+        val_norm = normalise_for_comparison(val)
         is_component_of_anchor = any(
             val_norm in anorm and val_norm != anorm
             for anorm in anchor_norms
@@ -489,11 +425,11 @@ def _resolve_slash_conflicts(
 # ── Main matcher ──────────────────────────────────────────────────────────────
 
 def match(question: str, schema_index: dict[str, ColumnMeta]) -> MatchResult:
-    q_lower = _norm_text(question)
+    q_lower = norm_text(question)
     filters: dict[str, list[str]] = {}
     match_types: dict[str, str] = {}
 
-    requested_tiers = _extract_requested_tiers(question)
+    requested_tiers = extract_requested_tiers(question)
 
     for col, meta in schema_index.items():
         if meta.match_type == "numeric" or not meta.is_filterable:
@@ -504,10 +440,10 @@ def match(question: str, schema_index: dict[str, ColumnMeta]) -> MatchResult:
         # Pass 1: full unique values found as phrases in the question.
         for val in meta.unique_values:
             val = str(val)
-            if len(val) < _MIN_MATCH_LEN:
+            if len(val) < MIN_MATCH_LEN:
                 continue
 
-            if _contains_phrase(q_lower, val) or val.lower() in q_lower:
+            if contains_phrase(q_lower, val) or val.lower() in q_lower:
                 kind = "exact" if meta.match_type == "exact" else "partial"
                 _add_match(found, match_types, val, kind)
 
@@ -517,13 +453,13 @@ def match(question: str, schema_index: dict[str, ColumnMeta]) -> MatchResult:
         # IMPORTANT: Only apply tier matching in tier-compatible columns.
         # Without this guard, "Tier 1 automotive components" in
         # EV Supply Chain Role would be selected as a tier filter.
-        if requested_tiers and _is_tier_compatible_column(col):
+        if requested_tiers and is_tier_compatible_column(col):
             for val in meta.unique_values:
                 val = str(val)
-                if len(val) < _MIN_MATCH_LEN or val in found:
+                if len(val) < MIN_MATCH_LEN or val in found:
                     continue
 
-                if _value_matches_requested_tier(val, requested_tiers):
+                if value_matches_requested_tier(val, requested_tiers):
                     kind = "exact" if meta.match_type == "exact" else "partial"
                     _add_match(found, match_types, val, f"tier_{kind}")
 
@@ -534,12 +470,12 @@ def match(question: str, schema_index: dict[str, ColumnMeta]) -> MatchResult:
         if "/" in question or requested_tiers:
             # If this is a tier query and the column is NOT tier-compatible,
             # skip soft tier matching to avoid polluting role/product columns.
-            if requested_tiers and not _is_tier_compatible_column(col):
+            if requested_tiers and not is_tier_compatible_column(col):
                 pass  # Skip tier-driven soft matching in non-tier columns
             else:
                 for val in meta.unique_values:
                     val = str(val)
-                    if len(val) < _MIN_MATCH_LEN or val in found:
+                    if len(val) < MIN_MATCH_LEN or val in found:
                         continue
 
                     if _value_soft_token_match(question, val):
@@ -549,16 +485,16 @@ def match(question: str, schema_index: dict[str, ColumnMeta]) -> MatchResult:
         # Pass 2: location/name components
         for comp in getattr(meta, "components", []):
             comp = str(comp)
-            if len(comp) < _MIN_MATCH_LEN:
+            if len(comp) < MIN_MATCH_LEN:
                 continue
 
-            if (_contains_phrase(q_lower, comp) or comp.lower() in q_lower) and comp not in found:
+            if (contains_phrase(q_lower, comp) or comp.lower() in q_lower) and comp not in found:
                 _add_match(found, match_types, comp, "component")
 
         if found:
             # Resolve slash/compound conflicts: if the user's slash phrase
             # exactly matches a live KB value, suppress expanded partials.
-            found = _resolve_slash_conflicts(
+            found = resolve_slash_conflicts(
                 found, match_types, col, schema_index, question,
             )
             found = _deduplicate(found)
@@ -607,7 +543,7 @@ def match(question: str, schema_index: dict[str, ColumnMeta]) -> MatchResult:
     unmatched = [
         w for w in q_words
         if w.lower() not in _STOPWORDS
-        and len(w) >= _MIN_MATCH_LEN
+        and len(w) >= MIN_MATCH_LEN
         and not any(w.lower() in m for m in matched_surface)
     ]
 

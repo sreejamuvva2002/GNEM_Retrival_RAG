@@ -5,10 +5,10 @@ from dotenv import load_dotenv
 ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_DIR = ROOT / "georgia_ev_intelligence"
 KB_DIR = ROOT / "kb"
-
-GNEM_EXCEL = KB_DIR / "GNEM - Auto Landscape Lat Long Updated.xlsx"
-HUMAN_QA_EXCEL = KB_DIR / "Human validated 50 questions.xlsx"
 OUTPUTS_DIR = PACKAGE_DIR / "outputs"
+
+GNEM_EXCEL = OUTPUTS_DIR / "Normalized_kb.xlsx"
+HUMAN_QA_EXCEL = KB_DIR / "Human validated 50 questions.xlsx"
 SMOKE_TEST_OUTPUTS_DIR = OUTPUTS_DIR / "smoke_test"
 
 load_dotenv(ROOT / ".env")

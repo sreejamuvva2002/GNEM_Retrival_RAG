@@ -1,4 +1,8 @@
 """Runtime deterministic reasoning."""
 
-from .retriever import apply_intent  # noqa: F401
-
+from .controller import (  # noqa: F401
+    apply_intent,
+    detect_intent,
+    support_level,
+    RetrievalResult,
+)

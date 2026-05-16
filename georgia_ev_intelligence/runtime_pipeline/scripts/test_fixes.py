@@ -7,20 +7,22 @@ from georgia_ev_intelligence.runtime_pipeline.query.operation_detector import (
     detect_operation,
     is_analytical_phrase,
 )
+from georgia_ev_intelligence.runtime_pipeline.query.text_utils import (
+    normalise_for_comparison,
+    extract_question_ngrams,
+)
 from georgia_ev_intelligence.runtime_pipeline.query.term_matcher import (
-    _is_tier_compatible_column,
-    _extract_slash_phrases,
-    _resolve_slash_conflicts,
-    _normalise_for_comparison,
-    _extract_question_ngrams,
+    is_tier_compatible_column,
+    extract_slash_phrases,
+    resolve_slash_conflicts,
     find_best_live_value_matches,
 )
 from georgia_ev_intelligence.runtime_pipeline.query.keyword_resolver import (
     resolve_keywords,
     KeywordResolution,
-    _is_column_name,
-    _classify_phrase_type,
-    _is_column_compatible,
+    is_column_name,
+    classify_phrase_type,
+    is_column_compatible,
 )
 from georgia_ev_intelligence.shared.data.schema import ColumnMeta
 
@@ -68,14 +70,14 @@ check("Battery Cell is NOT analytical", not is_analytical_phrase("Battery Cell")
 
 # ── Tier column compatibility ──
 
-print("\n--- _is_tier_compatible_column ---")
-check("category is tier-compatible", _is_tier_compatible_column("category"))
-check("ev_supply_chain_role is NOT tier-compatible", not _is_tier_compatible_column("ev_supply_chain_role"))
-check("product_service is NOT tier-compatible", not _is_tier_compatible_column("product_service"))
+print("\n--- is_tier_compatible_column ---")
+check("category is tier-compatible", is_tier_compatible_column("category"))
+check("ev_supply_chain_role is NOT tier-compatible", not is_tier_compatible_column("ev_supply_chain_role"))
+check("product_service is NOT tier-compatible", not is_tier_compatible_column("product_service"))
 
 # ── Slash conflict resolution ──
 
-print("\n--- _resolve_slash_conflicts ---")
+print("\n--- resolve_slash_conflicts ---")
 
 mock_schema = {
     "category": ColumnMeta(
@@ -88,7 +90,7 @@ mock_match_types = {
     "Tier 1/2": "exact", "Tier 1": "tier_exact",
     "Tier 2": "tier_exact", "Tier 2/3": "tier_exact",
 }
-resolved = _resolve_slash_conflicts(
+resolved = resolve_slash_conflicts(
     mock_found, mock_match_types, "category", mock_schema,
     "Show all Tier 1/2 suppliers",
 )
@@ -178,32 +180,32 @@ kw4 = resolve_keywords("Show EV Supply Chain Role data", mock_schema_full)
 # so it may not even be scanned. The column name check catches it if the model tries.)
 # Let's test directly:
 check("is_column_name detects column name",
-      _is_column_name("category", mock_schema_full))
+      is_column_name("category", mock_schema_full))
 check("is_column_name detects ev_supply_chain_role",
-      _is_column_name("ev_supply_chain_role", mock_schema_full))
+      is_column_name("ev_supply_chain_role", mock_schema_full))
 check("is_column_name rejects Battery Cell",
-      not _is_column_name("Battery Cell", mock_schema_full))
+      not is_column_name("Battery Cell", mock_schema_full))
 
 # Test 5: Analytical phrases should be rejected
 check("classify_phrase_type: 'highest' is analytical",
-      _classify_phrase_type("highest") == "analytical")
+      classify_phrase_type("highest") == "analytical")
 check("classify_phrase_type: 'Battery Cell' is product_component",
-      _classify_phrase_type("Battery Cell") == "product_component")
+      classify_phrase_type("Battery Cell") == "product_component")
 check("classify_phrase_type: 'tier 1/2' is tier",
-      _classify_phrase_type("tier 1/2") == "tier")
+      classify_phrase_type("tier 1/2") == "tier")
 
 # Test 6: Column compatibility
-check("tier compatible with category", _is_column_compatible("tier", "category"))
+check("tier compatible with category", is_column_compatible("tier", "category"))
 check("tier NOT compatible with ev_supply_chain_role",
-      not _is_column_compatible("tier", "ev_supply_chain_role"))
+      not is_column_compatible("tier", "ev_supply_chain_role"))
 check("product_component compatible with ev_supply_chain_role",
-      _is_column_compatible("product_component", "ev_supply_chain_role"))
+      is_column_compatible("product_component", "ev_supply_chain_role"))
 check("product_component NOT compatible with category",
-      not _is_column_compatible("product_component", "category"))
+      not is_column_compatible("product_component", "category"))
 check("analytical never compatible",
-      not _is_column_compatible("analytical", "category"))
+      not is_column_compatible("analytical", "category"))
 check("general compatible with anything",
-      _is_column_compatible("general", "category"))
+      is_column_compatible("general", "category"))
 
 # Test 7: No direct match → candidates only, not perfect
 kw5 = resolve_keywords("Show all companies doing power electronics", mock_schema_full)

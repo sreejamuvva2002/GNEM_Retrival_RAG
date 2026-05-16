@@ -6,7 +6,7 @@ Usage: python -m georgia_ev_intelligence.runtime_pipeline.scripts.smoke_test
 import re
 import sys
 import datetime
-from pathlib import Path
+from pathlib import Path 
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
@@ -256,7 +256,7 @@ def _run_structural_tests():
     specific company names, row counts, or answer text.
     """
     from georgia_ev_intelligence.runtime_pipeline.query.operation_detector import detect_operation
-    from georgia_ev_intelligence.runtime_pipeline.query.term_matcher import _is_tier_compatible_column
+    from georgia_ev_intelligence.runtime_pipeline.query.term_matcher import is_tier_compatible_column
 
     print(f"\n{'='*70}")
     print("STRUCTURAL ASSERTION TESTS")
@@ -286,7 +286,7 @@ def _run_structural_tests():
         # Check: no tier-derived filter in non-tier-compatible column
         if checks.get("no_tier_in_role_column"):
             for col, vals in result.filters_applied.items():
-                if not _is_tier_compatible_column(col):
+                if not is_tier_compatible_column(col):
                     for v in vals:
                         if re.search(r"\btier\s*\d", v.lower()):
                             failures.append(

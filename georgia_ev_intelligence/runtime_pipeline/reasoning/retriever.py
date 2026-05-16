@@ -21,6 +21,15 @@ import pandas as pd
 
 from ..query.term_matcher import MatchResult
 from ...shared.data.schema import ColumnMeta
+from ..retrieval.filters import (
+    build_and_mask,
+    build_col_mask,
+    best_single_filter,
+    is_relationship_query,
+    expand_partial_value,
+    GENERIC_NAME_WORDS,
+    RELATIONSHIP_KEYWORDS,
+)
 
 
 @dataclass
@@ -86,7 +95,7 @@ def _contains_any(words: set[str], text: str) -> bool:
     return any(_word_in(w, text) for w in words)
 
 
-def _detect_intent(question: str) -> dict:
+def detect_intent(question: str) -> dict:
     """
     Detect simple analytical intent.
 
@@ -257,192 +266,7 @@ def _extract_county(series: pd.Series) -> pd.Series:
     return series.apply(_get)
 
 
-# Generic business suffixes that should not be used alone for OEM partial matching.
-_GENERIC_NAME_WORDS = {
-    "corp",
-    "inc",
-    "llc",
-    "ltd",
-    "co",
-    "group",
-    "automotive",
-    "manufacturing",
-    "industries",
-    "international",
-    "america",
-    "americas",
-    "holdings",
-    "enterprise",
-    "enterprises",
-    "company",
-    "systems",
-}
-
-# Relationship-intent keywords → primary_oems is the right filter column.
-_RELATIONSHIP_KEYWORDS = {
-    "linked to",
-    "supplier of",
-    "supply chain",
-    "supplier network",
-    "connected to",
-    "supplies to",
-    "works with",
-    "partners with",
-}
-
-
-def _is_relationship_query(question: str) -> bool:
-    q = (question or "").lower()
-    return any(kw in q for kw in _RELATIONSHIP_KEYWORDS)
-
-
-def _expand_partial_value(val: str) -> list[str]:
-    """For a compound name like 'Rivian Automotive', extract significant words."""
-    words = [w.strip(".,()") for w in str(val).split()]
-    significant = [
-        w for w in words
-        if len(w) >= 4 and w.lower() not in _GENERIC_NAME_WORDS
-    ]
-    return significant if significant else [str(val)]
-
-
-# ── Mask builders ─────────────────────────────────────────────────────────────
-
-def _build_col_mask(
-    df: pd.DataFrame,
-    col: str,
-    values: list[str],
-    schema_index: dict[str, ColumnMeta],
-    allow_word_expansion: bool = False,
-) -> pd.Series:
-    """
-    Build OR mask for one column.
-
-    - Exact columns use equality first.
-    - Partial columns use contains.
-    - If exact equality finds no rows, safely tries contains as fallback because
-      some KB categorical values may include suffixes such as "Supplier".
-    """
-    if col not in df.columns:
-        return pd.Series([False] * len(df), index=df.index)
-
-    meta = schema_index.get(col)
-    series = df[col].astype(str)
-    col_mask = pd.Series([False] * len(df), index=df.index)
-
-    for val in values:
-        val = str(val).strip()
-        if not val:
-            continue
-
-        if meta and meta.match_type == "exact":
-            exact_mask = series.str.lower() == val.lower()
-
-            # Fallback for slash/category-style values: "Tier 1" should match
-            # "Tier 1 Supplier"; exact values still remain safest first.
-            if exact_mask.sum() == 0:
-                contains_mask = series.str.contains(re.escape(val), case=False, na=False)
-                col_mask = col_mask | contains_mask
-            else:
-                col_mask = col_mask | exact_mask
-        else:
-            full_mask = series.str.contains(re.escape(val), case=False, na=False)
-
-            if allow_word_expansion and full_mask.sum() <= 2:
-                expanded_mask = pd.Series([False] * len(df), index=df.index)
-                for word in _expand_partial_value(val):
-                    expanded_mask = expanded_mask | series.str.contains(
-                        re.escape(word),
-                        case=False,
-                        na=False,
-                    )
-                col_mask = col_mask | expanded_mask
-            else:
-                col_mask = col_mask | full_mask
-
-    return col_mask
-
-
-def _build_and_mask(
-    df: pd.DataFrame,
-    filters: dict[str, list[str]],
-    schema_index: dict[str, ColumnMeta],
-) -> pd.Series:
-    """AND across columns, OR within each column's values."""
-    mask = pd.Series([True] * len(df), index=df.index)
-
-    for col, values in (filters or {}).items():
-        if col not in df.columns:
-            continue
-        mask = mask & _build_col_mask(df, col, values, schema_index)
-
-    return mask
-
-
-def _best_single_filter(
-    df: pd.DataFrame,
-    filters: dict[str, list[str]],
-    schema_index: dict[str, ColumnMeta],
-    question: str = "",
-) -> tuple[pd.DataFrame, dict[str, list[str]]]:
-    """
-    Return the best single-column filter result.
-
-    For relationship queries ("linked to", "supplier of", etc.), prefer
-    primary_oems over company so we return suppliers, not the OEM itself.
-    """
-    is_rel = _is_relationship_query(question)
-
-    candidates: list[tuple[int, int, str, pd.DataFrame, dict[str, list[str]]]] = []
-
-    for col, values in (filters or {}).items():
-        if col not in df.columns:
-            continue
-
-        if is_rel and col == "company" and "primary_oems" in filters:
-            continue
-
-        m = _build_col_mask(
-            df,
-            col,
-            values,
-            schema_index,
-            allow_word_expansion=True,
-        )
-        candidate = df[m]
-
-        if len(candidate) > 0:
-            meta = schema_index.get(col)
-            exact_bonus = 0 if meta and meta.match_type == "exact" else 1
-            candidates.append((exact_bonus, len(candidate), col, candidate, {col: values}))
-
-    if not candidates:
-        # Fall back without relationship preference.
-        for col, values in (filters or {}).items():
-            if col not in df.columns:
-                continue
-
-            m = _build_col_mask(
-                df,
-                col,
-                values,
-                schema_index,
-                allow_word_expansion=True,
-            )
-            candidate = df[m]
-
-            if len(candidate) > 0:
-                meta = schema_index.get(col)
-                exact_bonus = 0 if meta and meta.match_type == "exact" else 1
-                candidates.append((exact_bonus, len(candidate), col, candidate, {col: values}))
-
-    if candidates:
-        # Prefer exact-match column results; among those, pick most selective.
-        candidates.sort(key=lambda x: (x[0], x[1]))
-        _, _, _, best_df, best_filter = candidates[0]
-        return best_df, best_filter
-
-    return df, {}
+# Filter/mask logic is in retrieval/filters.py — imported above.
 
 
 # ── Main retrieve function ────────────────────────────────────────────────────
@@ -453,17 +277,17 @@ def retrieve(
     schema_index: dict[str, ColumnMeta],
     match_result: MatchResult,
 ) -> RetrievalResult:
-    intent = _detect_intent(question)
+    intent = detect_intent(question)
     filters = match_result.filters
 
     # Try strict AND across all filters.
-    and_mask = _build_and_mask(df, filters, schema_index)
+    and_mask = build_and_mask(df, filters, schema_index)
     filtered = df[and_mask]
     active_filters = filters
 
     # Fallback: if AND produced 0 rows, use the most selective individual filter.
     if len(filtered) == 0 and filters:
-        filtered, active_filters = _best_single_filter(
+        filtered, active_filters = best_single_filter(
             df,
             filters,
             schema_index,
@@ -480,7 +304,7 @@ def retrieve(
     # Delegate intent-specific transformation.
     result, intent = apply_intent(filtered, question, df, intent=intent)
 
-    support_level = _support_level(
+    support_lvl = support_level(
         total_matched,
         match_result.unmatched_words,
         active_filters,
@@ -491,7 +315,7 @@ def retrieve(
         intent=intent,
         total_matched=total_matched,
         filters_applied=active_filters,
-        support_level=support_level,
+        support_level=support_lvl,
     )
 
 
@@ -519,7 +343,7 @@ def apply_intent(
         Optional pre-detected intent.
     """
     if intent is None:
-        intent = _detect_intent(question)
+        intent = detect_intent(question)
 
     itype = intent["type"]
 
@@ -598,7 +422,7 @@ def apply_intent(
         return filtered, intent
 
 
-def _support_level(total: int, unmatched_words: list[str], active_filters: dict) -> str:
+def support_level(total: int, unmatched_words: list[str], active_filters: dict) -> str:
     if total == 0 and not active_filters:
         return "Not Supported by KB"
     if total >= 3 and active_filters and not unmatched_words:

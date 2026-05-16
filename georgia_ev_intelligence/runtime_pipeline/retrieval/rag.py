@@ -24,7 +24,7 @@ from ...shared import config
 from ...shared.data.schema import ColumnMeta, SKIP_COLUMNS
 from .semantic import SemanticRetriever
 from ..query.term_matcher import MatchResult
-from ..reasoning.retriever import _build_and_mask, _best_single_filter
+from .filters import build_and_mask, best_single_filter
 
 try:
     from rank_bm25 import BM25Okapi as _BM25Okapi
@@ -56,12 +56,12 @@ def run(
     filters_applied: dict[str, list[str]] = {}
 
     if match.filters:
-        and_mask = _build_and_mask(df, match.filters, schema_index)
+        and_mask = build_and_mask(df, match.filters, schema_index)
         if and_mask.sum() > 0:
             frames.append(df[and_mask].copy())
             filters_applied = {col: list(vals) for col, vals in match.filters.items()}
         else:
-            fallback_df, fallback_filters = _best_single_filter(
+            fallback_df, fallback_filters = best_single_filter(
                 df, match.filters, schema_index, question
             )
             if not fallback_df.empty:
