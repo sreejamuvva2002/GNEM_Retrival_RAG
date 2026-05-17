@@ -3,20 +3,19 @@ FastAPI REST API for the Georgia EV Intelligence pipeline.
 
 Endpoints:
   POST /ask          — structured pipeline result as JSON
-  GET  /stream       — SSE streaming (yields answer tokens)
   GET  /health       — health check
 """
 from __future__ import annotations
-import json
-from fastapi import FastAPI, Query
-from fastapi.responses import StreamingResponse
+
+from dataclasses import asdict
+
+from fastapi import FastAPI
 from pydantic import BaseModel
 
 from ...shared import config
 from .. import pipeline
-from ..retrieval.semantic import retriever_backend_label
 
-app = FastAPI(title="Georgia EV Intelligence", version="2.0")
+app = FastAPI(title="Georgia EV Intelligence", version="3.0")
 
 
 class AskRequest(BaseModel):
@@ -27,8 +26,8 @@ class AskRequest(BaseModel):
 def health():
     return {
         "status": "ok",
-        "llm_backend": "anthropic" if config.USE_ANTHROPIC else "ollama",
-        "retriever_backend": retriever_backend_label(),
+        "llm_backend": "ollama",
+        "retrieval_method": "hybrid_rrf",
     }
 
 
@@ -38,31 +37,14 @@ def ask(req: AskRequest):
     return {
         "question": result.question,
         "answer": result.answer,
-        "support_level": result.support_level,
-        "hallucination_risk": result.hallucination_risk,
+        "parent_contexts_used": result.parent_contexts_used,
         "retrieval_method": result.retrieval_method,
-        "evidence_count": result.evidence_count,
-        "intent": result.intent,
-        "filters_applied": result.filters_applied,
-        "key_terms_matched": result.key_terms_matched,
-        "evidence_rows": result.evidence_rows,
+        "used_citations": [
+            asdict(c) for c in result.citations.used_citations
+        ],
+        "all_source_records": [
+            asdict(c) for c in result.citations.all_source_records
+        ],
+        "latency": result.trace.latency,
+        "errors": result.trace.errors,
     }
-
-
-@app.get("/stream")
-def stream(q: str = Query(..., description="Question to answer")):
-    def generate():
-        result = pipeline.run(q)
-        # Yield metadata first
-        meta = {
-            "support_level": result.support_level,
-            "hallucination_risk": result.hallucination_risk,
-            "evidence_count": result.evidence_count,
-        }
-        yield f"data: {json.dumps({'type': 'meta', 'data': meta})}\n\n"
-        # Stream answer word-by-word
-        for word in result.answer.split():
-            yield f"data: {json.dumps({'type': 'token', 'data': word + ' '})}\n\n"
-        yield "data: [DONE]\n\n"
-
-    return StreamingResponse(generate(), media_type="text/event-stream")
