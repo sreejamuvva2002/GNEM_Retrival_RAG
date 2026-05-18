@@ -1,6 +1,8 @@
 """Dense semantic retrieval over child chunks using pgvector cosine search."""
 from __future__ import annotations
 
+import json
+
 import psycopg2
 
 from ...shared import config
@@ -46,7 +48,6 @@ class DensePgvectorRetriever:
         results: list[RetrievedChildChunk] = []
         for chunk_id, parent_record_id, chunk_type, source_row_id, metadata, score in rows:
             if isinstance(metadata, str):
-                import json
                 metadata = json.loads(metadata)
             results.append(RetrievedChildChunk(
                 chunk_id=chunk_id,
@@ -55,7 +56,6 @@ class DensePgvectorRetriever:
                 source_row_id=int(source_row_id),
                 metadata=metadata or {},
                 score=float(score),
-                source="dense",
             ))
 
         return results

@@ -1,17 +1,10 @@
-"""Log full retrieval and generation traces for debugging and evaluation."""
+"""Log retrieval and generation traces for debugging and evaluation."""
 from __future__ import annotations
 
-import json
-import time
-from dataclasses import asdict
-from pathlib import Path
-
-from ...shared import config
 from ..schemas import (
     CitationOutput,
     FusedChildChunk,
     ParentContext,
-    RagResult,
     RetrievalTrace,
     RetrievedChildChunk,
 )
@@ -30,13 +23,7 @@ def build_trace(
     latency: dict[str, float],
     errors: list[str] | None = None,
 ) -> RetrievalTrace:
-    """Build a RetrievalTrace from pipeline stage outputs.
-
-    Args:
-        fetched_parent_count: total parents fetched from DB (before context limits).
-        included_parents: only the parents actually included in the LLM context
-                          (after max_context_records / max_context_chars truncation).
-    """
+    """Build a RetrievalTrace from pipeline stage outputs."""
     return RetrievalTrace(
         question=question,
         dense_results=[
@@ -46,7 +33,7 @@ def build_trace(
                 "chunk_type": c.chunk_type,
                 "score": c.score,
             }
-            for c in dense_results[:20]  # Log top 20 for brevity
+            for c in dense_results[:20]
         ],
         bm25_results=[
             {
@@ -85,18 +72,3 @@ def build_trace(
         latency=latency,
         errors=errors or [],
     )
-
-
-def save_trace(trace: RetrievalTrace, output_dir: Path | None = None) -> Path:
-    """Save a trace to a JSON file in the outputs directory."""
-    out_dir = output_dir or (config.OUTPUTS_DIR / "traces")
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    timestamp = int(time.time() * 1000)
-    filename = f"trace_{timestamp}.json"
-    out_path = out_dir / filename
-
-    with open(out_path, "w") as f:
-        json.dump(asdict(trace), f, indent=2, default=str)
-
-    return out_path

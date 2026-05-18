@@ -133,7 +133,6 @@ class BM25Retriever:
                 source_row_id=chunk["source_row_id"],
                 metadata=chunk["metadata"],
                 score=float(scores[idx]),
-                source="bm25",
             ))
 
         return results

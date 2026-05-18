@@ -6,7 +6,7 @@ Verifies each stage of the hybrid retrieval pipeline:
   2. Dense pgvector retrieval
   3. BM25 retrieval
   4. Hybrid RRF fusion
-  5. Parent chunk fetching
+  5. Retrieval orchestrator (hybrid + parent fetch)
   6. Context building
   7. LLM answer generation
   8. Citation output
@@ -90,18 +90,28 @@ def main():
     passed, msg = _run_stage("Hybrid RRF Fusion", _hybrid)
     results["hybrid_fusion"] = passed
 
-    # 5. Parent fetching
-    def _parents():
-        nonlocal parent_contexts
-        from georgia_ev_intelligence.runtime_pipeline.retrieval.parent_fetcher import fetch_parents
-        assert fused_results and dense_results and bm25_results, "Prior retrieval stages failed"
-        parent_contexts = fetch_parents(fused_results, dense_results, bm25_results)
-        assert len(parent_contexts) > 0, "No parents fetched"
+    # 5. Retrieval orchestrator (hybrid + parent fetch)
+    def _orchestrator():
+        nonlocal parent_contexts, fused_results, dense_results, bm25_results
+        from georgia_ev_intelligence.runtime_pipeline.retrieval.retrieval_orchestrator import (
+            RetrievalOrchestrator,
+        )
+        orch = RetrievalOrchestrator()
+        result = orch.search(TEST_QUESTION)
+        parent_contexts = result.parent_contexts
+        fused_results = result.fused_children
+        dense_results = result.dense_results
+        bm25_results = result.bm25_results
+        assert len(parent_contexts) > 0, "No parents from orchestrator"
         top = parent_contexts[0]
-        return f"{len(parent_contexts)} parents, top={top.metadata.get('company', '?')}"
+        return (
+            f"{len(parent_contexts)} parents, dense={len(dense_results)}, "
+            f"bm25={len(bm25_results)}, fused={len(fused_results)}, "
+            f"top={top.metadata.get('company', '?')}"
+        )
 
-    passed, msg = _run_stage("Parent Fetching", _parents)
-    results["parent_fetch"] = passed
+    passed, msg = _run_stage("Retrieval Orchestrator", _orchestrator)
+    results["orchestrator"] = passed
 
     # 6. Context building
     included_parents = None
@@ -144,7 +154,7 @@ def main():
         )
         from georgia_ev_intelligence.runtime_pipeline.evaluation.trace_logger import build_trace
         from georgia_ev_intelligence.runtime_pipeline.evaluation.ragas_runner import prepare_sample
-        from georgia_ev_intelligence.runtime_pipeline.schemas import RagResult, CitationOutput
+        from georgia_ev_intelligence.runtime_pipeline.schemas import RagResult
 
         assert citation_map, "Context building stage failed"
         test_answer = answer or "Company in [S1] and [S2]."

@@ -14,7 +14,6 @@ class RetrievedChildChunk:
     source_row_id: int
     metadata: dict[str, Any]
     score: float
-    source: str  # "dense" or "bm25"
 
 
 @dataclass
@@ -79,12 +78,9 @@ class RetrievalTrace:
     citations: list[dict] = field(default_factory=list)
     latency: dict[str, float] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
-    # Vocabulary filtering trace fields
-    structured_query: dict | None = None
-    vocabulary_matches_count: int = 0
-    vocabulary_parents_count: int = 0
-    vocabulary_used: bool = False
-    rewrite_latency_ms: float = 0.0
+    dense_result_count: int = 0
+    bm25_result_count: int = 0
+    hybrid_result_count: int = 0
 
 
 @dataclass
@@ -94,7 +90,6 @@ class RagResult:
     answer: str
     citations: CitationOutput = field(default_factory=CitationOutput)
     parent_contexts_used: int = 0
-    retrieval_method: str = "hybrid_rrf"
     trace: RetrievalTrace = field(default_factory=RetrievalTrace)
 
 
