@@ -1,38 +1,50 @@
-"""Deterministic clarification option generation and resolution."""
+"""Open-ended clarification generation and resolution via LLM phrase classification."""
 from .analysis_merger import AnalysisMerger
 from .clarification_resolver import ClarificationResolver, QueryAnalyzerProtocol
-from .clarification_store import InMemoryClarificationStore
-from .concept_registry import (
-    InMemoryConceptRegistry,
-    JsonConceptRegistry,
-    default_concepts_path,
+from .clarification_store import (
+    ClarificationStoreProtocol,
+    InMemoryClarificationStore,
 )
-from .exceptions import ClarificationCancelledError
-from .io_protocols import ClarificationPrompterProtocol
-from .option_generator import ClarificationOptionGenerator
-from .terminal_prompter import TerminalClarificationPrompter
-from .workflow import TerminalClarificationWorkflow
+from .exceptions import (
+    ClarificationAlreadyResolvedError,
+    ClarificationCancelledError,
+    ClarificationError,
+    ClarificationNotFoundError,
+    InvalidClarificationAnswerError,
+)
 from .models import (
     ClarificationAnswer,
+    ClarificationQuestion,
     ClarificationRequest,
     ClarificationSubmission,
+    ResolvedClarification,
     ResolvedQueryContext,
+    StoredClarificationSession,
 )
+from .terminal_prompter import (
+    ClarificationPrompterProtocol,
+    TerminalClarificationPrompter,
+)
+from .workflow import TerminalClarificationWorkflow
 
 __all__ = [
     "AnalysisMerger",
-    "ClarificationOptionGenerator",
     "ClarificationResolver",
     "QueryAnalyzerProtocol",
+    "ClarificationStoreProtocol",
     "InMemoryClarificationStore",
-    "InMemoryConceptRegistry",
-    "JsonConceptRegistry",
-    "default_concepts_path",
+    "ClarificationAlreadyResolvedError",
+    "ClarificationCancelledError",
+    "ClarificationError",
+    "ClarificationNotFoundError",
+    "InvalidClarificationAnswerError",
     "ClarificationAnswer",
+    "ClarificationQuestion",
     "ClarificationRequest",
     "ClarificationSubmission",
+    "ResolvedClarification",
     "ResolvedQueryContext",
-    "ClarificationCancelledError",
+    "StoredClarificationSession",
     "ClarificationPrompterProtocol",
     "TerminalClarificationPrompter",
     "TerminalClarificationWorkflow",

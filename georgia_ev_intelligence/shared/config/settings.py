@@ -71,3 +71,8 @@ PROBE_MIN_ROWS = _env_int("PROBE_MIN_ROWS")
 KB_TERM_MIN_FREQUENCY = _env_int("KB_TERM_MIN_FREQUENCY")
 KB_TERM_TOP_N = _env_int("KB_TERM_TOP_N")
 KB_TERM_MIN_DISCOVERED = _env_int("KB_TERM_MIN_DISCOVERED")
+
+# Phrase classifier LLM settings (optional — safe defaults)
+PHRASE_CLASSIFIER_ENABLED = os.environ.get("PHRASE_CLASSIFIER_ENABLED", "true").lower() == "true"
+PHRASE_CLASSIFIER_MODEL = os.environ.get("PHRASE_CLASSIFIER_MODEL", OLLAMA_LLM_MODEL)
+PHRASE_CLASSIFIER_TIMEOUT = int(os.environ.get("PHRASE_CLASSIFIER_TIMEOUT", "60"))

@@ -4,7 +4,7 @@ from __future__ import annotations
 import threading
 from typing import Protocol
 
-from .exceptions import ClarificationNotFoundError
+from .exceptions import ClarificationAlreadyResolvedError, ClarificationNotFoundError
 from .models import StoredClarificationSession, utc_now
 
 

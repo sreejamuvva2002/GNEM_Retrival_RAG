@@ -50,3 +50,8 @@ class QueryAnalysisResult:
     ignored_tokens: list[str] = field(default_factory=list)
     unmatched_tokens: list[str] = field(default_factory=list)
     debug: dict[str, Any] = field(default_factory=dict)
+
+    @property
+    def remaining_unmatched_phrases(self) -> list[str]:
+        """Alias for ambiguous_terms (leftover phrases after vocabulary matching)."""
+        return self.ambiguous_terms
