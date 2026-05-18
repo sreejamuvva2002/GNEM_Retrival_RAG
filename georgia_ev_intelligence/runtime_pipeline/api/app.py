@@ -47,4 +47,7 @@ def ask(req: AskRequest):
         ],
         "latency": result.trace.latency,
         "errors": result.trace.errors,
+        "vocabulary_used": result.trace.vocabulary_used,
+        "structured_query": result.trace.structured_query,
+        "rewrite_latency_ms": result.trace.rewrite_latency_ms,
     }

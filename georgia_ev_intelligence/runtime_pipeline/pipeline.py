@@ -3,11 +3,13 @@
 Flow:
   User question
   -> basic preprocessing
+  -> query rewriting (structured entity extraction)
+  -> vocabulary matching (resolve to row_ids)
   -> dense retrieval (pgvector over child chunks)
   -> sparse retrieval (BM25 over child chunks)
   -> hybrid fusion (Reciprocal Rank Fusion)
-  -> extract parent_record_ids from fused children
-  -> fetch parent chunks from PostgreSQL
+  -> vocabulary filter retrieval (exact parent fetch by row_ids)
+  -> merge hybrid + vocabulary results
   -> build structured context with citation IDs
   -> call local LLM (qwen2.5:14b via Ollama)
   -> generate final grounded answer
@@ -17,11 +19,11 @@ Flow:
 """
 from __future__ import annotations
 
+import dataclasses
 import time
 
 from .schemas import CitationOutput, PipelineConfig, RagResult, RetrievalTrace
-from .retrieval.hybrid_retriever import HybridRetriever
-from .retrieval.parent_fetcher import fetch_parents
+from .retrieval.retrieval_orchestrator import RetrievalOrchestrator, OrchestratorResult
 from .generation.context_builder import build_context
 from .generation.prompt_builder import build_prompt
 from .generation.llm_client import generate_answer
@@ -29,17 +31,18 @@ from .generation.citation_formatter import format_citations
 from .evaluation.trace_logger import build_trace
 
 
-# Module-level singleton for the hybrid retriever (lazy init)
-_hybrid_retriever: HybridRetriever | None = None
+# Module-level singleton for the retrieval orchestrator (lazy init)
+_orchestrator: RetrievalOrchestrator | None = None
 _pipeline_config: PipelineConfig | None = None
 
 
-def _get_retriever() -> HybridRetriever:
-    global _hybrid_retriever, _pipeline_config
-    if _hybrid_retriever is None:
+def _get_orchestrator() -> RetrievalOrchestrator:
+    """Lazily initialise and return the retrieval orchestrator."""
+    global _orchestrator, _pipeline_config
+    if _orchestrator is None:
         _pipeline_config = PipelineConfig()
-        _hybrid_retriever = HybridRetriever(pipeline_config=_pipeline_config)
-    return _hybrid_retriever
+        _orchestrator = RetrievalOrchestrator(pipeline_config=_pipeline_config)
+    return _orchestrator
 
 
 def _get_config() -> PipelineConfig:
@@ -60,7 +63,6 @@ def run(question: str) -> RagResult:
     """
     latency: dict[str, float] = {}
     errors: list[str] = []
-    cfg = _get_config()
 
     # Basic preprocessing
     question = question.strip()
@@ -71,11 +73,11 @@ def run(question: str) -> RagResult:
             trace=RetrievalTrace(question=question, errors=["Empty question"]),
         )
 
-    # Stage 1: Hybrid retrieval
+    # Stage 1-2: Orchestrated retrieval (hybrid + vocabulary)
     t0 = time.time()
-    retriever = _get_retriever()
+    orchestrator = _get_orchestrator()
     try:
-        fused_children, dense_results, bm25_results = retriever.search(question)
+        orchestrator_result = orchestrator.search(question)
     except Exception as e:
         errors.append(f"Retrieval error: {e}")
         return RagResult(
@@ -85,23 +87,11 @@ def run(question: str) -> RagResult:
         )
     latency["retrieval"] = time.time() - t0
 
-    # Stage 2: Fetch parent chunks
-    t0 = time.time()
-    try:
-        parent_contexts = fetch_parents(
-            fused_children,
-            dense_results,
-            bm25_results,
-            pipeline_config=cfg,
-        )
-    except Exception as e:
-        errors.append(f"Parent fetch error: {e}")
-        return RagResult(
-            question=question,
-            answer="An error occurred while fetching source records.",
-            trace=RetrievalTrace(question=question, errors=errors),
-        )
-    latency["parent_fetch"] = time.time() - t0
+    # Unpack for downstream compatibility
+    fused_children = orchestrator_result.fused_children
+    dense_results = orchestrator_result.dense_results
+    bm25_results = orchestrator_result.bm25_results
+    parent_contexts = orchestrator_result.parent_contexts
 
     if not parent_contexts:
         return RagResult(
@@ -144,6 +134,15 @@ def run(question: str) -> RagResult:
         latency=latency,
         errors=errors,
     )
+
+    # Add vocabulary filtering trace fields
+    trace.structured_query = dataclasses.asdict(
+        orchestrator_result.structured_query
+    )
+    trace.vocabulary_matches_count = orchestrator_result.vocabulary_matches.match_count
+    trace.vocabulary_parents_count = len(orchestrator_result.vocabulary_parents)
+    trace.vocabulary_used = orchestrator_result.vocabulary_used
+    trace.rewrite_latency_ms = orchestrator_result.structured_query.rewrite_latency_ms
 
     return RagResult(
         question=question,

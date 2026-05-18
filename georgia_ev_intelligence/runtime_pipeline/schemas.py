@@ -79,6 +79,12 @@ class RetrievalTrace:
     citations: list[dict] = field(default_factory=list)
     latency: dict[str, float] = field(default_factory=dict)
     errors: list[str] = field(default_factory=list)
+    # Vocabulary filtering trace fields
+    structured_query: dict | None = None
+    vocabulary_matches_count: int = 0
+    vocabulary_parents_count: int = 0
+    vocabulary_used: bool = False
+    rewrite_latency_ms: float = 0.0
 
 
 @dataclass

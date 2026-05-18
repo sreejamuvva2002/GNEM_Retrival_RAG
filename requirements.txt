@@ -11,3 +11,4 @@ numpy>=1.26
 rank-bm25>=0.2.2
 einops>=0.8
 psycopg2-binary>=2.9
+pydantic>=2.0
