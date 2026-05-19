@@ -11,6 +11,7 @@ from typing import Protocol
 import pandas as pd
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
+from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
 
 from .factory import build_default_pipeline
 from .only_pretrained_pipeline import OnlyPretrainedAnswerPipeline
@@ -29,6 +30,8 @@ OUTPUT_COLUMNS = [
     "golden answer",
     "LLM answer",
     "retrieved context",
+    "dense retrieved context",
+    "sparse retrieved context",
 ]
 
 NO_CONTEXT_OUTPUT_COLUMNS = [
@@ -36,6 +39,8 @@ NO_CONTEXT_OUTPUT_COLUMNS = [
     "question",
     "golden answer",
     "LLM answer",
+    "dense retrieved context",
+    "sparse retrieved context",
 ]
 
 
@@ -105,7 +110,18 @@ class QuestionModeAnswers:
     question: str
     golden_answer: str
     retrieved_context: str
+    dense_retrieved_context: str
+    sparse_retrieved_context: str
     answers_by_mode: dict[str, str]
+
+
+@dataclass(frozen=True)
+class RetrievedContextBundle:
+    """Formatted retrieval contexts used for workbook traces."""
+
+    final_context: str
+    dense_context: str
+    sparse_context: str
 
 
 class RunOutputDirectoryFactory:
@@ -150,6 +166,8 @@ class PipelineWorkbookWriter:
             }
             if spec.include_retrieved_context:
                 row["retrieved context"] = answers.retrieved_context
+            row["dense retrieved context"] = answers.dense_retrieved_context
+            row["sparse retrieved context"] = answers.sparse_retrieved_context
             self._rows_by_mode[spec.key].append(row)
         self.write()
 
@@ -187,17 +205,19 @@ class Rewritten50AllModesRunner:
         """Yield one output row per question."""
         for index, question_row in enumerate(questions, start=1):
             print(f"[{index}/{len(questions)}] {question_row.question}")
-            retrieved_context = self._retrieve_context(question_row.question)
+            retrieved_contexts = self._retrieve_contexts(question_row.question)
             yield QuestionModeAnswers(
                 serial_number=question_row.serial_number,
                 question=question_row.question,
                 golden_answer=question_row.golden_answer,
-                retrieved_context=retrieved_context,
+                retrieved_context=retrieved_contexts.final_context,
+                dense_retrieved_context=retrieved_contexts.dense_context,
+                sparse_retrieved_context=retrieved_contexts.sparse_context,
                 answers_by_mode={
                     "only_rag": self._answer_with_context(
                         self._pipelines.only_rag,
                         question_row.question,
-                        retrieved_context,
+                        retrieved_contexts.final_context,
                     ),
                     "only_pretrained": self._answer_without_context(
                         self._pipelines.only_pretrained,
@@ -206,18 +226,41 @@ class Rewritten50AllModesRunner:
                     "rag_plus_pretrained": self._answer_with_context(
                         self._pipelines.rag_plus_pretrained,
                         question_row.question,
-                        retrieved_context,
+                        retrieved_contexts.final_context,
                     ),
                 },
             )
 
-    def _retrieve_context(self, question: str) -> str:
+    def _retrieve_contexts(self, question: str) -> RetrievedContextBundle:
         try:
             retrieval_pipeline = self._get_retrieval_pipeline()
+            if hasattr(retrieval_pipeline, "retrieve_with_sources"):
+                retrieval_result = retrieval_pipeline.retrieve_with_sources(question)
+                return RetrievedContextBundle(
+                    final_context=_format_retrieved_context(
+                        retrieval_result.parent_contexts,
+                    ),
+                    dense_context=_format_child_contexts(
+                        retrieval_result.dense_children,
+                    ),
+                    sparse_context=_format_child_contexts(
+                        retrieval_result.sparse_children,
+                    ),
+                )
+
             parent_contexts = retrieval_pipeline.retrieve(question)
-            return _format_retrieved_context(parent_contexts)
+            return RetrievedContextBundle(
+                final_context=_format_retrieved_context(parent_contexts),
+                dense_context="",
+                sparse_context="",
+            )
         except Exception as exc:
-            return f"ERROR: retrieval failed: {exc}"
+            error = f"ERROR: retrieval failed: {exc}"
+            return RetrievedContextBundle(
+                final_context=error,
+                dense_context=error,
+                sparse_context=error,
+            )
 
     def _get_retrieval_pipeline(self):
         if self._retrieval_pipeline is not None:
@@ -257,6 +300,26 @@ class Rewritten50AllModesRunner:
             return pipeline.answer(question=question, timeout=self._llm_timeout)
         except Exception as exc:
             return f"ERROR: LLM generation failed: {exc}"
+
+
+def _format_child_contexts(children: list[RetrievedChildChunk]) -> str:
+    """Format child retrieval results for workbook inspection."""
+    sections: list[str] = []
+    for index, child in enumerate(children, start=1):
+        lines = [
+            f"[{index}] chunk_id: {child.chunk_id}",
+            f"parent_record_id: {child.parent_record_id}",
+            f"chunk_type: {child.chunk_type}",
+        ]
+        for field_name, value in child.metadata.items():
+            if value is None:
+                continue
+            text = str(value).strip()
+            if not text:
+                continue
+            lines.append(f"{field_name}: {text}")
+        sections.append("\n".join(lines))
+    return "\n\n".join(sections)
 
 
 def main() -> int:

@@ -12,6 +12,7 @@ from georgia_ev_intelligence.runtime_pipeline.schemas import (
 from .config import HybridRetrievalConfig
 from .interfaces import ChildReranker, ChildRetriever
 from .merger import ChildResultMerger
+from .models import HybridRetrievalResult
 from .parent_mapper import ParentChildMapper
 
 
@@ -34,6 +35,10 @@ class HybridRetrievalOrchestrator:
 
     def retrieve(self, query: str) -> list[ParentContext]:
         """Return deduplicated parent chunks for a query."""
+        return self.retrieve_with_sources(query).parent_contexts
+
+    def retrieve_with_sources(self, query: str) -> HybridRetrievalResult:
+        """Return final parents plus dense and sparse child retrieval traces."""
         retrieval_results = self._retrieve_children(query)
         merged_children = self._merger.merge(retrieval_results)
         reranked_children = self._reranker.rerank(
@@ -41,8 +46,13 @@ class HybridRetrievalOrchestrator:
             children=merged_children,
             top_k=self._config.reranker_top_k,
         )
-        return self._parent_mapper.map_to_parents(
+        parent_contexts = self._parent_mapper.map_to_parents(
             reranked_children=reranked_children,
+        )
+        return HybridRetrievalResult(
+            parent_contexts=parent_contexts,
+            sparse_children=retrieval_results[0] if len(retrieval_results) > 0 else [],
+            dense_children=retrieval_results[1] if len(retrieval_results) > 1 else [],
         )
 
     def _retrieve_children(self, query: str) -> list[list[RetrievedChildChunk]]:
