@@ -15,7 +15,7 @@ from ..schemas import RetrievedChildChunk
 
 
 _LOAD_CHUNKS_SQL = """
-SELECT chunk_id, parent_record_id, chunk_type, source_row_id, metadata
+SELECT chunk_id, parent_record_id, chunk_type, metadata
 FROM child_chunks;
 """
 
@@ -90,7 +90,7 @@ class BM25Retriever:
                 conn.close()
 
             corpus_tokens: list[list[str]] = []
-            for chunk_id, parent_record_id, chunk_type, source_row_id, metadata in rows:
+            for chunk_id, parent_record_id, chunk_type, metadata in rows:
                 if isinstance(metadata, str):
                     metadata = json.loads(metadata)
                 metadata = metadata or {}
@@ -99,7 +99,6 @@ class BM25Retriever:
                     "chunk_id": chunk_id,
                     "parent_record_id": parent_record_id,
                     "chunk_type": chunk_type,
-                    "source_row_id": int(source_row_id),
                     "metadata": metadata,
                 })
 
@@ -130,9 +129,7 @@ class BM25Retriever:
                 chunk_id=chunk["chunk_id"],
                 parent_record_id=chunk["parent_record_id"],
                 chunk_type=chunk["chunk_type"],
-                source_row_id=chunk["source_row_id"],
                 metadata=chunk["metadata"],
-                score=float(scores[idx]),
             ))
 
         return results

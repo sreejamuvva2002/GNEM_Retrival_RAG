@@ -15,9 +15,7 @@ SELECT
     chunk_id,
     parent_record_id,
     chunk_type,
-    source_row_id,
-    metadata,
-    1 - (embedding <=> %s::vector) AS score
+    metadata
 FROM child_chunks
 ORDER BY embedding <=> %s::vector
 LIMIT %s;
@@ -40,22 +38,20 @@ class DensePgvectorRetriever:
         conn = psycopg2.connect(config.NEON_DATABASE_URL)
         try:
             with conn.cursor() as cur:
-                cur.execute(_SEARCH_SQL, (query_vec, query_vec, top_k))
+                cur.execute(_SEARCH_SQL, (query_vec, top_k))
                 rows = cur.fetchall()
         finally:
             conn.close()
 
         results: list[RetrievedChildChunk] = []
-        for chunk_id, parent_record_id, chunk_type, source_row_id, metadata, score in rows:
+        for chunk_id, parent_record_id, chunk_type, metadata in rows:
             if isinstance(metadata, str):
                 metadata = json.loads(metadata)
             results.append(RetrievedChildChunk(
                 chunk_id=chunk_id,
                 parent_record_id=parent_record_id,
                 chunk_type=chunk_type,
-                source_row_id=int(source_row_id),
                 metadata=metadata or {},
-                score=float(score),
             ))
 
         return results

@@ -1,6 +1,6 @@
 # Isolated Hybrid Retrieval
 
-This folder contains a self-contained retrieval module that leaves the existing runtime pipeline unchanged.
+This folder contains the active runtime retrieval and 50-question batch answer flow.
 
 ## Flow
 

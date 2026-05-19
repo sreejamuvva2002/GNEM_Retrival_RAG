@@ -22,10 +22,3 @@ class RerankedChildChunk:
     def parent_record_id(self) -> str:
         return self.child.parent_record_id
 
-
-@dataclass(frozen=True)
-class RetrieverResultSet:
-    """Named results returned by one child retriever."""
-
-    name: str
-    children: list[RetrievedChildChunk]

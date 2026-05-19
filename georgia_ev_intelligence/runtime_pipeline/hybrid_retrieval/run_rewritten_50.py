@@ -1,4 +1,4 @@
-"""Run the isolated hybrid retrieval pipeline over Rewritten_50_questions.xlsx."""
+"""Run the active hybrid retrieval pipeline over Rewritten_50_questions.xlsx."""
 from __future__ import annotations
 
 import argparse
@@ -225,7 +225,7 @@ def _project_root() -> Path:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Run the isolated hybrid retrieval pipeline on "
+            "Run the active hybrid retrieval pipeline on "
             "kb/Rewritten_50_questions.xlsx and write generated answers to XLSX."
         )
     )

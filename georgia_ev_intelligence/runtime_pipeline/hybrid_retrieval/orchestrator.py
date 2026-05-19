@@ -4,21 +4,23 @@ from __future__ import annotations
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from collections.abc import Sequence
 
-from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
+from georgia_ev_intelligence.runtime_pipeline.schemas import (
+    ParentContext,
+    RetrievedChildChunk,
+)
 
 from .config import HybridRetrievalConfig
-from .interfaces import ChildReranker, RetrieverStage
+from .interfaces import ChildReranker, ChildRetriever
 from .merger import ChildResultMerger
-from .models import RetrieverResultSet
 from .parent_mapper import ParentChildMapper
 
 
 class HybridRetrievalOrchestrator:
-    """Clean entry point for the isolated three-stage retrieval flow."""
+    """Clean entry point for the active three-stage retrieval flow."""
 
     def __init__(
         self,
-        retrievers: Sequence[RetrieverStage],
+        retrievers: Sequence[ChildRetriever],
         reranker: ChildReranker,
         merger: ChildResultMerger,
         parent_mapper: ParentChildMapper,
@@ -41,32 +43,25 @@ class HybridRetrievalOrchestrator:
         )
         return self._parent_mapper.map_to_parents(
             reranked_children=reranked_children,
-            retrieval_results_by_name={
-                result.name: result.children for result in retrieval_results
-            },
         )
 
-    def _retrieve_children(self, query: str) -> list[RetrieverResultSet]:
+    def _retrieve_children(self, query: str) -> list[list[RetrievedChildChunk]]:
         if not self._retrievers:
             return []
 
         with ThreadPoolExecutor(max_workers=len(self._retrievers)) as executor:
             futures = {
                 executor.submit(
-                    stage.retriever.retrieve,
+                    retriever.retrieve,
                     query,
                     self._config.retriever_top_k,
                 ): index
-                for index, stage in enumerate(self._retrievers)
+                for index, retriever in enumerate(self._retrievers)
             }
 
-            results: list[RetrieverResultSet | None] = [None] * len(self._retrievers)
+            results: list[list[RetrievedChildChunk] | None] = [None] * len(self._retrievers)
             for future in as_completed(futures):
                 index = futures[future]
-                stage = self._retrievers[index]
-                results[index] = RetrieverResultSet(
-                    name=stage.name,
-                    children=future.result(),
-                )
+                results[index] = future.result()
 
         return [result for result in results if result is not None]

@@ -1,1 +1,1 @@
-"""Hybrid retrieval: dense pgvector + BM25 + RRF fusion + parent fetching."""
+"""Child retrieval and parent fetching primitives."""

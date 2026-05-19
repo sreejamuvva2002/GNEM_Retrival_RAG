@@ -1,7 +1,6 @@
 """Narrow interfaces used by the isolated hybrid retrieval orchestrator."""
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Protocol
 
 from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
@@ -26,11 +25,3 @@ class ChildReranker(Protocol):
         top_k: int,
     ) -> list[RerankedChildChunk]:
         """Return the top reranked child chunks."""
-
-
-@dataclass(frozen=True)
-class RetrieverStage:
-    """One injected child retrieval stage."""
-
-    name: str
-    retriever: ChildRetriever

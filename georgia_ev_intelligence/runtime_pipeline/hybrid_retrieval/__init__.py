@@ -1,4 +1,4 @@
-"""Isolated three-stage hybrid retrieval module."""
+"""Active three-stage hybrid retrieval module."""
 from __future__ import annotations
 
 from .bm25_retriever import BM25ChildRetriever
@@ -10,9 +10,9 @@ from .config import (
 )
 from .dense_retriever import DenseChildRetriever
 from .factory import build_default_pipeline
-from .interfaces import ChildReranker, ChildRetriever, RetrieverStage
+from .interfaces import ChildReranker, ChildRetriever
 from .merger import ChildResultMerger
-from .models import RerankedChildChunk, RetrieverResultSet
+from .models import RerankedChildChunk
 from .orchestrator import HybridRetrievalOrchestrator
 from .parent_mapper import ParentChildMapper
 from .reranker import CrossEncoderReranker
@@ -31,7 +31,5 @@ __all__ = [
     "RERANKER_TOP_K",
     "RETRIEVER_TOP_K",
     "RerankedChildChunk",
-    "RetrieverResultSet",
-    "RetrieverStage",
     "build_default_pipeline",
 ]

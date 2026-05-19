@@ -1,3 +1,1 @@
-"""Runtime question-answering pipeline."""
-
-from . import pipeline  # noqa: F401
+"""Runtime hybrid retrieval and batch answer generation."""

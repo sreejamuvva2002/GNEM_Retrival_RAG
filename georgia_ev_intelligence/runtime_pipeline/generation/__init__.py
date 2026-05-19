@@ -1,1 +1,1 @@
-"""Runtime answer generation with citations."""
+"""Runtime LLM answer generation."""
