@@ -7,7 +7,10 @@ from typing import Any
 from georgia_ev_intelligence.runtime_pipeline.retrieval.bm25_retriever import (
     _build_bm25_text,
 )
-from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
+from georgia_ev_intelligence.runtime_pipeline.schemas import (
+    ParentContext,
+    RetrievedChildChunk,
+)
 
 from .config import RERANKER_MODEL
 from .models import RerankedChildChunk
@@ -53,6 +56,27 @@ class CrossEncoderReranker:
                 rank=rank,
             ))
         return reranked
+
+    def rerank_parents(
+        self,
+        query: str,
+        parents: list[ParentContext],
+        top_k: int,
+    ) -> list[ParentContext]:
+        """Rerank deduplicated parent chunks and return the top parent records."""
+        if top_k <= 0 or not parents:
+            return []
+
+        pairs = [(query, parent.parent_chunk_text) for parent in parents]
+        raw_scores = self._model.predict(pairs, show_progress_bar=False)
+        scores = _flatten_scores(raw_scores)
+
+        scored_parents = sorted(
+            zip(parents, scores, strict=True),
+            key=lambda item: item[1],
+            reverse=True,
+        )
+        return [parent for parent, _score in scored_parents[:top_k]]
 
     @staticmethod
     def _load_model(model_name: str) -> Any:

@@ -10,7 +10,7 @@ from georgia_ev_intelligence.runtime_pipeline.schemas import (
 )
 
 from .config import HybridRetrievalConfig
-from .interfaces import ChildReranker, ChildRetriever
+from .interfaces import ChildRetriever, ParentReranker
 from .merger import ChildResultMerger
 from .models import HybridRetrievalResult
 from .parent_mapper import ParentChildMapper
@@ -22,7 +22,7 @@ class HybridRetrievalOrchestrator:
     def __init__(
         self,
         retrievers: Sequence[ChildRetriever],
-        reranker: ChildReranker,
+        reranker: ParentReranker,
         merger: ChildResultMerger,
         parent_mapper: ParentChildMapper,
         config: HybridRetrievalConfig | None = None,
@@ -41,16 +41,14 @@ class HybridRetrievalOrchestrator:
         """Return final parents plus dense and sparse child retrieval traces."""
         retrieval_results = self._retrieve_children(query)
         merged_children = self._merger.merge(retrieval_results)
-        reranked_children = self._reranker.rerank(
+        parent_contexts = self._parent_mapper.map_to_parents(merged_children)
+        reranked_parent_contexts = self._reranker.rerank_parents(
             query=query,
-            children=merged_children,
+            parents=parent_contexts,
             top_k=self._config.reranker_top_k,
         )
-        parent_contexts = self._parent_mapper.map_to_parents(
-            reranked_children=reranked_children,
-        )
         return HybridRetrievalResult(
-            parent_contexts=parent_contexts,
+            parent_contexts=reranked_parent_contexts,
             sparse_children=retrieval_results[0] if len(retrieval_results) > 0 else [],
             dense_children=retrieval_results[1] if len(retrieval_results) > 1 else [],
         )

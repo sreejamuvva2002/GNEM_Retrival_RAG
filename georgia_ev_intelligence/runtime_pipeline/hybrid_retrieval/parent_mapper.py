@@ -1,10 +1,17 @@
 """Map reranked child chunks back to deduplicated parent chunks."""
 from __future__ import annotations
 
+from collections.abc import Sequence
+from typing import Protocol
+
 from georgia_ev_intelligence.runtime_pipeline.retrieval.parent_fetcher import fetch_parents
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
-from .models import RerankedChildChunk
+
+class ChildWithParentRecordId(Protocol):
+    """Child-like retrieval result carrying a parent record id."""
+
+    parent_record_id: str
 
 
 class ParentChildMapper:
@@ -12,11 +19,11 @@ class ParentChildMapper:
 
     def map_to_parents(
         self,
-        reranked_children: list[RerankedChildChunk],
+        children: Sequence[ChildWithParentRecordId],
     ) -> list[ParentContext]:
-        if not reranked_children:
+        if not children:
             return []
 
         return fetch_parents([
-            child.parent_record_id for child in reranked_children
+            child.parent_record_id for child in children
         ])

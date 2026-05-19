@@ -3,10 +3,10 @@ from __future__ import annotations
 
 from typing import Protocol
 
-from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
-
-from .models import RerankedChildChunk
-
+from georgia_ev_intelligence.runtime_pipeline.schemas import (
+    ParentContext,
+    RetrievedChildChunk,
+)
 
 class ChildRetriever(Protocol):
     """Retrieve child chunks for a query."""
@@ -15,13 +15,13 @@ class ChildRetriever(Protocol):
         """Return at most top_k child chunks."""
 
 
-class ChildReranker(Protocol):
-    """Rerank retrieved child chunks for a query."""
+class ParentReranker(Protocol):
+    """Rerank deduplicated parent chunks for a query."""
 
-    def rerank(
+    def rerank_parents(
         self,
         query: str,
-        children: list[RetrievedChildChunk],
+        parents: list[ParentContext],
         top_k: int,
-    ) -> list[RerankedChildChunk]:
-        """Return the top reranked child chunks."""
+    ) -> list[ParentContext]:
+        """Return the top reranked parent chunks."""

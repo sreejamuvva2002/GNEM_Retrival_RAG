@@ -4,7 +4,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-RETRIEVER_TOP_K = 100
+RETRIEVER_TOP_K = 250
 RERANKER_TOP_K = 45
 RERANKER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
