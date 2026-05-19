@@ -75,10 +75,7 @@ class CurrentAnswerPipeline:
         retrieved_context: str,
         timeout: int = 180,
     ) -> str:
-        prompt = self._prompt_builder(
-            user_question=question,
-            retrieved_parent_chunks=retrieved_context,
-        )
+        prompt = self._prompt_builder(question, retrieved_context)
         return self._answer_generator(prompt, timeout)
 
 
@@ -173,11 +170,13 @@ class Rewritten50AllModesRunner:
 
     def __init__(
         self,
-        retrieval_pipeline,
+        retrieval_pipeline_factory,
         pipelines: PipelineSet,
         llm_timeout: int = 180,
     ) -> None:
-        self._retrieval_pipeline = retrieval_pipeline
+        self._retrieval_pipeline_factory = retrieval_pipeline_factory
+        self._retrieval_pipeline = None
+        self._retrieval_load_error = ""
         self._pipelines = pipelines
         self._llm_timeout = llm_timeout
 
@@ -214,10 +213,23 @@ class Rewritten50AllModesRunner:
 
     def _retrieve_context(self, question: str) -> str:
         try:
-            parent_contexts = self._retrieval_pipeline.retrieve(question)
+            retrieval_pipeline = self._get_retrieval_pipeline()
+            parent_contexts = retrieval_pipeline.retrieve(question)
             return _format_retrieved_context(parent_contexts)
         except Exception as exc:
             return f"ERROR: retrieval failed: {exc}"
+
+    def _get_retrieval_pipeline(self):
+        if self._retrieval_pipeline is not None:
+            return self._retrieval_pipeline
+        if self._retrieval_load_error:
+            raise RuntimeError(self._retrieval_load_error)
+        try:
+            self._retrieval_pipeline = self._retrieval_pipeline_factory()
+        except Exception as exc:
+            self._retrieval_load_error = str(exc)
+            raise
+        return self._retrieval_pipeline
 
     def _answer_with_context(
         self,
@@ -257,7 +269,7 @@ def main() -> int:
         questions = questions[: args.limit]
 
     runner = Rewritten50AllModesRunner(
-        retrieval_pipeline=build_default_pipeline(),
+        retrieval_pipeline_factory=build_default_pipeline,
         pipelines=PipelineSet(
             only_rag=OnlyRagAnswerPipeline(),
             only_pretrained=OnlyPretrainedAnswerPipeline(),
