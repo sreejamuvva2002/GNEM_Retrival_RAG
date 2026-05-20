@@ -28,51 +28,28 @@ def _env_int(name: str) -> int:
     return int(_env(name))
 
 
-def _env_float(name: str) -> float:
-    return float(_env(name))
+def _env_optional_float(name: str, default: float) -> float:
+    return float(os.environ.get(name, default))
+
+
+def _env_optional_int(name: str, default: int) -> int:
+    return int(os.environ.get(name, default))
 
 
 # Neon PostgreSQL (parent chunks storage)
 NEON_DATABASE_URL = _env("NEON_DATABASE_URL")
 
-ANTHROPIC_API_KEY = _env("ANTHROPIC_API_KEY")
-ANTHROPIC_MODEL = _env("ANTHROPIC_MODEL")
-
 OLLAMA_BASE_URL = _env("OLLAMA_BASE_URL")
 OLLAMA_LLM_MODEL = os.environ.get("OLLAMA_LLM_MODEL", "qwen2.5:14b")
-
-USE_ANTHROPIC = (
-    _env_bool("USE_ANTHROPIC")
-    and bool(ANTHROPIC_API_KEY)
-)
-
-SEMANTIC_THRESHOLD = _env_float("SEMANTIC_THRESHOLD")
-MAX_EVIDENCE_ROWS = _env_int("MAX_EVIDENCE_ROWS")
+OLLAMA_TEMPERATURE = _env_optional_float("OLLAMA_TEMPERATURE", 0.1)
+OLLAMA_TOP_P = _env_optional_float("OLLAMA_TOP_P", 0.9)
+OLLAMA_NUM_PREDICT = _env_optional_int("OLLAMA_NUM_PREDICT", 4096)
 
 EMBEDDING_MODEL = _env("EMBEDDING_MODEL")
 EMBEDDING_LOCAL_FILES_ONLY = _env_bool("EMBEDDING_LOCAL_FILES_ONLY")
 EMBEDDING_TRUST_REMOTE_CODE = _env_bool("EMBEDDING_TRUST_REMOTE_CODE")
 EMBEDDING_DOCUMENT_PREFIX = _env("EMBEDDING_DOCUMENT_PREFIX")
 EMBEDDING_QUERY_PREFIX = _env("EMBEDDING_QUERY_PREFIX")
-RAG_TOP_K = _env_int("RAG_TOP_K")
 
 # pgvector child chunk index (Neon PostgreSQL)
 PGVECTOR_BATCH_SIZE = _env_int("PGVECTOR_BATCH_SIZE")
-USE_PGVECTOR_RETRIEVER = _env_bool("USE_PGVECTOR_RETRIEVER")
-
-# Probe retrieval (Stage 1 multi-probe, high-recall)
-PROBE_TOP_K_SEMANTIC = _env_int("PROBE_TOP_K_SEMANTIC")
-PROBE_TOP_K_BM25 = _env_int("PROBE_TOP_K_BM25")
-PROBE_TOP_K_COLUMN = _env_int("PROBE_TOP_K_COLUMN")
-PROBE_FUSED_TOP_K = _env_int("PROBE_FUSED_TOP_K")
-PROBE_MIN_ROWS = _env_int("PROBE_MIN_ROWS")
-
-# KB term extraction
-KB_TERM_MIN_FREQUENCY = _env_int("KB_TERM_MIN_FREQUENCY")
-KB_TERM_TOP_N = _env_int("KB_TERM_TOP_N")
-KB_TERM_MIN_DISCOVERED = _env_int("KB_TERM_MIN_DISCOVERED")
-
-# Phrase classifier LLM settings (optional — safe defaults)
-PHRASE_CLASSIFIER_ENABLED = os.environ.get("PHRASE_CLASSIFIER_ENABLED", "true").lower() == "true"
-PHRASE_CLASSIFIER_MODEL = os.environ.get("PHRASE_CLASSIFIER_MODEL", OLLAMA_LLM_MODEL)
-PHRASE_CLASSIFIER_TIMEOUT = int(os.environ.get("PHRASE_CLASSIFIER_TIMEOUT", "60"))

@@ -33,3 +33,17 @@ class HybridRetrievalResult:
     parent_contexts: list[ParentContext]
     dense_children: list[RetrievedChildChunk]
     sparse_children: list[RetrievedChildChunk]
+    trace: "HybridRetrievalTrace | None" = None
+
+
+@dataclass(frozen=True)
+class HybridRetrievalTrace:
+    """Deterministic count summary for the active hybrid retrieval flow."""
+
+    sparse_child_count: int
+    dense_child_count: int
+    merged_child_result_count: int
+    unique_child_chunk_count: int
+    unique_parent_id_count: int
+    parent_context_count_before_rerank: int
+    parent_context_count_after_rerank: int

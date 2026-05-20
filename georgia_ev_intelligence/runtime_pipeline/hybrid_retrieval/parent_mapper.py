@@ -15,7 +15,7 @@ class ChildWithParentRecordId(Protocol):
 
 
 class ParentChildMapper:
-    """Expand reranked children to their parent records using parent_record_id."""
+    """Expand child hits to unique parent records using parent_record_id."""
 
     def map_to_parents(
         self,

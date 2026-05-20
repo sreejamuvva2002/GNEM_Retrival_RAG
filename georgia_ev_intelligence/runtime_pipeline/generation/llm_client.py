@@ -27,9 +27,9 @@ def generate_answer(prompt: str, timeout: int = 180) -> str:
             "prompt": prompt,
             "stream": False,
             "options": {
-                "temperature": 0.1,
-                "top_p": 0.9,
-                "num_predict": 4096,
+                "temperature": config.OLLAMA_TEMPERATURE,
+                "top_p": config.OLLAMA_TOP_P,
+                "num_predict": config.OLLAMA_NUM_PREDICT,
             },
         },
         timeout=timeout,

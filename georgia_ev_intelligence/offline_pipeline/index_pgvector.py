@@ -21,6 +21,9 @@ from georgia_ev_intelligence.offline_pipeline.chunking.operations import (
     export_child_chunks_to_xlsx,
     export_parent_chunks_to_xlsx,
 )
+from georgia_ev_intelligence.offline_pipeline.chunking.relationship import (
+    validate_relationships,
+)
 from georgia_ev_intelligence.offline_pipeline.postgres_store import store_parents_postgres
 from georgia_ev_intelligence.offline_pipeline.pgvector_store import index_kb_children
 
@@ -44,6 +47,7 @@ def main() -> None:
 
     df = kb_loader.load()
     artifacts = build_parent_child_chunks(df)
+    validate_relationships(artifacts.parents, artifacts.children)
 
     # Always export debug Excel files
     outputs_dir = config.OUTPUTS_DIR

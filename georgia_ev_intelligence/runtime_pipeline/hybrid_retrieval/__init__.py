@@ -12,7 +12,7 @@ from .dense_retriever import DenseChildRetriever
 from .factory import build_default_pipeline
 from .interfaces import ChildRetriever, ParentReranker
 from .merger import ChildResultMerger
-from .models import HybridRetrievalResult, RerankedChildChunk
+from .models import HybridRetrievalResult, HybridRetrievalTrace, RerankedChildChunk
 from .orchestrator import HybridRetrievalOrchestrator
 from .parent_mapper import ParentChildMapper
 from .reranker import CrossEncoderReranker
@@ -25,6 +25,7 @@ __all__ = [
     "DenseChildRetriever",
     "HybridRetrievalConfig",
     "HybridRetrievalResult",
+    "HybridRetrievalTrace",
     "HybridRetrievalOrchestrator",
     "ParentChildMapper",
     "ParentReranker",

@@ -8,6 +8,7 @@ from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.models import (
 )
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50 import (
     QuestionRow,
+    _load_questions,
 )
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only import (
     OUTPUT_COLUMNS,
@@ -68,6 +69,28 @@ def test_runner_populates_retrieval_contexts() -> None:
     assert rows[0].retrieved_context == "final parent context for Which suppliers are in Georgia?"
     assert "Dense Co" in rows[0].dense_retrieved_context
     assert "Sparse Co" in rows[0].sparse_retrieved_context
+
+
+def test_loads_human_validated_question_workbook(tmp_path) -> None:
+    input_path = tmp_path / "human_validated.xlsx"
+    pd.DataFrame([
+        {
+            "Num": 7,
+            "Use Case Category": "category",
+            "Question": "Which suppliers are listed?",
+            "Human validated answers": "Validated answer",
+        }
+    ]).to_excel(input_path, sheet_name="Sheet1", index=False)
+
+    rows = _load_questions(input_path=input_path, sheet_name="Sheet1")
+
+    assert rows == [
+        QuestionRow(
+            serial_number=7,
+            question="Which suppliers are listed?",
+            golden_answer="Validated answer",
+        )
+    ]
 
 
 def test_writer_creates_parent_directory_and_workbook(tmp_path) -> None:

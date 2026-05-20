@@ -1,4 +1,4 @@
-"""Run current, Only RAG, and Only Pre-Trained answer modes on 50 questions."""
+"""Run current, Only RAG, and Only Pre-Trained modes on human-validated QA."""
 from __future__ import annotations
 
 import argparse
@@ -17,28 +17,44 @@ from .factory import build_default_pipeline
 from .only_pretrained_pipeline import OnlyPretrainedAnswerPipeline
 from .only_rag_pipeline import OnlyRagAnswerPipeline
 from .run_rewritten_50 import (
+    DEFAULT_OUTPUT_DIR_NAME,
+    DEFAULT_QUESTIONS_SHEET,
+    DEFAULT_QUESTIONS_WORKBOOK,
+    _empty_trace_values,
+    _default_input_path,
     _format_retrieved_context,
     _load_questions,
     _project_root,
+    _trace_values,
     build_prompt as build_current_prompt,
 )
 
 
+TRACE_COLUMNS = [
+    "sparse_child_count",
+    "dense_child_count",
+    "merged_child_result_count",
+    "unique_child_chunk_count",
+    "unique_parent_id_count",
+    "parent_context_count_before_rerank",
+    "parent_context_count_after_rerank",
+]
+
 OUTPUT_COLUMNS = [
-    "s.no",
     "question",
-    "golden answer",
-    "LLM answer",
-    "retrieved context",
+    "golden_answer",
+    "retrieved_parent_chunks_after_reranking",
+    "final_llm_answer",
+    *TRACE_COLUMNS,
     "dense retrieved context",
     "sparse retrieved context",
 ]
 
 NO_CONTEXT_OUTPUT_COLUMNS = [
-    "s.no",
     "question",
-    "golden answer",
-    "LLM answer",
+    "golden_answer",
+    "final_llm_answer",
+    *TRACE_COLUMNS,
     "dense retrieved context",
     "sparse retrieved context",
 ]
@@ -112,6 +128,7 @@ class QuestionModeAnswers:
     retrieved_context: str
     dense_retrieved_context: str
     sparse_retrieved_context: str
+    trace_values: dict[str, object]
     answers_by_mode: dict[str, str]
 
 
@@ -122,6 +139,7 @@ class RetrievedContextBundle:
     final_context: str
     dense_context: str
     sparse_context: str
+    trace_values: dict[str, object]
 
 
 class RunOutputDirectoryFactory:
@@ -132,7 +150,7 @@ class RunOutputDirectoryFactory:
             _project_root()
             / "georgia_ev_intelligence"
             / "outputs"
-            / "hybrid_retrieval_rewritten_50"
+            / DEFAULT_OUTPUT_DIR_NAME
         )
 
     def create(self) -> Path:
@@ -159,13 +177,13 @@ class PipelineWorkbookWriter:
     def append(self, answers: QuestionModeAnswers) -> None:
         for spec in self._specs:
             row = {
-                "s.no": answers.serial_number,
                 "question": answers.question,
-                "golden answer": answers.golden_answer,
-                "LLM answer": answers.answers_by_mode[spec.key],
+                "golden_answer": answers.golden_answer,
+                "final_llm_answer": answers.answers_by_mode[spec.key],
+                **answers.trace_values,
             }
             if spec.include_retrieved_context:
-                row["retrieved context"] = answers.retrieved_context
+                row["retrieved_parent_chunks_after_reranking"] = answers.retrieved_context
             row["dense retrieved context"] = answers.dense_retrieved_context
             row["sparse retrieved context"] = answers.sparse_retrieved_context
             self._rows_by_mode[spec.key].append(row)
@@ -213,6 +231,7 @@ class Rewritten50AllModesRunner:
                 retrieved_context=retrieved_contexts.final_context,
                 dense_retrieved_context=retrieved_contexts.dense_context,
                 sparse_retrieved_context=retrieved_contexts.sparse_context,
+                trace_values=retrieved_contexts.trace_values,
                 answers_by_mode={
                     "only_rag": self._answer_with_context(
                         self._pipelines.only_rag,
@@ -246,6 +265,7 @@ class Rewritten50AllModesRunner:
                     sparse_context=_format_child_contexts(
                         retrieval_result.sparse_children,
                     ),
+                    trace_values=_trace_values(retrieval_result.trace),
                 )
 
             parent_contexts = retrieval_pipeline.retrieve(question)
@@ -253,6 +273,7 @@ class Rewritten50AllModesRunner:
                 final_context=_format_retrieved_context(parent_contexts),
                 dense_context="",
                 sparse_context="",
+                trace_values=_empty_trace_values(),
             )
         except Exception as exc:
             error = f"ERROR: retrieval failed: {exc}"
@@ -260,6 +281,7 @@ class Rewritten50AllModesRunner:
                 final_context=error,
                 dense_context=error,
                 sparse_context=error,
+                trace_values=_empty_trace_values(),
             )
 
     def _get_retrieval_pipeline(self):
@@ -324,7 +346,7 @@ def _format_child_contexts(children: list[RetrievedChildChunk]) -> str:
 
 def main() -> int:
     args = _parse_args()
-    input_path = _project_root() / "kb" / "Rewritten_50_questions.xlsx"
+    input_path = args.input or _default_input_path()
     output_dir = RunOutputDirectoryFactory(root=args.output_root).create()
 
     questions = _load_questions(input_path=input_path, sheet_name=args.sheet)
@@ -371,13 +393,19 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Run Only RAG, Only pre-trained, and Rag + Pre-Trained answer "
-            "generation for kb/Rewritten_50_questions.xlsx."
+            f"generation for kb/{DEFAULT_QUESTIONS_WORKBOOK}."
         )
     )
     parser.add_argument(
         "--sheet",
-        default="Q&A",
-        help="Worksheet name inside kb/Rewritten_50_questions.xlsx.",
+        default=DEFAULT_QUESTIONS_SHEET,
+        help=f"Worksheet name inside kb/{DEFAULT_QUESTIONS_WORKBOOK}.",
+    )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help="Optional QA workbook path. Defaults to the human-validated QA workbook.",
     )
     parser.add_argument(
         "--output-root",
@@ -386,7 +414,7 @@ def _parse_args() -> argparse.Namespace:
         help=(
             "Optional root directory for run folders. Each invocation creates "
             "a new timestamped child folder. Defaults to "
-            "georgia_ev_intelligence/outputs/hybrid_retrieval_rewritten_50."
+            f"georgia_ev_intelligence/outputs/{DEFAULT_OUTPUT_DIR_NAME}."
         ),
     )
     parser.add_argument(

@@ -1,4 +1,4 @@
-"""Run only retrieval over Rewritten_50_questions.xlsx and export traces."""
+"""Run only retrieval over the human-validated QA workbook and export traces."""
 from __future__ import annotations
 
 import argparse
@@ -12,18 +12,35 @@ from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
 
 from .factory import build_default_pipeline
 from .run_rewritten_50 import (
+    DEFAULT_OUTPUT_DIR_NAME,
+    DEFAULT_QUESTIONS_SHEET,
+    DEFAULT_QUESTIONS_WORKBOOK,
     QuestionRow,
+    _default_input_path,
+    _empty_trace_values,
     _format_retrieved_context,
     _load_questions,
     _project_root,
+    _trace_values,
 )
 
+
+TRACE_COLUMNS = [
+    "sparse_child_count",
+    "dense_child_count",
+    "merged_child_result_count",
+    "unique_child_chunk_count",
+    "unique_parent_id_count",
+    "parent_context_count_before_rerank",
+    "parent_context_count_after_rerank",
+]
 
 OUTPUT_COLUMNS = [
     "s.no",
     "question",
-    "golden answer",
+    "human validated answer",
     "retrieved context",
+    *TRACE_COLUMNS,
     "dense retrieved context",
     "sparse retrieved context",
 ]
@@ -39,6 +56,7 @@ class RetrievalOnlyRow:
     retrieved_context: str
     dense_retrieved_context: str
     sparse_retrieved_context: str
+    trace_values: dict[str, object]
 
 
 class RetrievalOnlyRunner:
@@ -77,6 +95,7 @@ class RetrievalOnlyRunner:
                     sparse_retrieved_context=_format_child_contexts(
                         retrieval_result.sparse_children,
                     ),
+                    trace_values=_trace_values(retrieval_result.trace),
                 )
 
             parent_contexts = retrieval_pipeline.retrieve(question_row.question)
@@ -87,6 +106,7 @@ class RetrievalOnlyRunner:
                 retrieved_context=_format_retrieved_context(parent_contexts),
                 dense_retrieved_context="",
                 sparse_retrieved_context="",
+                trace_values=_empty_trace_values(),
             )
         except Exception as exc:
             error = f"ERROR: retrieval failed: {exc}"
@@ -97,6 +117,7 @@ class RetrievalOnlyRunner:
                 retrieved_context=error,
                 dense_retrieved_context=error,
                 sparse_retrieved_context=error,
+                trace_values=_empty_trace_values(),
             )
 
     def _get_retrieval_pipeline(self):
@@ -123,8 +144,9 @@ class RetrievalWorkbookWriter:
         self._rows.append({
             "s.no": row.serial_number,
             "question": row.question,
-            "golden answer": row.golden_answer,
+            "human validated answer": row.golden_answer,
             "retrieved context": row.retrieved_context,
+            **row.trace_values,
             "dense retrieved context": row.dense_retrieved_context,
             "sparse retrieved context": row.sparse_retrieved_context,
         })
@@ -138,7 +160,7 @@ class RetrievalWorkbookWriter:
 
 def main() -> int:
     args = _parse_args()
-    input_path = _project_root() / "kb" / "Rewritten_50_questions.xlsx"
+    input_path = args.input or _default_input_path()
     output_path = args.output or _default_output_path()
 
     questions = _load_questions(input_path=input_path, sheet_name=args.sheet)
@@ -179,7 +201,7 @@ def _default_output_path() -> Path:
         _project_root()
         / "georgia_ev_intelligence"
         / "outputs"
-        / "hybrid_retrieval_rewritten_50"
+        / DEFAULT_OUTPUT_DIR_NAME
         / f"{timestamp}_retrieval_only.xlsx"
     )
 
@@ -187,14 +209,20 @@ def _default_output_path() -> Path:
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
-            "Run only hybrid retrieval on kb/Rewritten_50_questions.xlsx "
+            f"Run only hybrid retrieval on kb/{DEFAULT_QUESTIONS_WORKBOOK} "
             "and write retrieved contexts to XLSX."
         )
     )
     parser.add_argument(
         "--sheet",
-        default="Q&A",
-        help="Worksheet name inside kb/Rewritten_50_questions.xlsx.",
+        default=DEFAULT_QUESTIONS_SHEET,
+        help=f"Worksheet name inside kb/{DEFAULT_QUESTIONS_WORKBOOK}.",
+    )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help="Optional QA workbook path. Defaults to the human-validated QA workbook.",
     )
     parser.add_argument(
         "--output",

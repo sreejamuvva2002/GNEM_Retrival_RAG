@@ -10,6 +10,7 @@ from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.merger import (
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.orchestrator import (
     HybridRetrievalOrchestrator,
 )
+from georgia_ev_intelligence.runtime_pipeline.retrieval.parent_fetcher import _dedupe
 from georgia_ev_intelligence.runtime_pipeline.schemas import (
     ParentContext,
     RetrievedChildChunk,
@@ -65,6 +66,18 @@ class FakeParentReranker:
         return parents[:top_k]
 
 
+class ReverseParentReranker(FakeParentReranker):
+    def rerank_parents(
+        self,
+        query: str,
+        parents: list[ParentContext],
+        top_k: int,
+    ) -> list[ParentContext]:
+        self.received_parents = parents
+        self.received_top_k = top_k
+        return list(reversed(parents))[:top_k]
+
+
 def _child(
     chunk_id: str,
     parent_record_id: str,
@@ -81,8 +94,10 @@ def test_retrieves_250_children_then_reranks_deduped_parents() -> None:
     sparse = FakeRetriever([
         _child("S1", "P1"),
         _child("S2", "P1"),
+        _child("SHARED", "P3"),
     ])
     dense = FakeRetriever([
+        _child("SHARED", "P3"),
         _child("D1", "P2"),
     ])
     parent_mapper = FakeParentMapper()
@@ -102,8 +117,71 @@ def test_retrieves_250_children_then_reranks_deduped_parents() -> None:
     assert [child.chunk_id for child in parent_mapper.mapped_children] == [
         "S1",
         "S2",
+        "SHARED",
         "D1",
     ]
-    assert [parent.record_id for parent in reranker.received_parents] == ["P1", "P2"]
+    assert [parent.record_id for parent in reranker.received_parents] == [
+        "P1",
+        "P3",
+        "P2",
+    ]
     assert reranker.received_top_k == 45
-    assert [parent.record_id for parent in result.parent_contexts] == ["P1", "P2"]
+    assert [parent.record_id for parent in result.parent_contexts] == [
+        "P1",
+        "P3",
+        "P2",
+    ]
+    assert result.trace is not None
+    assert result.trace.sparse_child_count == 3
+    assert result.trace.dense_child_count == 2
+    assert result.trace.merged_child_result_count == 5
+    assert result.trace.unique_child_chunk_count == 4
+    assert result.trace.unique_parent_id_count == 3
+    assert result.trace.parent_context_count_before_rerank == 3
+    assert result.trace.parent_context_count_after_rerank == 3
+
+
+def test_final_output_contains_only_reranked_top_k_parent_contexts() -> None:
+    sparse = FakeRetriever([
+        _child("S1", "P1"),
+        _child("S2", "P2"),
+    ])
+    dense = FakeRetriever([
+        _child("D1", "P3"),
+    ])
+    parent_mapper = FakeParentMapper()
+    reranker = ReverseParentReranker()
+    orchestrator = HybridRetrievalOrchestrator(
+        retrievers=(sparse, dense),
+        reranker=reranker,
+        merger=ChildResultMerger(),
+        parent_mapper=parent_mapper,
+        config=HybridRetrievalConfig(reranker_top_k=2),
+    )
+
+    result = orchestrator.retrieve_with_sources("rank parent contexts")
+
+    assert [parent.record_id for parent in reranker.received_parents] == [
+        "P1",
+        "P2",
+        "P3",
+    ]
+    assert [parent.record_id for parent in result.parent_contexts] == ["P3", "P2"]
+    assert result.trace is not None
+    assert result.trace.parent_context_count_before_rerank == 3
+    assert result.trace.parent_context_count_after_rerank == 2
+
+
+def test_parent_record_ids_are_deduplicated_in_fetch_order() -> None:
+    assert _dedupe(["P1", "P2", "P1", "P3", "P2"]) == ["P1", "P2", "P3"]
+
+
+def test_child_merger_preserves_retriever_order_without_rrf() -> None:
+    merger = ChildResultMerger()
+
+    merged = merger.merge([
+        [_child("S1", "P1"), _child("SHARED", "P2")],
+        [_child("D1", "P3"), _child("SHARED", "P2")],
+    ])
+
+    assert [child.chunk_id for child in merged] == ["S1", "SHARED", "D1"]

@@ -1,4 +1,4 @@
-"""Run the active hybrid retrieval pipeline over Rewritten_50_questions.xlsx."""
+"""Run the active hybrid retrieval pipeline over the human-validated QA workbook."""
 from __future__ import annotations
 
 import argparse
@@ -13,6 +13,10 @@ from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
 from .factory import build_default_pipeline
 
+
+DEFAULT_QUESTIONS_WORKBOOK = "Human validated 50 questions.xlsx"
+DEFAULT_QUESTIONS_SHEET = "Sheet1"
+DEFAULT_OUTPUT_DIR_NAME = "hybrid_retrieval_human_validated_50"
 
 PROMPT_TEMPLATE = """You are an analyst answering questions about an EV supply chain knowledge base
 for the state of Georgia. Use ONLY the retrieved context below. Do not use
@@ -100,12 +104,34 @@ Generate the answer now."""
 
 
 OUTPUT_COLUMNS = [
-    "s.no",
     "question",
-    "golden answer",
-    "human validated answer",
-    "retrived context",
+    "golden_answer",
+    "retrieved_parent_chunks_after_reranking",
+    "final_llm_answer",
+    "sparse_child_count",
+    "dense_child_count",
+    "merged_child_result_count",
+    "unique_child_chunk_count",
+    "unique_parent_id_count",
+    "parent_context_count_before_rerank",
+    "parent_context_count_after_rerank",
 ]
+
+QUESTION_COLUMN_CANDIDATES = (
+    "question",
+    "Question",
+)
+
+GOLDEN_ANSWER_COLUMN_CANDIDATES = (
+    "golden_answer",
+    "Golden Answer",
+    "answer",
+    "Answer",
+    "human_validated_answer",
+    "Human Validated Answer",
+    "Human validated answers",
+    "validated_answer",
+)
 
 
 @dataclass(frozen=True)
@@ -117,7 +143,7 @@ class QuestionRow:
 
 def main() -> int:
     args = _parse_args()
-    input_path = _project_root() / "kb" / "Rewritten_50_questions.xlsx"
+    input_path = args.input or _default_input_path()
     output_path = args.output or _default_output_path()
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -131,8 +157,14 @@ def main() -> int:
     for index, row in enumerate(questions, start=1):
         print(f"[{index}/{len(questions)}] {row.question}")
         retrieved_context = ""
+        trace_values = _empty_trace_values()
         try:
-            parent_contexts = retrieval_pipeline.retrieve(row.question)
+            if hasattr(retrieval_pipeline, "retrieve_with_sources"):
+                retrieval_result = retrieval_pipeline.retrieve_with_sources(row.question)
+                parent_contexts = retrieval_result.parent_contexts
+                trace_values = _trace_values(retrieval_result.trace)
+            else:
+                parent_contexts = retrieval_pipeline.retrieve(row.question)
             retrieved_context = _format_retrieved_context(parent_contexts)
             prompt = build_prompt(
                 user_question=row.question,
@@ -147,11 +179,11 @@ def main() -> int:
                 generated_answer = f"ERROR: LLM generation failed: {exc}"
 
         output_rows.append({
-            "s.no": row.serial_number,
             "question": row.question,
-            "golden answer": row.golden_answer,
-            "human validated answer": generated_answer,
-            "retrived context": retrieved_context,
+            "golden_answer": row.golden_answer,
+            "retrieved_parent_chunks_after_reranking": retrieved_context,
+            "final_llm_answer": generated_answer,
+            **trace_values,
         })
         _write_output(output_path, output_rows)
 
@@ -169,29 +201,75 @@ def build_prompt(user_question: str, retrieved_parent_chunks: str) -> str:
 
 def _load_questions(input_path: Path, sheet_name: str) -> list[QuestionRow]:
     dataframe = pd.read_excel(input_path, sheet_name=sheet_name)
-    _validate_columns(dataframe, input_path)
+    column_map = _question_column_map(dataframe, input_path)
 
     rows: list[QuestionRow] = []
     for record in dataframe.to_dict(orient="records"):
-        question = str(record["question"]).strip()
+        question = str(record[column_map["question"]]).strip()
         if not question:
             continue
 
         rows.append(QuestionRow(
-            serial_number=record["s.no"],
+            serial_number=record[column_map["serial_number"]],
             question=question,
-            golden_answer="" if pd.isna(record["answer"]) else str(record["answer"]),
+            golden_answer=(
+                ""
+                if pd.isna(record[column_map["answer"]])
+                else str(record[column_map["answer"]])
+            ),
         ))
 
     return rows
 
 
-def _validate_columns(dataframe: pd.DataFrame, input_path: Path) -> None:
-    required_columns = {"s.no", "question", "answer"}
-    missing = required_columns.difference(dataframe.columns)
-    if missing:
-        missing_list = ", ".join(sorted(missing))
-        raise ValueError(f"{input_path} is missing required columns: {missing_list}")
+def _question_column_map(dataframe: pd.DataFrame, input_path: Path) -> dict[str, str]:
+    """Return canonical question columns for supported QA workbooks."""
+    question_column = _first_existing_column(
+        dataframe,
+        QUESTION_COLUMN_CANDIDATES,
+        input_path,
+        "question",
+    )
+    answer_column = _first_existing_column(
+        dataframe,
+        GOLDEN_ANSWER_COLUMN_CANDIDATES,
+        input_path,
+        "golden answer",
+    )
+    serial_column = _optional_first_existing_column(dataframe, ("s.no", "Num"))
+    return {
+        "serial_number": serial_column or question_column,
+        "question": question_column,
+        "answer": answer_column,
+    }
+
+
+def _first_existing_column(
+    dataframe: pd.DataFrame,
+    candidates: tuple[str, ...],
+    input_path: Path,
+    label: str,
+) -> str:
+    column = _optional_first_existing_column(dataframe, candidates)
+    if column is not None:
+        return column
+
+    raise ValueError(
+        f"{input_path} is missing a {label} column. "
+        f"Supported {label} columns: {', '.join(candidates)}. "
+        f"Found: {', '.join(str(column) for column in dataframe.columns)}"
+    )
+
+
+def _optional_first_existing_column(
+    dataframe: pd.DataFrame,
+    candidates: tuple[str, ...],
+) -> str | None:
+    columns = set(dataframe.columns)
+    for candidate in candidates:
+        if candidate in columns:
+            return candidate
+    return None
 
 
 def _format_retrieved_context(parent_contexts: list[ParentContext]) -> str:
@@ -200,6 +278,32 @@ def _format_retrieved_context(parent_contexts: list[ParentContext]) -> str:
         for parent in parent_contexts
         if parent.parent_chunk_text
     )
+
+
+def _empty_trace_values() -> dict[str, object]:
+    return {
+        "sparse_child_count": None,
+        "dense_child_count": None,
+        "merged_child_result_count": None,
+        "unique_child_chunk_count": None,
+        "unique_parent_id_count": None,
+        "parent_context_count_before_rerank": None,
+        "parent_context_count_after_rerank": None,
+    }
+
+
+def _trace_values(trace) -> dict[str, object]:
+    if trace is None:
+        return _empty_trace_values()
+    return {
+        "sparse_child_count": trace.sparse_child_count,
+        "dense_child_count": trace.dense_child_count,
+        "merged_child_result_count": trace.merged_child_result_count,
+        "unique_child_chunk_count": trace.unique_child_chunk_count,
+        "unique_parent_id_count": trace.unique_parent_id_count,
+        "parent_context_count_before_rerank": trace.parent_context_count_before_rerank,
+        "parent_context_count_after_rerank": trace.parent_context_count_after_rerank,
+    }
 
 
 def _write_output(output_path: Path, output_rows: list[dict[str, object]]) -> None:
@@ -213,9 +317,13 @@ def _default_output_path() -> Path:
         _project_root()
         / "georgia_ev_intelligence"
         / "outputs"
-        / "hybrid_retrieval_rewritten_50"
+        / DEFAULT_OUTPUT_DIR_NAME
         / f"{timestamp}_answers.xlsx"
     )
+
+
+def _default_input_path() -> Path:
+    return _project_root() / "kb" / DEFAULT_QUESTIONS_WORKBOOK
 
 
 def _project_root() -> Path:
@@ -226,13 +334,19 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Run the active hybrid retrieval pipeline on "
-            "kb/Rewritten_50_questions.xlsx and write generated answers to XLSX."
+            f"kb/{DEFAULT_QUESTIONS_WORKBOOK} and write generated answers to XLSX."
         )
     )
     parser.add_argument(
         "--sheet",
-        default="Q&A",
-        help="Worksheet name inside kb/Rewritten_50_questions.xlsx.",
+        default=DEFAULT_QUESTIONS_SHEET,
+        help=f"Worksheet name inside kb/{DEFAULT_QUESTIONS_WORKBOOK}.",
+    )
+    parser.add_argument(
+        "--input",
+        type=Path,
+        default=None,
+        help="Optional QA workbook path. Defaults to the human-validated QA workbook.",
     )
     parser.add_argument(
         "--output",

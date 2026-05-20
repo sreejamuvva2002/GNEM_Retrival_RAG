@@ -65,7 +65,7 @@ class ChildChunk:
     metadata: dict
 
     def payload(self) -> dict[str, Any]:
-        """Return lightweight Qdrant payload — no full parent data."""
+        """Return lightweight child metadata without full parent data."""
         return {
             "chunk_id": self.chunk_id,
             "parent_record_id": self.parent_record_id,

@@ -6,12 +6,10 @@ import pandas as pd
 
 
 CURRENT_FILE = Path(__file__).resolve()
+ROOT = CURRENT_FILE.parents[3]
 OUTPUTS_DIR = CURRENT_FILE.parents[2] / "outputs"
 NORMALIZED_KB_PATH = OUTPUTS_DIR / "Normalized_kb.xlsx"
-KB_EXCEL_PATH = Path(
-    "/Users/sreejamuvva/Desktop/GNEM_Retrival_RAG/kb/"
-    "GNEM - Auto Landscape Lat Long Updated.xlsx"
-)
+KB_EXCEL_PATH = ROOT / "kb" / "GNEM - Auto Landscape Lat Long Updated.xlsx"
 
 
 # -------------------------------------------------------

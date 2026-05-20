@@ -17,7 +17,7 @@ from .models import RerankedChildChunk
 
 
 class CrossEncoderReranker:
-    """Rerank child chunks with a sentence-transformers cross encoder."""
+    """Score child or parent candidates with a sentence-transformers cross encoder."""
 
     def __init__(
         self,
@@ -63,7 +63,11 @@ class CrossEncoderReranker:
         parents: list[ParentContext],
         top_k: int,
     ) -> list[ParentContext]:
-        """Rerank deduplicated parent chunks and return the top parent records."""
+        """Rerank unique parent chunks and return the final LLM context set.
+
+        This is the active runtime path. Parent-level reranking is intentional:
+        the LLM receives parent_chunk_text values, not child chunk metadata.
+        """
         if top_k <= 0 or not parents:
             return []
 
