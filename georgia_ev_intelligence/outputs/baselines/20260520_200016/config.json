@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-05-20T20:00:16.886876",
+  "models": [
+    "qwen2.5:7b",
+    "llama3.1:8b",
+    "mistral-small3.2:24b",
+    "qwen3.5:35b-a3b",
+    "qwen2.5:32b",
+    "gemma3:27b",
+    "qwen2.5:14b"
+  ],
+  "pipelines": [
+    "rag_only",
+    "hybrid_rag",
+    "pretrained_only",
+    "direct_kb"
+  ],
+  "input_file": "/home/sm11926/GNEM_Retrival_RAG/kb/Human validated 50 questions.xlsx",
+  "sheet_name": "Sheet1",
+  "question_count": 50,
+  "llm_timeout_seconds": 300,
+  "total_llm_calls": 1400
+}

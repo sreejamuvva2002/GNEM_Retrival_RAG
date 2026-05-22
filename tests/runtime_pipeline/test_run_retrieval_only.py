@@ -1,4 +1,4 @@
-"""Tests for the retrieval-only rewritten-question batch runner."""
+"""Tests for the retrieval-only batch runner."""
 from __future__ import annotations
 
 import pandas as pd
@@ -6,11 +6,11 @@ import pandas as pd
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.models import (
     HybridRetrievalResult,
 )
-from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50 import (
+from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag import (
     QuestionRow,
     _load_questions,
 )
-from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only import (
+from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_retrieval_only import (
     OUTPUT_COLUMNS,
     RetrievalOnlyRunner,
     RetrievalWorkbookWriter,

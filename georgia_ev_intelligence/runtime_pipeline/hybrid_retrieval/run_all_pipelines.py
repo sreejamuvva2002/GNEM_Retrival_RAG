@@ -1,7 +1,8 @@
-"""Run current, Only RAG, and Only Pre-Trained modes on human-validated QA."""
+"""Run rag_only, hybrid_rag, and pretrained_only pipelines on human-validated QA."""
 from __future__ import annotations
 
 import argparse
+import json
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,9 +15,9 @@ from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import gener
 from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
 
 from .factory import build_default_pipeline
-from .only_pretrained_pipeline import OnlyPretrainedAnswerPipeline
-from .only_rag_pipeline import OnlyRagAnswerPipeline
-from .run_rewritten_50 import (
+from .pretrained_only_pipeline import OnlyPretrainedAnswerPipeline
+from .rag_only_pipeline import OnlyRagAnswerPipeline
+from .run_hybrid_rag import (
     DEFAULT_OUTPUT_DIR_NAME,
     DEFAULT_QUESTIONS_SHEET,
     DEFAULT_QUESTIONS_WORKBOOK,
@@ -43,11 +44,8 @@ TRACE_COLUMNS = [
 OUTPUT_COLUMNS = [
     "question",
     "golden_answer",
-    "retrieved_parent_chunks_after_reranking",
     "final_llm_answer",
     *TRACE_COLUMNS,
-    "dense retrieved context",
-    "sparse retrieved context",
 ]
 
 NO_CONTEXT_OUTPUT_COLUMNS = [
@@ -55,8 +53,6 @@ NO_CONTEXT_OUTPUT_COLUMNS = [
     "golden_answer",
     "final_llm_answer",
     *TRACE_COLUMNS,
-    "dense retrieved context",
-    "sparse retrieved context",
 ]
 
 
@@ -165,7 +161,7 @@ class RunOutputDirectoryFactory:
 
 
 class PipelineWorkbookWriter:
-    """Write one XLSX workbook per answer-generation mode."""
+    """Write one XLSX workbook per answer-generation mode and one JSON with retrieved contexts."""
 
     def __init__(self, output_dir: Path, specs: tuple[PipelineOutputSpec, ...]) -> None:
         self._output_dir = output_dir
@@ -173,6 +169,7 @@ class PipelineWorkbookWriter:
         self._rows_by_mode: dict[str, list[dict[str, object]]] = {
             spec.key: [] for spec in specs
         }
+        self._context_rows: list[dict[str, object]] = []
 
     def append(self, answers: QuestionModeAnswers) -> None:
         for spec in self._specs:
@@ -182,11 +179,13 @@ class PipelineWorkbookWriter:
                 "final_llm_answer": answers.answers_by_mode[spec.key],
                 **answers.trace_values,
             }
-            if spec.include_retrieved_context:
-                row["retrieved_parent_chunks_after_reranking"] = answers.retrieved_context
-            row["dense retrieved context"] = answers.dense_retrieved_context
-            row["sparse retrieved context"] = answers.sparse_retrieved_context
             self._rows_by_mode[spec.key].append(row)
+        self._context_rows.append({
+            "question": answers.question,
+            "retrieved_parent_chunks_after_reranking": answers.retrieved_context,
+            "dense_retrieved_context": answers.dense_retrieved_context,
+            "sparse_retrieved_context": answers.sparse_retrieved_context,
+        })
         self.write()
 
     def write(self) -> None:
@@ -199,6 +198,12 @@ class PipelineWorkbookWriter:
             )
             dataframe = pd.DataFrame(self._rows_by_mode[spec.key], columns=columns)
             dataframe.to_excel(path, index=False)
+
+        json_path = self._output_dir / "retrieved_contexts.json"
+        json_path.write_text(
+            json.dumps(self._context_rows, indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
 
 
 class Rewritten50AllModesRunner:

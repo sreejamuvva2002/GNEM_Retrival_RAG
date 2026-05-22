@@ -1,4 +1,4 @@
-"""Tests for the all-modes rewritten-question batch runner."""
+"""Tests for the all-pipelines batch runner."""
 from __future__ import annotations
 
 import pandas as pd
@@ -6,10 +6,10 @@ import pandas as pd
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.models import (
     HybridRetrievalResult,
 )
-from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50 import (
+from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag import (
     QuestionRow,
 )
-from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_all_modes import (
+from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_all_pipelines import (
     NO_CONTEXT_OUTPUT_COLUMNS,
     OUTPUT_COLUMNS,
     PipelineOutputSpec,

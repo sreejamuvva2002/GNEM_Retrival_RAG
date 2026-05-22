@@ -11,7 +11,7 @@ import pandas as pd
 from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
 
 from .factory import build_default_pipeline
-from .run_rewritten_50 import (
+from .run_hybrid_rag import (
     DEFAULT_OUTPUT_DIR_NAME,
     DEFAULT_QUESTIONS_SHEET,
     DEFAULT_QUESTIONS_WORKBOOK,
