@@ -6,6 +6,7 @@ ROOT = Path(__file__).resolve().parents[3]
 PACKAGE_DIR = ROOT / "georgia_ev_intelligence"
 KB_DIR = ROOT / "kb"
 OUTPUTS_DIR = PACKAGE_DIR / "outputs"
+RAW_DOCS_DIR = KB_DIR / "raw_docs"
 
 GNEM_EXCEL = OUTPUTS_DIR / "Normalized_kb.xlsx"
 HUMAN_QA_EXCEL = KB_DIR / "Human validated 50 questions.xlsx"
@@ -53,3 +54,20 @@ EMBEDDING_QUERY_PREFIX = _env("EMBEDDING_QUERY_PREFIX")
 
 # pgvector child chunk index (Neon PostgreSQL)
 PGVECTOR_BATCH_SIZE = _env_int("PGVECTOR_BATCH_SIZE")
+
+# ---------------------------------------------------------------------------
+# kb_builder crawler settings (all optional — safe defaults provided)
+# ---------------------------------------------------------------------------
+
+def _env_optional_str(name: str, default: str) -> str:
+    return os.environ.get(name, default)
+
+
+CRAWLER_CONCURRENCY: int = _env_optional_int("CRAWLER_CONCURRENCY", 5)
+CRAWLER_DEPTH: int = _env_optional_int("CRAWLER_DEPTH", 3)
+CRAWLER_DELAY_SECONDS: float = _env_optional_float("CRAWLER_DELAY_SECONDS", 1.0)
+CRAWLER_USER_AGENT: str = _env_optional_str(
+    "CRAWLER_USER_AGENT", "GNEM-RAG-Bot/1.0 (research crawler)"
+)
+# Cron expression for the periodic re-crawl scheduler (default: every Sunday at 02:00)
+CRAWLER_SCHEDULE_CRON: str = _env_optional_str("CRAWLER_SCHEDULE_CRON", "0 2 * * 0")

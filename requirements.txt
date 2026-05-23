@@ -13,5 +13,12 @@ einops>=0.8
 psycopg2-binary>=2.9
 pydantic>=2.0
 
+# kb_builder — web data collection
+trafilatura>=1.9
+pdfplumber>=0.11
+python-docx>=1.1
+httpx[http2]>=0.27
+apscheduler>=3.10
+
 # Development / testing
 pytest>=8.0

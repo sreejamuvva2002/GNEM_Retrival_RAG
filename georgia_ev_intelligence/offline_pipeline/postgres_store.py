@@ -156,3 +156,154 @@ def _to_numeric(value) -> float | None:
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+# ---------------------------------------------------------------------------
+# raw_documents — web KB source document store
+# ---------------------------------------------------------------------------
+
+_CREATE_RAW_DOCS_TABLE_SQL = """
+CREATE TABLE IF NOT EXISTS raw_documents (
+    doc_id            TEXT PRIMARY KEY,          -- sha256 of normalised body_text
+    url               TEXT NOT NULL,
+    domain            TEXT,
+    source_type       TEXT,                      -- company_site | gov_doc | news
+    title             TEXT,
+    body_text         TEXT,
+    crawled_at        TIMESTAMPTZ,
+    content_hash      TEXT,
+    http_status       INT,
+    language          TEXT DEFAULT 'en',
+    linked_company_id TEXT,
+    ingestion_status  TEXT DEFAULT 'new',        -- new | indexed | error
+    error_detail      TEXT,
+    created_at        TIMESTAMPTZ DEFAULT NOW(),
+    updated_at        TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_raw_docs_status ON raw_documents(ingestion_status);
+CREATE INDEX IF NOT EXISTS idx_raw_docs_domain  ON raw_documents(domain);
+CREATE INDEX IF NOT EXISTS idx_raw_docs_url     ON raw_documents(url);
+"""
+
+_UPSERT_RAW_DOC_SQL = """
+INSERT INTO raw_documents (
+    doc_id, url, domain, source_type, title, body_text,
+    crawled_at, content_hash, http_status, language,
+    linked_company_id, ingestion_status, updated_at
+) VALUES (
+    %(doc_id)s, %(url)s, %(domain)s, %(source_type)s, %(title)s, %(body_text)s,
+    %(crawled_at)s, %(content_hash)s, %(http_status)s, %(language)s,
+    %(linked_company_id)s, %(ingestion_status)s, NOW()
+)
+ON CONFLICT (doc_id) DO UPDATE SET
+    url               = EXCLUDED.url,
+    domain            = EXCLUDED.domain,
+    source_type       = EXCLUDED.source_type,
+    title             = EXCLUDED.title,
+    body_text         = EXCLUDED.body_text,
+    crawled_at        = EXCLUDED.crawled_at,
+    content_hash      = EXCLUDED.content_hash,
+    http_status       = EXCLUDED.http_status,
+    language          = EXCLUDED.language,
+    linked_company_id = EXCLUDED.linked_company_id,
+    ingestion_status  = EXCLUDED.ingestion_status,
+    updated_at        = NOW();
+"""
+
+_FETCH_NEW_DOCS_SQL = """
+SELECT doc_id, url, domain, source_type, title, body_text,
+       crawled_at, content_hash, linked_company_id
+FROM   raw_documents
+WHERE  ingestion_status = 'new'
+ORDER  BY crawled_at ASC
+LIMIT  %(limit)s;
+"""
+
+_UPDATE_STATUS_SQL = """
+UPDATE raw_documents
+SET    ingestion_status = %(status)s,
+       error_detail     = %(error_detail)s,
+       updated_at       = NOW()
+WHERE  doc_id = ANY(%(doc_ids)s::text[]);
+"""
+
+
+def ensure_raw_documents_table() -> None:
+    """Create the raw_documents table and indexes if they don't exist."""
+    conn = _get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(_CREATE_RAW_DOCS_TABLE_SQL)
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def upsert_raw_document(doc: dict) -> None:
+    """Upsert a single RawDocument dict into raw_documents.
+
+    ``doc`` must contain the keys that match the INSERT columns above.
+    Missing optional keys default to None.
+    """
+    conn = _get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(_UPSERT_RAW_DOC_SQL, {
+                "doc_id":            doc.get("doc_id"),
+                "url":               doc.get("url"),
+                "domain":            doc.get("domain"),
+                "source_type":       doc.get("source_type", "unknown"),
+                "title":             doc.get("title"),
+                "body_text":         doc.get("body_text"),
+                "crawled_at":        doc.get("crawled_at"),
+                "content_hash":      doc.get("content_hash"),
+                "http_status":       doc.get("http_status"),
+                "language":          doc.get("language", "en"),
+                "linked_company_id": doc.get("linked_company_id"),
+                "ingestion_status":  doc.get("ingestion_status", "new"),
+            })
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def fetch_new_raw_documents(limit: int = 500) -> list[dict]:
+    """Return up to *limit* raw_documents rows where ingestion_status = 'new'."""
+    conn = _get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(_FETCH_NEW_DOCS_SQL, {"limit": limit})
+            cols = [desc[0] for desc in cur.description]
+            return [dict(zip(cols, row)) for row in cur.fetchall()]
+    finally:
+        conn.close()
+
+
+def update_raw_doc_status(
+    doc_ids: list[str],
+    status: str,
+    error_detail: str | None = None,
+) -> None:
+    """Bulk-update ingestion_status for a list of doc_ids."""
+    if not doc_ids:
+        return
+    conn = _get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(_UPDATE_STATUS_SQL, {
+                "status":       status,
+                "error_detail": error_detail,
+                "doc_ids":      doc_ids,
+            })
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
