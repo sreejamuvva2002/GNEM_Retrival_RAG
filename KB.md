@@ -142,3 +142,69 @@ python -m pytest tests/kb_builder/ -v
 | `robots.txt` per domain | Cached per domain to avoid repeated fetches; allows crawl if robots.txt is unreachable |
 | `ingestion_status` lifecycle | `new → indexed / error` allows the indexer to safely batch-process only unprocessed docs |
 | `--source excel` default | Existing scripts and CI remain completely unchanged |
+
+
+# How to Run
+
+
+---
+
+## Step 1 — Make sure web content is indexed in Neon
+
+The retrieval pipeline always queries Neon. For web pages to show up in results, they must already be crawled and indexed. If you haven't done this yet:
+
+```powershell
+# Activate venv
+.\.venv\Scripts\activate
+
+# One-time: create the raw_documents table (skip if already done)
+python -m georgia_ev_intelligence.kb_builder --init-db
+
+# Crawl all web tiers and store to Neon + JSONL
+python -m georgia_ev_intelligence.kb_builder
+
+# Index the crawled web docs into pgvector (child_chunks / parent_chunks)
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source web
+```
+
+---
+
+## Step 2 — Run against the 50 questions
+
+### Option A — Retrieval only (fast, no Ollama needed)
+Outputs the raw retrieved context per question — good for checking *what* the DB returns.
+
+```powershell
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only
+```
+
+This defaults to `kb/Human validated 50 questions.xlsx`. Output goes to:
+`georgia_ev_intelligence/outputs/hybrid_retrieval_human_validated_50/<timestamp>_retrieval_only.xlsx`
+
+---
+
+### Option B — Full pipeline with LLM answers (requires Ollama running)
+```powershell
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50
+```
+
+Output: `...<timestamp>_answers.xlsx` with columns `question`, `golden_answer`, `retrieved_parent_chunks_after_reranking`, `final_llm_answer`, + trace counts.
+
+---
+
+### Option C — Quick smoke test (first 5 questions only)
+```powershell
+# Retrieval only, 5 questions
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only --limit 5
+
+# Full answers, 5 questions
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50 --limit 5
+```
+
+---
+
+## What "web-based retrieval" means here
+
+All three options above query the **same Neon DB**. Once you've run `--source web` (or `--source all`) in the indexer, web-crawled documents are mixed into `parent_chunks` / `child_chunks` alongside the Excel KB data. The BM25 + pgvector pipeline retrieves from all of it — there's no separate switch to "only retrieve from web" at query time.
+
+If you want to isolate *only* web-sourced chunks for analysis, let me know — that would require a `source_type` filter in the SQL which I can add.
