@@ -28,11 +28,33 @@ logger = logging.getLogger(__name__)
 
 _PDF_RE  = re.compile(r"\.pdf(\?.*)?$", re.IGNORECASE)
 _DOCX_RE = re.compile(r"\.(docx?)(\?.*)?$", re.IGNORECASE)
+_IMAGE_RE = re.compile(r"\.(jpg|jpeg|png|gif|svg|webp|ico)(\?.*)?$", re.IGNORECASE)
 
 _SKIP_EXTS = re.compile(
-    r"\.(jpg|jpeg|png|gif|svg|webp|ico|css|js|woff2?|ttf|eot|mp4|mp3|zip|tar|gz)$",
+    r"\.(css|js|woff2?|ttf|eot|mp4|mp3|zip|tar|gz)$",
     re.IGNORECASE,
 )
+
+# ---------------------------------------------------------------------------
+# Aggregator / directory sites that reliably 403 or contain thin content
+# Add domains here to permanently skip them for DDG seeds.
+# ---------------------------------------------------------------------------
+_BLOCKED_DOMAINS: frozenset[str] = frozenset({
+    "chamberofcommerce.com",
+    "yelp.com",
+    "yellowpages.com",
+    "manta.com",
+    "dnb.com",
+    "zoominfo.com",
+    "bloomberg.com",
+    "hoovers.com",
+    "bbb.org",
+    "corporationwiki.com",
+    "opencorporates.com",
+    "bizapedia.com",
+    "bizstanding.com",
+    "corporateregistration.com",
+})
 
 
 def _guess_file_type(url: str, content_type: str) -> str:
@@ -41,12 +63,21 @@ def _guess_file_type(url: str, content_type: str) -> str:
         return "pdf"
     if "officedocument" in ct or "msword" in ct or _DOCX_RE.search(url):
         return "docx"
+    if "image" in ct or _IMAGE_RE.search(url):
+        return "image"
     return "html"
 
 
 def _is_skippable(url: str) -> bool:
     parsed = urllib.parse.urlparse(url)
-    return bool(_SKIP_EXTS.search(parsed.path))
+    if bool(_SKIP_EXTS.search(parsed.path)):
+        return True
+    # Strip leading www. for domain matching
+    domain = parsed.netloc.lower().lstrip("www.")
+    if domain in _BLOCKED_DOMAINS:
+        logger.debug("Blocked domain — skipping %s", url)
+        return True
+    return False
 
 
 def _same_domain(base: str, target: str) -> bool:
@@ -219,6 +250,13 @@ async def crawl(
                         dedup.mark_url_seen(url, datetime.now(timezone.utc).isoformat())
                         return child_items
 
+                # Skip non-200 responses immediately — don't try to extract
+                # from error pages (403, 404, 429, 5xx, etc.)
+                if status != 200:
+                    logger.info("Skipping %s — HTTP %d", url, status)
+                    dedup.mark_url_seen(url, datetime.now(timezone.utc).isoformat())
+                    return child_items
+
                 crawled_at = datetime.now(timezone.utc)
                 ct = resp.headers.get("content-type", "text/html")
                 file_type = _guess_file_type(url, ct)
@@ -230,10 +268,27 @@ async def crawl(
                     title, body = pdf_extractor.extract(raw_bytes)
                 elif file_type == "docx":
                     title, body = docx_extractor.extract(raw_bytes)
+                elif file_type == "image":
+                    title = url.split("/")[-1] or "image"
+                    body = f"Image file extracted from {url}"
                 else:
                     title, body = html_extractor.extract(raw_bytes, url=url)
 
+                # Enqueue child links (HTML only, same-domain, within depth)
+                if file_type == "html" and depth < max_depth:
+                    html_str = raw_bytes.decode("utf-8", errors="replace")
+                    for link in _extract_links(html_str, url):
+                        if _same_domain(seed_url, link) and not dedup.is_url_seen(link):
+                            child_items.append(
+                                (link, depth + 1, source_type,
+                                 linked_company_id, seed_url)
+                            )
+
                 if not body or len(body) < 100:
+                    logger.info(
+                        "Skipping %s — body too short (%d chars) after extraction",
+                        url, len(body) if body else 0,
+                    )
                     dedup.mark_url_seen(url, crawled_at.isoformat())
                     return child_items
 
@@ -243,7 +298,7 @@ async def crawl(
                 content_hash = hashlib.sha256(norm.encode("utf-8")).hexdigest()
 
                 if dedup.is_hash_seen(content_hash):
-                    logger.debug("Duplicate content hash — skipping %s", url)
+                    logger.info("Skipping %s — duplicate content hash", url)
                     dedup.mark_url_seen(url, crawled_at.isoformat())
                     return child_items
 
@@ -259,6 +314,7 @@ async def crawl(
                     linked_company_id=linked_company_id,
                     crawled_at=crawled_at,
                     file_type=file_type,
+                    raw_binary=raw_bytes if file_type in ("pdf", "docx", "image") else None,
                 )
 
                 dedup.mark_seen(url, content_hash, crawled_at.isoformat())
@@ -269,16 +325,6 @@ async def crawl(
                 else:
                     logger.info("[DRY-RUN] Would write: %s (%d chars)", url, len(body))
                     written += 1
-
-                # Enqueue child links (HTML only, same-domain, within depth)
-                if file_type == "html" and depth < max_depth:
-                    html_str = raw_bytes.decode("utf-8", errors="replace")
-                    for link in _extract_links(html_str, url):
-                        if _same_domain(seed_url, link) and not dedup.is_url_seen(link):
-                            child_items.append(
-                                (link, depth + 1, source_type,
-                                 linked_company_id, seed_url)
-                            )
 
                 return child_items
 

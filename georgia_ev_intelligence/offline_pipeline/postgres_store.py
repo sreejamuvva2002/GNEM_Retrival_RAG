@@ -177,6 +177,7 @@ CREATE TABLE IF NOT EXISTS raw_documents (
     linked_company_id TEXT,
     ingestion_status  TEXT DEFAULT 'new',        -- new | indexed | error
     error_detail      TEXT,
+    raw_binary        BYTEA,
     created_at        TIMESTAMPTZ DEFAULT NOW(),
     updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
@@ -189,11 +190,11 @@ _UPSERT_RAW_DOC_SQL = """
 INSERT INTO raw_documents (
     doc_id, url, domain, source_type, title, body_text,
     crawled_at, content_hash, http_status, language,
-    linked_company_id, ingestion_status, updated_at
+    linked_company_id, ingestion_status, raw_binary, updated_at
 ) VALUES (
     %(doc_id)s, %(url)s, %(domain)s, %(source_type)s, %(title)s, %(body_text)s,
     %(crawled_at)s, %(content_hash)s, %(http_status)s, %(language)s,
-    %(linked_company_id)s, %(ingestion_status)s, NOW()
+    %(linked_company_id)s, %(ingestion_status)s, %(raw_binary)s, NOW()
 )
 ON CONFLICT (doc_id) DO UPDATE SET
     url               = EXCLUDED.url,
@@ -207,6 +208,7 @@ ON CONFLICT (doc_id) DO UPDATE SET
     language          = EXCLUDED.language,
     linked_company_id = EXCLUDED.linked_company_id,
     ingestion_status  = EXCLUDED.ingestion_status,
+    raw_binary        = EXCLUDED.raw_binary,
     updated_at        = NOW();
 """
 
@@ -234,6 +236,8 @@ def ensure_raw_documents_table() -> None:
     try:
         with conn.cursor() as cur:
             cur.execute(_CREATE_RAW_DOCS_TABLE_SQL)
+            # Ensure raw_binary column exists even if table was created previously
+            cur.execute("ALTER TABLE raw_documents ADD COLUMN IF NOT EXISTS raw_binary BYTEA;")
         conn.commit()
     except Exception:
         conn.rollback()
@@ -250,6 +254,11 @@ def upsert_raw_document(doc: dict) -> None:
     """
     conn = _get_connection()
     try:
+        import base64
+        raw_binary_val = doc.get("raw_binary")
+        if isinstance(raw_binary_val, str):
+            raw_binary_val = base64.b64decode(raw_binary_val)
+
         with conn.cursor() as cur:
             cur.execute(_UPSERT_RAW_DOC_SQL, {
                 "doc_id":            doc.get("doc_id"),
@@ -264,6 +273,7 @@ def upsert_raw_document(doc: dict) -> None:
                 "language":          doc.get("language", "en"),
                 "linked_company_id": doc.get("linked_company_id"),
                 "ingestion_status":  doc.get("ingestion_status", "new"),
+                "raw_binary":        raw_binary_val,
             })
         conn.commit()
     except Exception:

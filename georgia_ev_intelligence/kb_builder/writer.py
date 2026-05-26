@@ -16,6 +16,7 @@ def _jsonl_path(raw_docs_dir: Path, source_type: str) -> Path:
         "company_site": "company_sites.jsonl",
         "news":         "news.jsonl",
         "gov_doc":      "gov_docs.jsonl",
+        "ddg_search":   "ddg_search.jsonl",
     }
     filename = mapping.get(source_type, "other.jsonl")
     return raw_docs_dir / filename

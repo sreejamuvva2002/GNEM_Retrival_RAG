@@ -21,6 +21,7 @@ class RawDocument:
     linked_company_id: Optional[str] = None
     crawled_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     file_type: str = "html"              # html | pdf | docx
+    raw_binary: Optional[bytes] = None
 
     # Computed on creation
     content_hash: str = field(init=False)
@@ -32,6 +33,11 @@ class RawDocument:
         self.doc_id = f"sha256:{self.content_hash}"
 
     def to_dict(self) -> dict:
+        import base64
+        raw_binary_str = None
+        if self.raw_binary:
+            raw_binary_str = base64.b64encode(self.raw_binary).decode("utf-8")
+
         return {
             "doc_id":            self.doc_id,
             "url":               self.url,
@@ -46,4 +52,5 @@ class RawDocument:
             "linked_company_id": self.linked_company_id,
             "ingestion_status":  "new",
             "file_type":         self.file_type,
+            "raw_binary":        raw_binary_str,
         }

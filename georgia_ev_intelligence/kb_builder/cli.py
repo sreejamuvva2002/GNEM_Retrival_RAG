@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[3]))
 
 
-def _build_seeds(source: str) -> list[dict]:
+def _build_seeds(source: str, args: argparse.Namespace = None) -> list[dict]:
     from georgia_ev_intelligence.kb_builder.seed_urls import (
         all_seeds,
         company_site_seeds,
@@ -40,6 +40,13 @@ def _build_seeds(source: str) -> list[dict]:
         return NEWS_SEEDS
     if source == "gov":
         return GOV_SEEDS
+    if source == "ddg":
+        from georgia_ev_intelligence.kb_builder.ddg_queries import get_ddg_seeds
+        from georgia_ev_intelligence.shared import config as _cfg
+        md_file = str(_cfg.KB_DIR.parent / "georgia_ev_intelligence" / "kb_builder" / "web_queries.md")
+        # limit queries so --limit N controls total seeds (≈ N/3 queries × 3 results each)
+        max_queries = (args.limit // 3 + 1) if args and args.limit else 0
+        return get_ddg_seeds(md_file, max_results_per_query=3, max_queries=max_queries)
     return all_seeds()   # "all" (default)
 
 
@@ -49,7 +56,7 @@ def _make_crawl_fn(args: argparse.Namespace) -> callable:
     from georgia_ev_intelligence.shared import config
 
     def _crawl() -> None:
-        seeds = _build_seeds(args.source)
+        seeds = _build_seeds(args.source, args)
         if args.limit:
             seeds = seeds[: args.limit]
         total = run_crawl(
@@ -82,9 +89,9 @@ def main() -> None:
     )
     parser.add_argument(
         "--source",
-        choices=["all", "company", "news", "gov"],
+        choices=["all", "company", "news", "gov", "ddg"],
         default="all",
-        help="Seed tier to crawl (default: all, priority A→B→C)",
+        help="Seed tier to crawl (default: all, priority A→B→C, ddg=DuckDuckGo queries)",
     )
     parser.add_argument(
         "--depth",
