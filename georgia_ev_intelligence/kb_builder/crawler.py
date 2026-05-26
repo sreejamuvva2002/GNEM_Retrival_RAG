@@ -171,6 +171,7 @@ async def crawl(
     user_agent: str,
     dry_run: bool = False,
     db: bool = True,
+    b2: bool = True,
 ) -> int:
     """Crawl all seed URLs with BFS up to max_depth.
 
@@ -314,13 +315,13 @@ async def crawl(
                     linked_company_id=linked_company_id,
                     crawled_at=crawled_at,
                     file_type=file_type,
-                    raw_binary=raw_bytes if file_type in ("pdf", "docx", "image") else None,
+                    raw_binary=raw_bytes,   # always stored: HTML for B2, PDF/DOCX too
                 )
 
                 dedup.mark_seen(url, content_hash, crawled_at.isoformat())
 
                 if not dry_run:
-                    write_document(doc, raw_docs_dir, db=db)
+                    write_document(doc, raw_docs_dir, db=db, b2=b2)
                     written += 1
                 else:
                     logger.info("[DRY-RUN] Would write: %s (%d chars)", url, len(body))

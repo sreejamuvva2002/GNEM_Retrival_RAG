@@ -71,3 +71,11 @@ CRAWLER_USER_AGENT: str = _env_optional_str(
 )
 # Cron expression for the periodic re-crawl scheduler (default: every Sunday at 02:00)
 CRAWLER_SCHEDULE_CRON: str = _env_optional_str("CRAWLER_SCHEDULE_CRON", "0 2 * * 0")
+
+# ---------------------------------------------------------------------------
+# Backblaze B2 storage (optional — leave blank to disable B2 upload)
+# ---------------------------------------------------------------------------
+B2_KEY_ID:          str = _env_optional_str("B2_KEY_ID", "")
+B2_APPLICATION_KEY: str = _env_optional_str("B2_APPLICATION_KEY", "")
+B2_BUCKET_NAME:     str = _env_optional_str("B2_BUCKET_NAME", "")
+B2_ENDPOINT_URL:    str = _env_optional_str("B2_ENDPOINT_URL", "")

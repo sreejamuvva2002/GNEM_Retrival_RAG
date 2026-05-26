@@ -1,210 +1,375 @@
-# Expanded Knowledge Base — Walkthrough
+# GNEM Expanded Knowledge Base — Runbook
 
-## What Was Built
-
-The GNEM RAG system now has a full web data collection pipeline that sits upstream of the existing chunking and indexing infrastructure. The Excel KB is **completely unchanged** — all new web documents flow through a new code path.
+This document covers everything needed to crawl web data, store it locally and in Backblaze B2, index it into pgvector, and run the retrieval/answer pipeline.
 
 ---
 
-## Architecture (Implemented)
+## Table of Contents
 
-```
-Excel KB (unchanged)               Web Sources (new)
-     │                                    │
-     ▼                                    ▼
-index_pgvector                    kb_builder (crawler)
---source excel (default)          --source company/news/gov/all
-     │                                    │
-     │                            kb/raw_docs/*.jsonl   ← crash-safe JSONL
-     │                                    │
-     │                            PostgreSQL: raw_documents
-     │                            (ingestion_status: new → indexed)
-     │                                    │
-     └─────────────────┬──────────────────┘
-                       ▼
-              parent_chunks + child_chunks
-              PostgreSQL + pgvector
-                       │
-                       ▼
-            BM25 + dense retrieval (unchanged)
-            cross-encoder rerank   (unchanged)
-            Ollama answer gen      (unchanged)
-```
+1. [Environment Setup](#1-environment-setup)
+2. [Configure Credentials](#2-configure-credentials)
+3. [One-Time DB Initialisation](#3-one-time-db-initialisation)
+4. [Crawler Command Reference](#4-crawler-command-reference)
+5. [Backblaze B2 Setup & Verification](#5-backblaze-b2-setup--verification)
+6. [Index Web Docs into pgvector](#6-index-web-docs-into-pgvector)
+7. [Run the Retrieval & Answer Pipeline](#7-run-the-retrieval--answer-pipeline)
+8. [Periodic Re-Crawl (Scheduler)](#8-periodic-re-crawl-scheduler)
+9. [File Locations](#9-file-locations)
+10. [Troubleshooting](#10-troubleshooting)
 
 ---
 
-## Files Changed / Created
-
-### New Files
-
-| File | Purpose |
-|---|---|
-| `georgia_ev_intelligence/kb_builder/__init__.py` | Package declaration |
-| `georgia_ev_intelligence/kb_builder/__main__.py` | `python -m kb_builder` entry |
-| `georgia_ev_intelligence/kb_builder/models.py` | `RawDocument` dataclass (auto `doc_id`, `content_hash`) |
-| `georgia_ev_intelligence/kb_builder/seed_urls.py` | 3-tier seeds: Excel KB → news → gov |
-| `georgia_ev_intelligence/kb_builder/extractors/html_extractor.py` | trafilatura HTML → text |
-| `georgia_ev_intelligence/kb_builder/extractors/pdf_extractor.py` | pdfplumber PDF → text |
-| `georgia_ev_intelligence/kb_builder/extractors/docx_extractor.py` | python-docx DOCX → text |
-| `georgia_ev_intelligence/kb_builder/dedup.py` | SQLite-backed URL + content-hash dedup |
-| `georgia_ev_intelligence/kb_builder/writer.py` | JSONL append + PostgreSQL upsert |
-| `georgia_ev_intelligence/kb_builder/crawler.py` | Async BFS, robots.txt, rate-limiting |
-| `georgia_ev_intelligence/kb_builder/scheduler.py` | APScheduler weekly cron |
-| `georgia_ev_intelligence/kb_builder/cli.py` | Full CLI |
-| `georgia_ev_intelligence/offline_pipeline/web_chunk_builder.py` | `raw_documents` row → `ParentRecord` |
-| `kb/raw_docs/` | Directory for JSONL shards + SQLite dedup DB |
-| `tests/kb_builder/test_dedup.py` | 8 dedup unit tests |
-| `tests/kb_builder/test_html_extractor.py` | 4 HTML extractor tests |
-| `tests/kb_builder/test_seed_urls.py` | 4 seed URL tests |
-
-### Modified Files
-
-| File | Change |
-|---|---|
-| `georgia_ev_intelligence/shared/config/settings.py` | `RAW_DOCS_DIR` + 5 crawler config vars |
-| `georgia_ev_intelligence/offline_pipeline/postgres_store.py` | `raw_documents` table + 4 helper functions |
-| `georgia_ev_intelligence/offline_pipeline/index_pgvector.py` | `--source excel\|web\|all`, `--web-batch N` |
-| `requirements.txt` | `trafilatura`, `pdfplumber`, `python-docx`, `httpx[http2]`, `apscheduler` |
-| `.env.example` | Crawler env var block |
-
----
-
-## Test Results
-
-```
-platform win32 -- Python 3.14.3, pytest-9.0.3
-
-tests/kb_builder/test_dedup.py::test_new_url_is_not_seen              PASSED
-tests/kb_builder/test_dedup.py::test_url_marked_seen                  PASSED
-tests/kb_builder/test_dedup.py::test_hash_not_seen_initially           PASSED
-tests/kb_builder/test_dedup.py::test_hash_marked_seen                  PASSED
-tests/kb_builder/test_dedup.py::test_is_duplicate_url_hit              PASSED
-tests/kb_builder/test_dedup.py::test_is_duplicate_hash_hit             PASSED
-tests/kb_builder/test_dedup.py::test_mark_seen_persists_across_instances PASSED
-tests/kb_builder/test_dedup.py::test_no_duplicate_if_nothing_seen      PASSED
-tests/kb_builder/test_html_extractor.py::test_extract_returns_nonempty_body PASSED
-tests/kb_builder/test_html_extractor.py::test_extract_title            PASSED
-tests/kb_builder/test_html_extractor.py::test_extract_empty_html_returns_empty_strings PASSED
-tests/kb_builder/test_html_extractor.py::test_extract_body_contains_ev_content PASSED
-tests/kb_builder/test_seed_urls.py::test_news_seeds_are_nonempty       PASSED
-tests/kb_builder/test_seed_urls.py::test_gov_seeds_are_nonempty        PASSED
-tests/kb_builder/test_seed_urls.py::test_all_seeds_priority_order      PASSED
-tests/kb_builder/test_seed_urls.py::test_seed_dicts_have_required_keys PASSED
-
-16 passed in 3.37s
-```
-
-> [!NOTE]
-> The pre-existing `tests/runtime_pipeline/` tests require `NEON_DATABASE_URL` in the environment (live DB connection). They fail during collection without a `.env` file — this behaviour is unchanged from before our work.
-
----
-
-## How to Run (Quick Reference)
-
-```bash
-# Activate venv
-.\.venv\Scripts\activate   # Windows
-
-# 1. Create the raw_documents table in Neon (one-time)
-python -m georgia_ev_intelligence.kb_builder --init-db
-
-# 2. Smoke test: 5 company seeds, no writes
-python -m georgia_ev_intelligence.kb_builder --source company --limit 5 --dry-run
-
-# 3. Full crawl: all tiers (A→B→C), depth 3, JSONL + DB
-python -m georgia_ev_intelligence.kb_builder
-
-# 4. Crawl company sites only, skip PostgreSQL (JSONL only)
-python -m georgia_ev_intelligence.kb_builder --source company --no-db
-
-# 5. Index new web docs into pgvector (leaves Excel KB rows untouched)
-python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source web
-
-# 6. Index both Excel + web in one pass
-python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source all
-
-# 7. Start periodic re-crawl (every Sunday 02:00 ET, blocks until Ctrl-C)
-python -m georgia_ev_intelligence.kb_builder --schedule
-
-# 8. Run kb_builder unit tests
-python -m pytest tests/kb_builder/ -v
-```
-
----
-
-## Key Design Decisions
-
-| Decision | Rationale |
-|---|---|
-| JSONL-first write | Crash-safe; JSONL is the permanent record. DB upsert failures are warnings, not aborts |
-| SQLite dedup cache | Persists across runs — essential for periodic re-crawl to not re-index already-seen pages |
-| Same-domain BFS | Child links only followed within the seed's own domain to avoid scope creep |
-| `robots.txt` per domain | Cached per domain to avoid repeated fetches; allows crawl if robots.txt is unreachable |
-| `ingestion_status` lifecycle | `new → indexed / error` allows the indexer to safely batch-process only unprocessed docs |
-| `--source excel` default | Existing scripts and CI remain completely unchanged |
-
-
-# How to Run
-
-
----
-
-## Step 1 — Make sure web content is indexed in Neon
-
-The retrieval pipeline always queries Neon. For web pages to show up in results, they must already be crawled and indexed. If you haven't done this yet:
+## 1. Environment Setup
 
 ```powershell
-# Activate venv
+# Clone / open the repo, then create and activate the venv
+python -m venv .venv
 .\.venv\Scripts\activate
 
-# One-time: create the raw_documents table (skip if already done)
-python -m georgia_ev_intelligence.kb_builder --init-db
-
-# Crawl all web tiers and store to Neon + JSONL
-python -m georgia_ev_intelligence.kb_builder
-
-# Index the crawled web docs into pgvector (child_chunks / parent_chunks)
-python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source web
+# Install all dependencies (includes boto3, trafilatura, pdfplumber, etc.)
+pip install -r requirements.txt
 ```
 
 ---
 
-## Step 2 — Run against the 50 questions
+## 2. Configure Credentials
 
-### Option A — Retrieval only (fast, no Ollama needed)
-Outputs the raw retrieved context per question — good for checking *what* the DB returns.
+Copy `.env.example` to `.env` and fill in:
+
+```bash
+# Neon PostgreSQL (required for DB indexing)
+NEON_DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
+
+# Ollama (required for answer generation only)
+OLLAMA_BASE_URL="http://localhost:11434"
+OLLAMA_LLM_MODEL="qwen2.5:32b"
+
+# Embedding model
+EMBEDDING_MODEL="nomic-ai/nomic-embed-text-v1.5"
+EMBEDDING_LOCAL_FILES_ONLY="false"
+EMBEDDING_TRUST_REMOTE_CODE="true"
+EMBEDDING_DOCUMENT_PREFIX="search_document: "
+EMBEDDING_QUERY_PREFIX="search_query: "
+
+PGVECTOR_BATCH_SIZE="64"
+
+# Hybrid retrieval
+HYBRID_RETRIEVER_TOP_K="250"
+HYBRID_RERANKER_TOP_K="45"
+HYBRID_RERANKER_MODEL="cross-encoder/ms-marco-MiniLM-L12-v2"
+
+# Backblaze B2 (optional — leave blank to disable)
+B2_KEY_ID="your-25-char-key-id"
+B2_APPLICATION_KEY="your-application-key"
+B2_BUCKET_NAME="gnem-raw-docs"
+B2_ENDPOINT_URL="https://s3.us-east-005.backblazeb2.com"
+
+# Crawler (all optional — these are the defaults)
+CRAWLER_CONCURRENCY="5"
+CRAWLER_DEPTH="3"
+CRAWLER_DELAY_SECONDS="1.0"
+CRAWLER_SCHEDULE_CRON="0 2 * * 0"
+```
+
+---
+
+## 3. One-Time DB Initialisation
+
+Creates the `raw_documents` table in Neon. Skip if already done.
 
 ```powershell
+python -m georgia_ev_intelligence.kb_builder --init-db
+```
+
+Expected output:
+```
+raw_documents table ensured in PostgreSQL.
+```
+
+---
+
+## 4. Crawler Command Reference
+
+### Source tiers
+
+| `--source` | What it crawls |
+|---|---|
+| `company` | 205 company websites from the Excel KB `Website` column |
+| `news` | 6 curated Georgia EV news / press sites |
+| `gov` | 7 government / regulatory sites (DOE, EPA, FHWA, Georgia DCA, etc.) |
+| `ddg` | DuckDuckGo search results from `web_queries.md` |
+| `all` | All of the above in priority order A → B → C (default) |
+
+### Common commands
+
+```powershell
+# --- Smoke tests (safe, nothing written) ---
+
+# Dry-run: see what would be fetched from company sites
+python -m georgia_ev_intelligence.kb_builder --source company --limit 5 --dry-run
+
+# Dry-run DDG: 3 seeds, depth 1
+python -m georgia_ev_intelligence.kb_builder --source ddg --limit 3 --depth 1 --dry-run
+
+
+# --- Real crawls ---
+
+# Crawl company sites, write JSONL + DB + B2
+python -m georgia_ev_intelligence.kb_builder --source company
+
+# Crawl DDG results, JSONL only (skip DB and B2)
+python -m georgia_ev_intelligence.kb_builder --source ddg --no-db --no-b2
+
+# Crawl all tiers, depth 2, 10 concurrent requests
+python -m georgia_ev_intelligence.kb_builder --source all --depth 2 --concurrency 10
+
+# Crawl government docs only
+python -m georgia_ev_intelligence.kb_builder --source gov
+
+
+# --- Flag reference ---
+# --source    company | news | gov | ddg | all
+# --depth N   BFS levels per seed domain (default: 3)
+# --limit N   Process only first N seed URLs (0 = unlimited)
+# --concurrency N  Parallel HTTP requests (default: 5)
+# --delay N   Seconds between requests per domain (default: 1.0)
+# --dry-run   Fetch+extract but write nothing
+# --no-db     Write JSONL only, skip PostgreSQL
+# --no-b2     Skip Backblaze B2 upload
+# --schedule  Start periodic re-crawl (blocks until Ctrl-C)
+# --init-db   Create raw_documents table, then exit
+```
+
+---
+
+## 5. Backblaze B2 Setup & Verification
+
+### Create credentials
+
+1. Log in at [backblaze.com](https://www.backblaze.com) → **B2 Cloud Storage**
+2. **Buckets** → **Create a Bucket**: name it `gnem-raw-docs`, set to **Private**
+3. Note the **Endpoint** shown on the bucket detail page (e.g. `https://s3.us-east-005.backblazeb2.com`)
+4. **App Keys** → **Add a New Application Key**:
+   - Name: `gnem-crawler`
+   - Bucket: `gnem-raw-docs`
+   - Permissions: **Read and Write**
+5. Copy **keyID** (25 chars) and **applicationKey** immediately — the key is shown only once
+6. Paste both into `.env`
+
+### Test the connection
+
+```powershell
+.\.venv\Scripts\python.exe -c "
+import sys; sys.path.insert(0, '.')
+from georgia_ev_intelligence.shared import config
+import boto3
+c = boto3.client('s3',
+    endpoint_url=config.B2_ENDPOINT_URL,
+    aws_access_key_id=config.B2_KEY_ID,
+    aws_secret_access_key=config.B2_APPLICATION_KEY)
+r = c.list_objects_v2(Bucket=config.B2_BUCKET_NAME, MaxKeys=10)
+print('Connected! Objects in bucket:', r.get('KeyCount', 0))
+for obj in r.get('Contents', []):
+    print(' ', obj['Key'], '-', obj['Size'], 'bytes')
+"
+```
+
+Expected output (empty bucket):
+```
+Connected! Objects in bucket: 0
+```
+
+### What B2 stores
+
+```
+gnem-raw-docs/
+  raw-html/<sha256>.html     ← full HTML source of every crawled page
+  raw-pdf/<sha256>.pdf       ← PDFs
+  raw-docx/<sha256>.docx     ← DOCX files
+  jsonl/
+    company_sites.jsonl      ← synced at end of each crawl run
+    ddg_search.jsonl
+    gov_docs.jsonl
+    news.jsonl
+```
+
+Each object has S3 metadata: `url`, `source_type`, `crawled_at`, `linked_company_id`.
+
+### Verify after a crawl
+
+```powershell
+# Run a real crawl (3 DDG seeds, depth 1)
+python -m georgia_ev_intelligence.kb_builder --source ddg --limit 3 --depth 1
+```
+
+You should see in the terminal:
+```
+[crawl] Done. Documents written: N
+[b2]    Synced 1 JSONL shard(s) to Backblaze B2.
+```
+
+And in the log lines:
+```
+INFO  B2 ← raw-html/abc123...html  (45821 bytes)
+```
+
+Then check in the B2 console: **Buckets → gnem-raw-docs → Browse Files**.
+
+---
+
+## 6. Index Web Docs into pgvector
+
+After crawling, index the new documents into `parent_chunks` / `child_chunks`:
+
+```powershell
+# Index only new web docs (raw_documents rows with ingestion_status='new')
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source web
+
+# Index both Excel KB and web docs in one pass
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source all
+
+# Index Excel KB only (original default behaviour)
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector
+
+# Process up to 1000 new web docs per run
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source web --web-batch 1000
+```
+
+Expected output:
+```
+Fetched 34 new web documents from raw_documents table.
+Stored 34 parent chunks in PostgreSQL (parent_chunks table).
+Indexed 170 child chunks into pgvector (child_chunks table) with 768-dim vectors.
+Marked 34 web docs as indexed in raw_documents.
+```
+
+---
+
+## 7. Run the Retrieval & Answer Pipeline
+
+All commands require `.env` with `NEON_DATABASE_URL` set. Answer generation also requires Ollama running.
+
+```powershell
+# Start Ollama (separate terminal)
+ollama serve
+ollama pull qwen2.5:32b
+```
+
+### Retrieval only (no LLM, fast)
+
+```powershell
+# Smoke test: first 5 questions
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only --limit 5
+
+# Full 50-question run
 python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only
 ```
 
-This defaults to `kb/Human validated 50 questions.xlsx`. Output goes to:
-`georgia_ev_intelligence/outputs/hybrid_retrieval_human_validated_50/<timestamp>_retrieval_only.xlsx`
+Output: `georgia_ev_intelligence/outputs/hybrid_retrieval_human_validated_50/<timestamp>_retrieval_only.xlsx`
 
----
+Columns: `s.no`, `question`, `human_validated_answer`, `retrieved_context`, `dense_retrieved_context`, `sparse_retrieved_context`
 
-### Option B — Full pipeline with LLM answers (requires Ollama running)
+### Full pipeline with LLM answers
+
 ```powershell
+# Smoke test: 5 questions
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50 --limit 5
+
+# Full 50-question run
 python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50
 ```
 
-Output: `...<timestamp>_answers.xlsx` with columns `question`, `golden_answer`, `retrieved_parent_chunks_after_reranking`, `final_llm_answer`, + trace counts.
+Output columns: `question`, `golden_answer`, `retrieved_parent_chunks_after_reranking`, `final_llm_answer`, + retrieval trace counts.
 
----
+### Three-mode comparison
 
-### Option C — Quick smoke test (first 5 questions only)
 ```powershell
-# Retrieval only, 5 questions
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_retrieval_only --limit 5
+# Smoke test
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_all_modes --limit 5
 
-# Full answers, 5 questions
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50 --limit 5
+# Full run — writes three workbooks
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_rewritten_50_all_modes
 ```
 
+Writes: `only_rag.xlsx`, `only_pre_trained.xlsx`, `rag_plus_pre_trained.xlsx` under a timestamped folder.
+
 ---
 
-## What "web-based retrieval" means here
+## 8. Periodic Re-Crawl (Scheduler)
 
-All three options above query the **same Neon DB**. Once you've run `--source web` (or `--source all`) in the indexer, web-crawled documents are mixed into `parent_chunks` / `child_chunks` alongside the Excel KB data. The BM25 + pgvector pipeline retrieves from all of it — there's no separate switch to "only retrieve from web" at query time.
+The scheduler blocks and fires a full crawl on a cron schedule (default: every Sunday at 02:00 ET).
 
-If you want to isolate *only* web-sourced chunks for analysis, let me know — that would require a `source_type` filter in the SQL which I can add.
+```powershell
+# Start with default schedule (every Sunday 02:00 ET)
+python -m georgia_ev_intelligence.kb_builder --schedule
+
+# Override schedule via .env
+# CRAWLER_SCHEDULE_CRON="0 2 * * 0"   <- Sunday 02:00
+# CRAWLER_SCHEDULE_CRON="0 3 * * 1"   <- Monday 03:00
+
+# Use as a Windows background service:
+# Run this in a separate PowerShell window or wrap in nssm/Task Scheduler
+```
+
+Each scheduled run:
+1. Crawls all seed tiers
+2. Writes new documents to JSONL
+3. Upserts into `raw_documents` (PostgreSQL)
+4. Uploads raw bytes to B2 per-document
+5. Syncs all JSONL shards to B2 at the end
+
+---
+
+## 9. File Locations
+
+| Path | Contents |
+|---|---|
+| `kb/raw_docs/company_sites.jsonl` | Crawled company website documents |
+| `kb/raw_docs/ddg_search.jsonl` | DDG search result documents |
+| `kb/raw_docs/gov_docs.jsonl` | Government/regulatory documents |
+| `kb/raw_docs/news.jsonl` | News/press documents |
+| `kb/raw_docs/.dedup.db` | SQLite URL + content-hash dedup cache |
+| `georgia_ev_intelligence/kb_builder/web_queries.md` | DDG query definitions (edit to add companies) |
+| `georgia_ev_intelligence/outputs/parent_chunks.xlsx` | Debug export of all parent chunks |
+| `georgia_ev_intelligence/outputs/child_chunks.xlsx` | Debug export of all child chunks |
+| `georgia_ev_intelligence/outputs/hybrid_retrieval_human_validated_50/` | Retrieval + answer output workbooks |
+
+---
+
+## 10. Troubleshooting
+
+### `Documents written: 0` after DDG crawl
+
+The crawler skipped all URLs. Check the INFO logs for the reason:
+- `Skipping ... — HTTP 403` → site blocks bots. Add domain to `_BLOCKED_DOMAINS` in `crawler.py`
+- `Skipping ... — body too short (N chars)` → trafilatura extracted < 100 chars (thin/JS-rendered page)
+- `Skipping ... — duplicate content hash` → content already seen in a previous run
+
+```powershell
+# Re-run with explicit logging to see every skip reason
+python -m georgia_ev_intelligence.kb_builder --source ddg --limit 5 --dry-run 2>&1
+```
+
+### `InvalidAccessKeyId: Malformed Access Key Id`
+
+The B2 key ID in `.env` is incorrect or truncated. A valid B2 key ID is exactly **25 characters**. Regenerate in the B2 console under **App Keys**.
+
+### `WARNING: html - backends do not exist or are disabled`
+
+Your version of `ddgs` no longer has the `html` backend. This is already fixed — the crawler uses `backend="auto"`. If you still see it, reinstall: `pip install -r requirements.txt`.
+
+### Runtime tests fail with `Missing required environment variable: NEON_DATABASE_URL`
+
+Run from the repo root with `.env` present, or set the variable in your shell:
+```powershell
+$env:NEON_DATABASE_URL = "postgresql://..."
+python -m pytest tests/runtime_pipeline/ -v
+```
+
+### Reset the dedup cache (re-crawl everything)
+
+```powershell
+Remove-Item kb\raw_docs\.dedup.db
+```
+
+This forces all previously-seen URLs and content hashes to be re-crawled on the next run.

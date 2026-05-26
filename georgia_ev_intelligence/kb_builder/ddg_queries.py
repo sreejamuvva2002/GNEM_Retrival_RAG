@@ -56,20 +56,12 @@ def parse_queries(md_file_path: str) -> list[tuple[str, str]]:
 
 
 def _ddg_search(ddgs: DDGS, query: str, max_results: int) -> list[dict]:
-    """Try html backend first, fall back to auto if it returns nothing."""
+    """Search DDG using the best available backend (auto-selected by ddgs)."""
     try:
-        results = list(ddgs.text(query, backend="html", max_results=max_results))
-        if results:
-            return results
-    except Exception as exc:
-        logger.debug("DDG html backend failed for %r: %s", query, exc)
-
-    # Fallback: let ddgs choose the best available backend
-    try:
-        results = list(ddgs.text(query, max_results=max_results))
+        results = list(ddgs.text(query, backend="auto", max_results=max_results))
         return results or []
     except Exception as exc:
-        logger.warning("DDG fallback also failed for %r: %s", query, exc)
+        logger.warning("DDG search failed for %r: %s", query, exc)
         return []
 
 

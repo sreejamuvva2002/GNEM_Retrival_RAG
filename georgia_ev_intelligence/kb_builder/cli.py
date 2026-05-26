@@ -68,8 +68,18 @@ def _make_crawl_fn(args: argparse.Namespace) -> callable:
             user_agent=config.CRAWLER_USER_AGENT,
             dry_run=args.dry_run,
             db=not args.no_db,
+            b2=not args.no_b2,
         )
         print(f"[crawl] Done. Documents written: {total}")
+
+        # Sync all JSONL shards to B2 at end of run
+        if not args.dry_run and not args.no_b2 and config.B2_BUCKET_NAME:
+            try:
+                from georgia_ev_intelligence.kb_builder.b2_uploader import sync_all_jsonl_shards
+                keys = sync_all_jsonl_shards(config.RAW_DOCS_DIR, config.B2_BUCKET_NAME)
+                print(f"[b2]    Synced {len(keys)} JSONL shard(s) to Backblaze B2.")
+            except Exception as exc:
+                print(f"[b2]    JSONL sync failed: {exc}")
 
     return _crawl
 
@@ -127,6 +137,11 @@ def main() -> None:
         "--no-db",
         action="store_true",
         help="Write to JSONL only; skip PostgreSQL upsert",
+    )
+    parser.add_argument(
+        "--no-b2",
+        action="store_true",
+        help="Skip Backblaze B2 upload (JSONL + raw bytes). B2 is skipped automatically when credentials are not set.",
     )
     parser.add_argument(
         "--schedule",
