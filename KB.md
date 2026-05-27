@@ -165,28 +165,7 @@ python -m georgia_ev_intelligence.kb_builder --source gov
 5. Copy **keyID** (25 chars) and **applicationKey** immediately — the key is shown only once
 6. Paste both into `.env`
 
-### Test the connection
 
-```powershell
-.\.venv\Scripts\python.exe -c "
-import sys; sys.path.insert(0, '.')
-from georgia_ev_intelligence.shared import config
-import boto3
-c = boto3.client('s3',
-    endpoint_url=config.B2_ENDPOINT_URL,
-    aws_access_key_id=config.B2_KEY_ID,
-    aws_secret_access_key=config.B2_APPLICATION_KEY)
-r = c.list_objects_v2(Bucket=config.B2_BUCKET_NAME, MaxKeys=10)
-print('Connected! Objects in bucket:', r.get('KeyCount', 0))
-for obj in r.get('Contents', []):
-    print(' ', obj['Key'], '-', obj['Size'], 'bytes')
-"
-```
-
-Expected output (empty bucket):
-```
-Connected! Objects in bucket: 0
-```
 
 ### What B2 stores
 

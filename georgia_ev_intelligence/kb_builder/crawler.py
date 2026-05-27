@@ -16,6 +16,7 @@ import logging
 import re
 import urllib.parse
 import urllib.robotparser
+from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -209,6 +210,7 @@ async def crawl(
         json_extractor,
         xml_extractor,
         text_extractor,
+        image_extractor,
     )
 
     sem = asyncio.Semaphore(concurrency)
@@ -220,6 +222,7 @@ async def crawl(
     }
 
     written = 0
+    stats = defaultdict(int)
 
     with DedupCache(raw_docs_dir) as dedup:
         robots = _RobotsCache(user_agent)
@@ -244,21 +247,21 @@ async def crawl(
                 source_type: str,
                 linked_company_id: Optional[str],
                 seed_url: str,
-            ) -> list[tuple]:
-                """Fetch one URL, extract text, persist, return child links."""
+            ) -> tuple[list[tuple], str]:
+                """Fetch one URL, extract text, persist, return (child_links, status_or_filetype)."""
                 nonlocal written
                 child_items: list[tuple] = []
 
                 if _is_skippable(url):
-                    return child_items
+                    return child_items, "skipped"
 
                 if dedup.is_url_seen(url):
-                    return child_items
+                    return child_items, "deduped"
 
                 allowed = await robots.can_fetch(url, client)
                 if not allowed:
-                    logger.info("robots.txt disallows %s — skipping", url)
-                    return child_items
+                    logger.debug("robots.txt disallows %s — skipping", url)
+                    return child_items, "robots_blocked"
 
                 await throttle.acquire(url)
 
@@ -269,14 +272,14 @@ async def crawl(
                     except Exception as exc:
                         logger.warning("Fetch error %s: %s", url, exc)
                         dedup.mark_url_seen(url, datetime.now(timezone.utc).isoformat())
-                        return child_items
+                        return child_items, "fetch_error"
 
                 # Skip non-200 responses immediately — don't try to extract
                 # from error pages (403, 404, 429, 5xx, etc.)
                 if status != 200:
-                    logger.info("Skipping %s — HTTP %d", url, status)
+                    logger.debug("Skipping %s — HTTP %d", url, status)
                     dedup.mark_url_seen(url, datetime.now(timezone.utc).isoformat())
-                    return child_items
+                    return child_items, f"http_{status}"
 
                 crawled_at = datetime.now(timezone.utc)
                 ct = resp.headers.get("content-type", "text/html")
@@ -300,8 +303,11 @@ async def crawl(
                 elif file_type == "text":
                     title, body = text_extractor.extract(raw_bytes)
                 elif file_type == "image":
-                    title = url.split("/")[-1] or "image"
-                    body = f"Image file extracted from {url}"
+                    title, body = image_extractor.extract(raw_bytes)
+                    if not title or title == "Image Document":
+                        title = url.split("/")[-1] or "image"
+                    if not body:
+                        body = f"Image file extracted from {url}"
                 else:
                     title, body = html_extractor.extract(raw_bytes, url=url)
 
@@ -316,12 +322,12 @@ async def crawl(
                             )
 
                 if not body or len(body) < 100:
-                    logger.info(
+                    logger.debug(
                         "Skipping %s — body too short (%d chars) after extraction",
                         url, len(body) if body else 0,
                     )
                     dedup.mark_url_seen(url, crawled_at.isoformat())
-                    return child_items
+                    return child_items, "too_short"
 
                 # Content-hash dedup
                 import hashlib
@@ -329,9 +335,9 @@ async def crawl(
                 content_hash = hashlib.sha256(norm.encode("utf-8")).hexdigest()
 
                 if dedup.is_hash_seen(content_hash):
-                    logger.info("Skipping %s — duplicate content hash", url)
+                    logger.debug("Skipping %s — duplicate content hash", url)
                     dedup.mark_url_seen(url, crawled_at.isoformat())
-                    return child_items
+                    return child_items, "duplicate_hash"
 
                 domain = urllib.parse.urlparse(url).netloc
 
@@ -357,10 +363,11 @@ async def crawl(
                     logger.info("[DRY-RUN] Would write: %s (%d chars)", url, len(body))
                     written += 1
 
-                return child_items
+                return child_items, file_type
 
             # BFS loop — drain queue with async workers
             active: set[asyncio.Task] = set()
+            processed_count = 0
 
             while not queue.empty() or active:
                 # Launch tasks up to concurrency limit
@@ -376,14 +383,26 @@ async def crawl(
                     active, return_when=asyncio.FIRST_COMPLETED
                 )
                 for t in done:
+                    processed_count += 1
+                    if processed_count % 50 == 0:
+                        logger.info(
+                            "Progress: Processed %d URLs (Queue size: %d, Active: %d)", 
+                            processed_count, queue.qsize(), len(active)
+                        )
                     try:
-                        children = t.result()
+                        children, status_or_type = t.result()
+                        stats[status_or_type] += 1
                         for child in children:
                             queue.put_nowait(child)
                     except Exception as exc:
                         logger.error("Task error: %s", exc)
+                        stats["error"] += 1
 
     logger.info("Crawl complete. Documents written: %d", written)
+    logger.info("--- Crawl Summary ---")
+    for k, v in sorted(stats.items(), key=lambda item: item[1], reverse=True):
+        logger.info("  %s: %d", k, v)
+
     return written
 
 
