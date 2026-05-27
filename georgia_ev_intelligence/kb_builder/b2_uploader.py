@@ -34,13 +34,23 @@ _PREFIX = {
     "pdf":   "raw-pdf",
     "docx":  "raw-docx",
     "image": "raw-image",
+    "excel": "raw-excel",
+    "csv":   "raw-csv",
+    "json":  "raw-json",
+    "xml":   "raw-xml",
+    "text":  "raw-text",
 }
 
 _EXT = {
     "html":  ".html",
     "pdf":   ".pdf",
     "docx":  ".docx",
-    "image": ".bin",
+    "image": ".png",
+    "excel": ".xlsx",
+    "csv":   ".csv",
+    "json":  ".json",
+    "xml":   ".xml",
+    "text":  ".txt",
 }
 
 
@@ -90,7 +100,8 @@ def upload_raw_bytes(
     """
     client = _get_client()
     key = _object_key(doc_id, file_type)
-    content_type = mimetypes.types_map.get(f".{file_type}", "application/octet-stream")
+    ext = _EXT.get(file_type, ".bin")
+    content_type = mimetypes.types_map.get(ext, "application/octet-stream")
 
     extra: dict = {"ContentType": content_type}
     if metadata:

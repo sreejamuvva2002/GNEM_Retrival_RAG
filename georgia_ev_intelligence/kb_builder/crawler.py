@@ -29,6 +29,11 @@ logger = logging.getLogger(__name__)
 _PDF_RE  = re.compile(r"\.pdf(\?.*)?$", re.IGNORECASE)
 _DOCX_RE = re.compile(r"\.(docx?)(\?.*)?$", re.IGNORECASE)
 _IMAGE_RE = re.compile(r"\.(jpg|jpeg|png|gif|svg|webp|ico)(\?.*)?$", re.IGNORECASE)
+_EXCEL_RE = re.compile(r"\.(xlsx?|xlsm)(\?.*)?$", re.IGNORECASE)
+_CSV_RE = re.compile(r"\.(csv|tsv)(\?.*)?$", re.IGNORECASE)
+_JSON_RE = re.compile(r"\.json(\?.*)?$", re.IGNORECASE)
+_XML_RE = re.compile(r"\.xml(\?.*)?$", re.IGNORECASE)
+_TEXT_RE = re.compile(r"\.(txt|md)(\?.*)?$", re.IGNORECASE)
 
 _SKIP_EXTS = re.compile(
     r"\.(css|js|woff2?|ttf|eot|mp4|mp3|zip|tar|gz)$",
@@ -65,6 +70,16 @@ def _guess_file_type(url: str, content_type: str) -> str:
         return "docx"
     if "image" in ct or _IMAGE_RE.search(url):
         return "image"
+    if "excel" in ct or "spreadsheet" in ct or _EXCEL_RE.search(url):
+        return "excel"
+    if "csv" in ct or "tab-separated" in ct or _CSV_RE.search(url):
+        return "csv"
+    if "json" in ct or _JSON_RE.search(url):
+        return "json"
+    if "xml" in ct or _XML_RE.search(url):
+        return "xml"
+    if "text/plain" in ct or "markdown" in ct or _TEXT_RE.search(url):
+        return "text"
     return "html"
 
 
@@ -189,6 +204,11 @@ async def crawl(
         html_extractor,
         pdf_extractor,
         docx_extractor,
+        excel_extractor,
+        csv_extractor,
+        json_extractor,
+        xml_extractor,
+        text_extractor,
     )
 
     sem = asyncio.Semaphore(concurrency)
@@ -269,6 +289,16 @@ async def crawl(
                     title, body = pdf_extractor.extract(raw_bytes)
                 elif file_type == "docx":
                     title, body = docx_extractor.extract(raw_bytes)
+                elif file_type == "excel":
+                    title, body = excel_extractor.extract(raw_bytes)
+                elif file_type == "csv":
+                    title, body = csv_extractor.extract(raw_bytes)
+                elif file_type == "json":
+                    title, body = json_extractor.extract(raw_bytes)
+                elif file_type == "xml":
+                    title, body = xml_extractor.extract(raw_bytes)
+                elif file_type == "text":
+                    title, body = text_extractor.extract(raw_bytes)
                 elif file_type == "image":
                     title = url.split("/")[-1] or "image"
                     body = f"Image file extracted from {url}"

@@ -26,7 +26,7 @@ This document covers everything needed to crawl web data, store it locally and i
 python -m venv .venv
 .\.venv\Scripts\activate
 
-# Install all dependencies (includes boto3, trafilatura, pdfplumber, etc.)
+# Install all dependencies (includes boto3, beautifulsoup4, pandas, pdfplumber, lxml, etc.)
 pip install -r requirements.txt
 ```
 
@@ -99,6 +99,15 @@ raw_documents table ensured in PostgreSQL.
 | `gov` | 7 government / regulatory sites (DOE, EPA, FHWA, Georgia DCA, etc.) |
 | `ddg` | DuckDuckGo search results from `web_queries.md` |
 | `all` | All of the above in priority order A → B → C (default) |
+
+### Supported File Formats
+
+The crawler automatically detects and extracts text from the following file types:
+- **HTML**: Uses BeautifulSoup to extract body text, preserving links (`[Text](href)`) and images (`[Image: alt](src)`).
+- **PDF**: Uses `pdfplumber`.
+- **Office**: Uses `python-docx` for Word (`.docx`), and `pandas`/`openpyxl` for Excel (`.xls`, `.xlsx`).
+- **Data/Text**: Uses `pandas` for CSV/TSV, and native Python parsers for JSON, XML, and plain text/Markdown.
+- **Images**: Automatically identified and stored as `.png` in Backblaze B2.
 
 ### Common commands
 
@@ -186,6 +195,12 @@ gnem-raw-docs/
   raw-html/<sha256>.html     ← full HTML source of every crawled page
   raw-pdf/<sha256>.pdf       ← PDFs
   raw-docx/<sha256>.docx     ← DOCX files
+  raw-image/<sha256>.png     ← Image files
+  raw-excel/<sha256>.xlsx    ← Excel files
+  raw-csv/<sha256>.csv       ← CSV/TSV files
+  raw-json/<sha256>.json     ← JSON files
+  raw-xml/<sha256>.xml       ← XML files
+  raw-text/<sha256>.txt      ← Text/Markdown files
   jsonl/
     company_sites.jsonl      ← synced at end of each crawl run
     ddg_search.jsonl
