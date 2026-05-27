@@ -8,8 +8,6 @@ from pathlib import Path
 
 import pandas as pd
 
-from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
-
 from .factory import build_default_pipeline
 from .run_hybrid_rag import (
     DEFAULT_OUTPUT_DIR_NAME,
@@ -18,6 +16,7 @@ from .run_hybrid_rag import (
     QuestionRow,
     _default_input_path,
     _empty_trace_values,
+    _format_child_contexts,
     _format_retrieved_context,
     _load_questions,
     _project_root,
@@ -174,25 +173,6 @@ def main() -> int:
 
     print(f"Saved {len(questions)} retrieval rows to {output_path}")
     return 0
-
-
-def _format_child_contexts(children: list[RetrievedChildChunk]) -> str:
-    sections: list[str] = []
-    for index, child in enumerate(children, start=1):
-        lines = [
-            f"[{index}] chunk_id: {child.chunk_id}",
-            f"parent_record_id: {child.parent_record_id}",
-            f"chunk_type: {child.chunk_type}",
-        ]
-        for field_name, value in child.metadata.items():
-            if value is None:
-                continue
-            text = str(value).strip()
-            if not text:
-                continue
-            lines.append(f"{field_name}: {text}")
-        sections.append("\n".join(lines))
-    return "\n\n".join(sections)
 
 
 def _default_output_path() -> Path:

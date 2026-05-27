@@ -2,16 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Callable
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
 
-
-class PromptBuilder(Protocol):
-    """Build a prompt from a question without retrieved context."""
-
-    def build(self, question: str) -> str:
-        """Return the prompt sent to the LLM."""
+from .interfaces import NoContextPromptBuilder
 
 
 @dataclass(frozen=True)
@@ -27,7 +22,7 @@ class OnlyPretrainedAnswerPipeline:
 
     def __init__(
         self,
-        prompt_builder: PromptBuilder | None = None,
+        prompt_builder: NoContextPromptBuilder | None = None,
         answer_generator: Callable[[str, int], str] = generate_answer,
     ) -> None:
         self._prompt_builder = prompt_builder or OnlyPretrainedPromptBuilder()

@@ -1,7 +1,6 @@
 """Answer pipeline that uses the full Normalized_kb.xlsx as context without retrieval."""
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Callable
 
@@ -95,7 +94,7 @@ def _load_and_format_kb(kb_path: Path) -> list[str]:
             if col == "_row_id":
                 continue
             value = row[col]
-            if value is None or (isinstance(value, float) and math.isnan(value)):
+            if pd.isna(value):
                 continue
             text = str(value).strip()
             if not text:

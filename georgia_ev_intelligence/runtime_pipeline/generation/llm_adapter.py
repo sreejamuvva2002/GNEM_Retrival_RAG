@@ -1,12 +1,12 @@
 """Swappable LLM adapter for multi-model baseline runs."""
 from __future__ import annotations
 
-import re
 from typing import Protocol
 
 import requests
 
 from georgia_ev_intelligence.shared import config
+from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import _clean_answer
 
 
 class LLMAdapter(Protocol):
@@ -53,13 +53,3 @@ class OllamaAdapter:
         resp.raise_for_status()
         answer = resp.json().get("response", "").strip()
         return _clean_answer(answer)
-
-
-def _clean_answer(answer: str) -> str:
-    if not answer:
-        return ""
-    cleaned = answer.strip()
-    cleaned = re.sub(r"<think>.*?</think>", "", cleaned, flags=re.DOTALL | re.IGNORECASE).strip()
-    cleaned = re.sub(r"^```(?:text|markdown)?\s*", "", cleaned, flags=re.IGNORECASE).strip()
-    cleaned = re.sub(r"\s*```$", "", cleaned).strip()
-    return cleaned

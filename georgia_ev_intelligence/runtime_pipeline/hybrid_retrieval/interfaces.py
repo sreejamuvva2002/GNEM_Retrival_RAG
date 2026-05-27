@@ -8,6 +8,7 @@ from georgia_ev_intelligence.runtime_pipeline.schemas import (
     RetrievedChildChunk,
 )
 
+
 class ChildRetriever(Protocol):
     """Retrieve child chunks for a query."""
 
@@ -25,3 +26,36 @@ class ParentReranker(Protocol):
         top_k: int,
     ) -> list[ParentContext]:
         """Return the top reranked parent chunks."""
+
+
+class PromptBuilder(Protocol):
+    """Build a prompt from a question and retrieved context."""
+
+    def build(self, question: str, retrieved_context: str) -> str:
+        """Return the prompt sent to the LLM."""
+
+
+class NoContextPromptBuilder(Protocol):
+    """Build a prompt from a question only (no retrieved context)."""
+
+    def build(self, question: str) -> str:
+        """Return the prompt sent to the LLM."""
+
+
+class ContextualAnswerPipeline(Protocol):
+    """Generate an answer from a question and retrieved context."""
+
+    def answer(
+        self,
+        question: str,
+        retrieved_context: str,
+        timeout: int = 180,
+    ) -> str:
+        """Return the generated answer."""
+
+
+class NonContextualAnswerPipeline(Protocol):
+    """Generate an answer from only a question (no retrieved context)."""
+
+    def answer(self, question: str, timeout: int = 180) -> str:
+        """Return the generated answer."""

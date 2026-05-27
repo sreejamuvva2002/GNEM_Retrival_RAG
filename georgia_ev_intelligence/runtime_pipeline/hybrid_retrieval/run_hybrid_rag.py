@@ -10,7 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
-from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
+from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext, RetrievedChildChunk
 
 from .factory import build_default_pipeline
 
@@ -322,6 +322,26 @@ def _format_retrieved_context(parent_contexts: list[ParentContext]) -> str:
         for parent in parent_contexts
         if parent.parent_chunk_text
     )
+
+
+def _format_child_contexts(children: list[RetrievedChildChunk]) -> str:
+    """Format child retrieval results for workbook inspection."""
+    sections: list[str] = []
+    for index, child in enumerate(children, start=1):
+        lines = [
+            f"[{index}] chunk_id: {child.chunk_id}",
+            f"parent_record_id: {child.parent_record_id}",
+            f"chunk_type: {child.chunk_type}",
+        ]
+        for field_name, value in child.metadata.items():
+            if value is None:
+                continue
+            text = str(value).strip()
+            if not text:
+                continue
+            lines.append(f"{field_name}: {text}")
+        sections.append("\n".join(lines))
+    return "\n\n".join(sections)
 
 
 def _empty_trace_values() -> dict[str, object]:

@@ -2,16 +2,11 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Callable
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
 
-
-class PromptBuilder(Protocol):
-    """Build a prompt from a question and retrieved context."""
-
-    def build(self, question: str, retrieved_context: str) -> str:
-        """Return the prompt sent to the LLM."""
+from .interfaces import PromptBuilder
 
 
 @dataclass(frozen=True)

@@ -7,14 +7,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Protocol
 
 import pandas as pd
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
-from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
 
 from .factory import build_default_pipeline
+from .interfaces import ContextualAnswerPipeline, NonContextualAnswerPipeline
 from .pretrained_only_pipeline import OnlyPretrainedAnswerPipeline
 from .rag_only_pipeline import OnlyRagAnswerPipeline
 from .run_hybrid_rag import (
@@ -23,6 +22,7 @@ from .run_hybrid_rag import (
     DEFAULT_QUESTIONS_WORKBOOK,
     _empty_trace_values,
     _default_input_path,
+    _format_child_contexts,
     _format_retrieved_context,
     _load_questions,
     _project_root,
@@ -54,25 +54,6 @@ NO_CONTEXT_OUTPUT_COLUMNS = [
     "final_llm_answer",
     *TRACE_COLUMNS,
 ]
-
-
-class ContextualAnswerPipeline(Protocol):
-    """Generate an answer from a question and retrieved context."""
-
-    def answer(
-        self,
-        question: str,
-        retrieved_context: str,
-        timeout: int = 180,
-    ) -> str:
-        """Return the generated answer."""
-
-
-class NonContextualAnswerPipeline(Protocol):
-    """Generate an answer from only a question."""
-
-    def answer(self, question: str, timeout: int = 180) -> str:
-        """Return the generated answer."""
 
 
 class CurrentAnswerPipeline:
@@ -327,26 +308,6 @@ class Rewritten50AllModesRunner:
             return pipeline.answer(question=question, timeout=self._llm_timeout)
         except Exception as exc:
             return f"ERROR: LLM generation failed: {exc}"
-
-
-def _format_child_contexts(children: list[RetrievedChildChunk]) -> str:
-    """Format child retrieval results for workbook inspection."""
-    sections: list[str] = []
-    for index, child in enumerate(children, start=1):
-        lines = [
-            f"[{index}] chunk_id: {child.chunk_id}",
-            f"parent_record_id: {child.parent_record_id}",
-            f"chunk_type: {child.chunk_type}",
-        ]
-        for field_name, value in child.metadata.items():
-            if value is None:
-                continue
-            text = str(value).strip()
-            if not text:
-                continue
-            lines.append(f"{field_name}: {text}")
-        sections.append("\n".join(lines))
-    return "\n\n".join(sections)
 
 
 def main() -> int:
