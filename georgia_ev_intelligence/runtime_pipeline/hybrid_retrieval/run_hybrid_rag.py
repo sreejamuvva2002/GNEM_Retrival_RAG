@@ -121,6 +121,7 @@ OUTPUT_COLUMNS = [
 QUESTION_COLUMN_CANDIDATES = (
     "question",
     "Question",
+    "Original Question",
 )
 
 GOLDEN_ANSWER_COLUMN_CANDIDATES = (
@@ -136,12 +137,18 @@ GOLDEN_ANSWER_COLUMN_CANDIDATES = (
 
 # Optional rewritten-query columns produced by multi-query generation.
 # Each non-empty value is an alternative phrasing of the original question.
+# Supports both naming conventions: "rewritten_query_N" and "Variation N".
 REWRITTEN_QUERY_COLUMNS = (
     "rewritten_query_1",
     "rewritten_query_2",
     "rewritten_query_3",
     "rewritten_query_4",
     "rewritten_query_5",
+    "Variation 1",
+    "Variation 2",
+    "Variation 3",
+    "Variation 4",
+    "Variation 5",
 )
 
 
