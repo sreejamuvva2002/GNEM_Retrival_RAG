@@ -1,4 +1,64 @@
-"""In-repo RAGAS evaluator using Qwen 14B (via Ollama) as the judge LLM.
+"""In-repo RAGAS evaluator using a local Ollama LLM as the judge.
+
+WHY THIS FILE EXISTS
+--------------------
+After ``run_baseline.py`` produces JSONL files with LLM answers and retrieved
+contexts, this script computes objective RAGAS metrics using a separate judge
+LLM (default: ``qwen2.5:14b``).  This separates generation from evaluation and
+allows re-evaluating the same run with a different judge or new metrics.
+
+METRICS PER PIPELINE
+--------------------
+Metrics are chosen based on what each pipeline provides:
+
+  ``rag_only``        → answer_correctness, answer_relevancy, faithfulness,
+                        context_precision, context_recall
+                        (has retrieved contexts → all retrieval metrics apply)
+
+  ``hybrid_rag``      → answer_correctness, answer_relevancy, faithfulness,
+                        context_precision, context_recall
+                        (has same retrieved contexts as rag_only → same metrics)
+
+  ``pretrained_only`` → answer_correctness, answer_relevancy only
+                        (no contexts → context metrics not meaningful)
+
+  ``direct_kb``       → answer_correctness, answer_relevancy, faithfulness,
+                        context_precision, context_recall
+                        (has all 205 KB rows as contexts; context_precision and
+                        context_recall will be trivially high — interpret carefully)
+
+JUDGE LLM SETUP
+---------------
+Uses LangChain Ollama wrappers (``langchain_ollama`` preferred, falls back to
+``langchain_community``) wrapped with RAGAS's ``LangchainLLMWrapper``.
+Requires Ollama running locally with the judge model pulled.
+
+RAGAS DATASET FORMAT
+--------------------
+RAGAS ``evaluate()`` expects a HuggingFace ``Dataset`` with columns:
+  - ``question``      : the user question
+  - ``answer``        : the LLM-generated answer
+  - ``ground_truth``  : the human-validated answer
+  - ``contexts``      : list of retrieved text strings (or ``[""]`` if none)
+
+OUTPUT
+------
+``<run-dir>/ragas_scores.json`` with structure::
+    {
+      "metadata": { "run_dir": ..., "judge_model": ..., "run_date": ... },
+      "by_pipeline": {
+        "<pipeline>": {
+          "per_question": [ { "question_id": ..., "answer_correctness": ... } ],
+          "aggregate":    { "answer_correctness": { "mean": ..., "std": ..., ... } }
+        }
+      }
+    }
+
+USAGE
+-----
+    python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.evaluate_ragas \\
+        --run-dir georgia_ev_intelligence/outputs/baselines/<timestamp> \\
+        --judge-model qwen2.5:14b
 
 Reads the JSONL files produced by ``run_baseline.py`` and computes RAGAS
 metrics per pipeline.  Results are written as a JSON file inside the run
@@ -109,6 +169,8 @@ _PIPELINE_METRICS: dict[str, list[str]] = {
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
+        "context_precision",
+        "context_recall",
     ],
     "pretrained_only": [
         "answer_correctness",

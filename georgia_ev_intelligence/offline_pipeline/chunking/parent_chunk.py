@@ -1,4 +1,34 @@
-"""Parent KB record construction for offline chunking."""
+"""Parent KB record construction for offline chunking.
+
+WHY THIS FILE EXISTS:
+  Each row in the KB Excel becomes one "parent record".  The parent record
+  holds ALL fields from that row as a single formatted text block
+  (parent_chunk_text) — this is the text the LLM eventually reads to answer
+  questions.  The parent record is also the retrieval unit returned to the caller
+  after child-level retrieval and reranking.
+
+KEY DESIGN DECISION — parent vs child split:
+  Retrieval is done at the child level (fine-grained, focused chunks) but the
+  LLM receives the full parent_chunk_text.  This gives BM25 / dense search
+  the precision of small focused text while giving the LLM full context.
+
+FIELDS IN parent_chunk_text (built by build_parent_chunk_text):
+  Record ID, Company, Category, Industry Group, Updated Location, Address,
+  Lat/Long, Primary Facility Type, EV Supply Chain Role, Primary OEMs,
+  Supplier or Affiliation Type, Employment, Product/Service,
+  EV/Battery Relevant, Classification Method
+
+record_id GENERATION (_record_id):
+  MD5 hash of (company, location, product, category, facility_type, row_id)
+  → deterministic 12-char hex suffix: "KB_ROW_{row:04d}_{hash12}"
+  Ensures the same KB row always gets the same ID across re-indexing runs.
+
+RELATIONSHIPS:
+  Called by: offline_pipeline/chunking/relationship.py,
+             offline_pipeline/chunking/operations.py
+  Stored in: PostgreSQL parent_chunks table (via postgres_store.py)
+  Retrieved at runtime by: retrieval/parent_fetcher.py
+"""
 from __future__ import annotations
 
 import hashlib

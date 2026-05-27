@@ -1,3 +1,33 @@
+"""Central configuration: loads all environment variables from .env.
+
+WHY THIS FILE EXISTS:
+  Single source of truth for every runtime setting.  All modules import
+  this file (as `from georgia_ev_intelligence.shared import config`) rather
+  than calling os.environ directly, so settings can be changed in one place.
+
+ENVIRONMENT VARIABLES (defined in .env — see .env.example):
+  NEON_DATABASE_URL       — PostgreSQL connection string (Neon cloud DB)
+                            Used by BM25 retriever, dense retriever, parent fetcher
+  OLLAMA_BASE_URL         — URL of the local Ollama server (default: localhost:11434)
+  OLLAMA_LLM_MODEL        — Default model for llm_client.py (not used by run_baseline)
+  OLLAMA_TEMPERATURE      — Sampling temperature (default: 0.1 — nearly deterministic)
+  OLLAMA_TOP_P            — Nucleus sampling threshold (default: 0.9)
+  OLLAMA_NUM_PREDICT      — Max tokens to generate (default: 4096)
+  EMBEDDING_MODEL         — HuggingFace model ID for child-chunk embeddings
+                            (nomic-ai/nomic-embed-text-v1.5)
+  EMBEDDING_LOCAL_FILES_ONLY — If true, never downloads from HuggingFace
+  EMBEDDING_TRUST_REMOTE_CODE — Required true for nomic-embed-text
+  EMBEDDING_DOCUMENT_PREFIX   — Prefix for indexing ("search_document:")
+  EMBEDDING_QUERY_PREFIX      — Prefix for queries ("search_query:")
+  PGVECTOR_BATCH_SIZE     — Batch size for pgvector upsert operations
+
+PATH CONSTANTS:
+  GNEM_EXCEL      — outputs/Normalized_kb.xlsx (used by direct_kb_pipeline)
+  HUMAN_QA_EXCEL  — kb/Human validated 50 questions.xlsx
+
+RELATIONSHIPS:
+  Imported by virtually every runtime and offline module.
+"""
 import os
 from pathlib import Path
 from dotenv import load_dotenv

@@ -1,4 +1,48 @@
-"""Orchestrator for parallel child retrieval, reranking, and parent expansion."""
+"""Orchestrator for parallel child retrieval, parent mapping, and reranking.
+
+WHY THIS FILE EXISTS
+--------------------
+``HybridRetrievalOrchestrator`` is the central coordinator of the retrieval
+pipeline.  It wires together BM25 retrieval, dense retrieval, child deduplication,
+parent fetching, and cross-encoder reranking into a single coherent flow.
+
+PIPELINE FLOW
+-------------
+For a single query (``retrieve`` / ``retrieve_with_sources``):
+  1. Run BM25 retriever and dense retriever IN PARALLEL via ThreadPoolExecutor.
+  2. Merge all child hit lists with ``ChildResultMerger`` (dedup by chunk_id).
+  3. Map deduped children to their parent records via ``ParentChildMapper``
+     (batch SQL fetch, order-preserving dedup).
+  4. Rerank parent chunks with ``CrossEncoderReranker.rerank_parents()``
+     using the original query, keeping top ``config.reranker_top_k`` parents.
+  5. Return the reranked parent list (+ trace metadata).
+
+For multi-query (``retrieve_multi_query_with_sources``):
+  1. For each query in [original_question, variation_1, ..., variation_5]:
+     - Run BM25 + dense in parallel with ``per_query_top_k=150``.
+     - Accumulate all child hit lists.
+  2. Merge all accumulated child lists (dedup by chunk_id across all queries).
+  3. Map → Rerank with the ORIGINAL question as anchor.
+  Steps 2-5 are otherwise identical to the single-query flow.
+
+PARALLELISM
+-----------
+``_retrieve_children_top_k`` uses ``ThreadPoolExecutor`` with ``max_workers``
+equal to the number of retrievers (2: BM25 + dense).  Both retrievers run
+concurrently; results are collected preserving insertion-index order so BM25
+results always come first in the merged output regardless of which finishes
+first.
+
+CORRECTNESS CONTRACT
+--------------------
+- The reranker always uses ``queries[0]`` (the original question) as the
+  reranking anchor, never a variation.
+- ``parent_context_count_after_rerank`` in the trace should be ≤ ``reranker_top_k``
+  and reflects exactly what the LLM will receive.
+- Trace counts under multi-query mode: ``sparse_child_count`` and
+  ``dense_child_count`` are cumulative totals across all queries; this is
+  intentional for diagnosing retrieval breadth.
+"""
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor, as_completed

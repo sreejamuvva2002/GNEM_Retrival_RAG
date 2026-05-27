@@ -1,4 +1,27 @@
-"""Store child chunks as vectors in Neon PostgreSQL using pgvector."""
+"""Store child chunks as vectors in Neon PostgreSQL using pgvector.
+
+WHY THIS FILE EXISTS
+--------------------
+Handles the write side of vector indexing during the offline pipeline.  After
+child chunks are created by the chunking module, this file stores their
+text embeddings in the ``child_chunks`` table using the pgvector extension.
+
+HOW IT WORKS
+------------
+- Embeds each child chunk's structured text using the sentence transformer
+  model from ``shared.embeddings`` with the ``"search_document:"`` prefix
+  (asymmetric embedding convention for Nomic Embed).
+- Writes embeddings as vectors to the ``embedding`` column in
+  ``child_chunks`` (stored as ``vector(768)`` in PostgreSQL).
+- Upserts by ``chunk_id`` so re-indexing is idempotent.
+
+CORRECTNESS CONTRACT
+--------------------
+The embedding prefix used HERE (``"search_document:"``) must match the
+indexing convention that ``dense_pgvector_retriever.py`` expects at query
+time (``"search_query:"`` prefix for queries).  Both are enforced via the
+``as_document_text()`` and ``as_query_text()`` helpers in ``shared.embeddings``.
+"""
 from __future__ import annotations
 
 import json

@@ -1,27 +1,61 @@
 """Analyse pipeline evaluation results and produce a Markdown report + CSVs.
 
-Supports two input formats automatically:
-  1. ``ragas_scores.json``       — produced by ``evaluate_ragas.py``
+WHY THIS FILE EXISTS
+--------------------
+After ``evaluate_ragas.py`` scores the pipeline outputs, this script reads
+those scores and produces human-readable analysis: pipeline rankings, head-to-head
+comparisons, retrieval lift measurements, and struggling-question detection.  It
+is intentionally separated from the evaluator so it can be re-run quickly with
+different thresholds or comparisons without re-running the expensive LLM-based
+RAGAS evaluation.
+
+INPUT FORMATS (auto-detected)
+------------------------------
+  1. ``ragas_scores.json``       — produced by ``evaluate_ragas.py`` (preferred)
                                    Metrics: answer_correctness, faithfulness,
                                             context_precision, context_recall,
                                             answer_relevancy
-  2. ``ragas_report_ragas.xlsx`` — produced by the custom RAGAS scorer
+  2. ``ragas_report_ragas.xlsx`` — produced by the legacy custom RAGAS scorer
                                    Metrics: answer_accuracy, faithfulness,
                                             response_groundedness,
                                             answer_relevancy, composite_score
 
-Outputs written to the run directory (or --output-dir):
-  analysis.md               — full Markdown report
-  per_question_scores.csv   — one row per (question × pipeline), all metrics
-  pipeline_summary.csv      — aggregate mean ± std per pipeline × metric
+OUTPUTS
+-------
+All written to the run directory (or ``--output-dir``):
+  ``analysis.md``              — full 6-section Markdown report
+  ``per_question_scores.csv``  — one row per (question × pipeline), all metrics
+  ``pipeline_summary.csv``     — aggregate mean ± std per pipeline × metric
 
-Usage (new format — ragas_scores.json):
+REPORT SECTIONS
+---------------
+  1. Aggregate scores per pipeline (mean ± std, best value bolded)
+  2. Pipeline ranking by primary metric
+  3. Head-to-head: rag_only vs hybrid_rag (+ direct_kb)
+  4. Retrieval lift: rag_only vs pretrained_only
+  5. Struggling questions (all retrieval pipelines scored < threshold)
+  6. Full metric detail per pipeline (mean, std, min, max, N)
+
+KEY ANALYSIS FUNCTIONS
+-----------------------
+``_head_to_head(scores, a, b, metric, threshold=0.05)``
+    Compares pipelines a and b per question.  A win is Δ > 0.05 (not
+    just any positive delta) to focus on meaningful differences.
+
+``_struggling_questions(scores, pipelines, metric, threshold=0.3)``
+    Finds questions where ALL retrieval pipelines scored below threshold —
+    indicating a fundamental retrieval or KB coverage gap.
+
+``_pipeline_scores_by_question(scores, pipeline, metric)``
+    Normalises question string whitespace and averages across multiple
+    model runs for the same pipeline (JSONL from multi-model runs).
+
+USAGE
+-----
     python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.analyze_results \\
         --run-dir georgia_ev_intelligence/outputs/baselines/<timestamp>
 
-Usage (old xlsx format):
-    python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.analyze_results \\
-        --run-dir georgia_ev_intelligence/outputs/unused/baselines/20260520_200016
+    python -m ... --run-dir outputs/unused/baselines/20260520_200016   # xlsx format
 
     The script auto-detects which format is present in the run directory.
 """

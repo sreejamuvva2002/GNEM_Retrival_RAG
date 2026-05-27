@@ -1,3 +1,35 @@
+"""Knowledge Base (KB) loader and normaliser for the Georgia EV company dataset.
+
+WHY THIS FILE EXISTS:
+  Reads the raw Excel file ("GNEM - Auto Landscape Lat Long Updated.xlsx"),
+  normalises all text values, and returns a clean pandas DataFrame used by
+  both the offline indexer and the direct-KB pipeline.
+
+SOURCE DATA:
+  kb/GNEM - Auto Landscape Lat Long Updated.xlsx
+  Columns: Company, Category, Industry Group, Updated Location, Address,
+           Lat/Long, Primary Facility Type, EV Supply Chain Role,
+           Primary OEMs, Supplier/Affiliation Type, Product/Service,
+           EV/Battery Relevant, Classification Method, Employment
+
+NORMALISATION STEPS (normalize_dataframe):
+  - Company names  → lowercased for consistent matching
+  - Category       → OEM casing standardised, brackets removed
+  - Facility type  → Manufacturing Plant, R&D, OEM normalised
+  - OEMs / product → separator chars (;/|) made uniform
+  - Employment     → coerced to numeric; non-numeric values → "Unknown"
+  - Lat/Long       → coerced to numeric
+  - Blanks/NaN     → replaced with "Unknown" throughout
+
+COLUMN CONSTANTS (KBColumns):
+  Class that maps human-readable column names to the normalised
+  snake_case keys used everywhere downstream.
+
+RELATIONSHIPS:
+  Called by: offline_pipeline/index_pgvector.py (offline indexing),
+             hybrid_retrieval/direct_kb_pipeline.py (runtime full-KB answering)
+  Produces:  outputs/Normalized_kb.xlsx (when run as __main__)
+"""
 import re
 from html import unescape
 from pathlib import Path

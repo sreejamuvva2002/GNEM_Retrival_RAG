@@ -1,7 +1,40 @@
-"""
-Build parent-child KB chunks, store parents in PostgreSQL and child vectors in pgvector.
+"""Build parent-child KB chunks, store parents and child vectors in PostgreSQL.
 
-Usage:
+WHY THIS FILE EXISTS
+--------------------
+This is the offline indexing entry point: it reads ``Normalized_kb.xlsx``,
+creates parent and child chunks, and writes them to Neon PostgreSQL with
+pgvector embeddings.  It must be run ONCE (or on any KB update) before the
+runtime retrieval pipeline can serve queries.
+
+PIPELINE IT TRIGGERS
+--------------------
+  1. ``data.loader`` reads Normalized_kb.xlsx → list of ``KBRecord`` objects.
+  2. ``chunking.operations.build_chunks_for_record()`` creates:
+       - 1 ``ParentChunk`` per row (full structured text)
+       - 5 ``ChildChunk`` per row (identity, product_role, oem_relationship,
+         location_employment, classification)
+  3. ``postgres_store`` writes parent_chunks to the ``parent_chunks`` table.
+  4. ``pgvector_store`` embeds child chunk texts with ``"search_document:"``
+     prefix and writes to the ``child_chunks`` table (with pgvector embeddings).
+
+FLAGS
+-----
+  ``--recreate-child-table``  Drop and recreate the child_chunks table (full
+                               re-index).  Use after KB schema changes.
+  ``--dry-run``               Print chunk previews without writing to DB.
+  ``--preview N``             Show the first N parent chunks in dry-run mode.
+
+CORRECTNESS CONTRACT
+--------------------
+- Running this script twice is safe: upsert semantics prevent duplicates.
+- The embedding dimension (768) must match the ``vector(768)`` column type
+  in the DB schema and the ``EMBEDDING_MODEL`` in config.
+- After re-indexing, restart the BM25 retriever (its in-memory index is
+  stale until the next process start).
+
+USAGE
+-----
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --recreate-child-table
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --dry-run --preview 3

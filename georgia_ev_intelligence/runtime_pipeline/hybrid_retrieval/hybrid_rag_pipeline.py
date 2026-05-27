@@ -1,9 +1,43 @@
 """Answer generation that combines retrieved context with pretrained knowledge.
 
-Unlike ``rag_only_pipeline``, this pipeline treats the retrieved context as a
-*primary* source but explicitly permits the model to supplement its answer with
-pretrained knowledge where the context is incomplete.  Any information sourced
-from pretrained knowledge must be labelled ``[From general knowledge: ...]``.
+WHY THIS FILE EXISTS
+--------------------
+Implements the ``hybrid_rag`` pipeline, which uses the SAME retrieved parent
+chunks as ``rag_only`` but with a different prompt that allows the LLM to
+also use its pretrained world knowledge to fill gaps.  This tests whether
+allowing pretrained knowledge supplementation improves answer quality over
+strict RAG.
+
+DISTINCTION FROM rag_only
+--------------------------
+``rag_only``   → model MUST use ONLY retrieved context; refuses if context
+                 is insufficient.
+``hybrid_rag`` → model uses retrieved context as PRIMARY source but MAY
+                 supplement with pretrained knowledge, explicitly labelling
+                 any addition as ``[From general knowledge: ...]``.
+
+PROMPT DESIGN (correctness-critical)
+--------------------------------------
+The prompt enforces:
+  1. Retrieved context is PRIMARY — ground every claim there first.
+  2. Pretrained supplement is LABELLED — any non-context fact must be
+     wrapped in ``[From general knowledge: ...]``.
+  3. Do not invent companies, roles, products, OEMs, etc. from either source.
+  4. Style rules: one company per line, exact field formatting.
+
+CONTEXT PASSED
+--------------
+Unlike ``pretrained_only``, this pipeline DOES receive retrieved context —
+the same ``retrieval["formatted_context"]`` as ``rag_only``.
+Verified in ``run_baseline.py::_answer_hybrid_rag``.
+
+CORRECTNESS CONTRACT
+--------------------
+✅ Receives the same retrieved context list as rag_only (from RetrievalCache).
+✅ ``contexts`` list stored in JSONL output is populated (used for RAGAS
+   faithfulness scoring — whether answers are grounded in the retrieved text).
+✅ DIFFERENT prompt from rag_only: the model is explicitly permitted and
+   expected to use pretrained knowledge to supplement, unlike rag_only.
 """
 from __future__ import annotations
 

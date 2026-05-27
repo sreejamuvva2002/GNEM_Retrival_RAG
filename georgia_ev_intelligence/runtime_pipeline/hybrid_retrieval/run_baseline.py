@@ -1,10 +1,48 @@
 """Baseline runner: all models × all pipelines × human-validated questions → JSONL.
 
-Usage:
+WHY THIS FILE EXISTS
+--------------------
+The primary entry point for running evaluation experiments.  It loops over all
+model × pipeline × question combinations, calls the appropriate answer pipeline,
+and writes results as JSONL files that feed into ``evaluate_ragas.py``.
+
+PIPELINE ROUTING (correctness-critical)
+-----------------------------------------
+Each pipeline receives exactly the context it should:
+
+  ``rag_only``       → retrieved parent chunks only (from RetrievalCache)
+                        ✅ ``pipeline.answer(question, retrieved_context=...)``
+  ``hybrid_rag``     → same retrieved parent chunks as rag_only
+                        ✅ same RetrievalCache result, different prompt
+  ``pretrained_only`` → NO context passed at all
+                        ✅ ``pipeline.answer(question)`` — no context argument
+  ``direct_kb``      → full Normalized_kb.xlsx formatted as 205 text records
+                        ✅ ``direct_kb_pipeline.answer(question)`` — KB loaded
+                        internally; no retrieval
+
+MULTI-QUERY RETRIEVAL
+---------------------
+``RetrievalCache.retrieve(row)`` implements multi-query expansion:
+  - If ``row.rewritten_queries`` is non-empty, runs BM25+dense for EACH query
+    (original + up to 5 variations) with ``per_query_top_k=150``.
+  - All child hits are merged, deduplicated, mapped to parents, and
+    cross-encoder reranked on the ORIGINAL question.
+  - Result is cached by ``(question, rewritten_queries)`` so all 4 pipelines
+    share one retrieval call per question (retrieval is model-independent).
+
+JSONL OUTPUT FORMAT
+--------------------
+Each line is a JSON object with these fields:
+  question_id, question, ground_truth, answer, contexts, pipeline, model, trace
+
+``contexts`` is a list of parent chunk texts (empty for pretrained_only).
+``trace`` contains retrieval count diagnostics (sparse_child_count, etc.).
+
+USAGE
+-----
     python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline
-    python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline \
-        --models qwen2.5:7b llama3.1:8b \
-        --limit 5
+    python -m ... --models gemma3:27b --limit 3      # smoke test
+    python -m ... --pipelines rag_only hybrid_rag    # specific pipelines
 """
 from __future__ import annotations
 
@@ -33,13 +71,11 @@ from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag im
     DEFAULT_QUESTIONS_WORKBOOK,
     QuestionRow,
     _empty_trace_values,
-    _format_retrieved_context,
     _load_questions,
     _project_root,
     _trace_values,
 )
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.factory import build_default_pipeline
-from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
 
 
 ALL_MODELS = [

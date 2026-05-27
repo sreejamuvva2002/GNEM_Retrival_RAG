@@ -1,4 +1,41 @@
-"""Cross-encoder reranking for merged child chunk candidates."""
+"""Cross-encoder reranking for parent chunk candidates.
+
+WHY THIS FILE EXISTS
+--------------------
+After BM25+dense retrieval fetches many child chunks and they are mapped to
+parent records, there are often more parent chunks than we want to pass to the
+LLM (a large context degrades LLM accuracy).  This module uses a cross-encoder
+model to score each parent chunk against the original query and keep only the
+most relevant top-K.
+
+TECHNIQUE: Cross-Encoder Reranking
+------------------------------------
+- A bi-encoder (like BERT/SBERT) embeds queries and documents independently;
+  a cross-encoder instead feeds the query+document pair together in one forward
+  pass, giving much more accurate relevance scores at the cost of speed.
+- Model: ``cross-encoder/ms-marco-MiniLM-L12-v2`` (fast, passage-level reranking).
+- Implemented via ``sentence_transformers.CrossEncoder``.
+
+ACTIVE RERANKING PATH
+---------------------
+**Parent-level reranking is the active path.**  ``rerank_parents()`` scores
+each parent chunk text against the original query and keeps ``top_k`` parents.
+These are exactly the chunks whose text is concatenated and passed to the LLM.
+
+``rerank()`` (child-level) exists for experimental use but is NOT called in the
+standard pipeline.  Child-level reranking was disabled in favour of mapping all
+deduped children to parents first, then reranking parents — this ensures the LLM
+always sees complete company records rather than partial child snippets.
+
+CORRECTNESS CONTRACT
+--------------------
+- The reranker is called with ``query = original_question`` (not a rewritten
+  variant).  Reranking anchors to the user's exact question.
+- ``_flatten_scores`` handles both scalar and sequence score outputs so the
+  model can return numpy arrays, Python lists, or nested sequences.
+- Lazy model loading: ``CrossEncoder`` is imported and instantiated on first use
+  to avoid slow startup when running analysis-only commands.
+"""
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence

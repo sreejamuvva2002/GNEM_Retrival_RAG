@@ -1,4 +1,37 @@
-"""Fetch parent chunks from PostgreSQL using ordered parent record IDs."""
+"""Fetch parent chunks from PostgreSQL using ordered parent record IDs.
+
+WHY THIS FILE EXISTS
+--------------------
+Implements the "parent retrieval" step of the parent-child chunking strategy.
+Child chunks are retrieved by BM25 / dense search (fine-grained, semantically
+focused), then their ``parent_record_id`` pointers are used here to fetch the
+full parent records that the LLM will actually read.
+
+PARENT-CHILD DESIGN
+--------------------
+Each company row in the knowledge base is split at index time into:
+  - 1 parent_chunk (the full structured text about the company)
+  - 5 child_chunks (identity, product_role, oem_relationship,
+    location_employment, classification — each a focused slice)
+
+Retrieval operates on child chunks for precision; the LLM receives parent chunks
+for completeness.  This file bridges the two: given child hits, retrieve parents.
+
+KEY BEHAVIOUR
+-------------
+- ``_dedupe()`` preserves the first-seen order of parent_record_ids so the
+  natural retrieval-score ordering from the merger/reranker is maintained.
+- Uses a single SQL ``WHERE record_id = ANY(%s)`` batch fetch (no N+1).
+- Maintains stable ordering: the result list follows the order in which
+  ``parent_record_ids`` were passed in, not the DB row order.
+
+CORRECTNESS CONTRACT
+--------------------
+- Missing parent IDs (IDs that don't exist in the DB) are silently skipped.
+- Returns ``ParentContext`` dataclasses carrying ``record_id``,
+  ``source_row_id``, and ``parent_chunk_text``.
+- ``parent_chunk_text`` is the exact string passed to the LLM as context.
+"""
 from __future__ import annotations
 
 from collections.abc import Sequence

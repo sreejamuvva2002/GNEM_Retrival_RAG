@@ -1,4 +1,25 @@
-"""Store parent chunks in Neon PostgreSQL."""
+"""Store parent records in the Neon PostgreSQL parent_chunks table.
+
+WHY THIS FILE EXISTS:
+  Handles the DDL (CREATE TABLE IF NOT EXISTS) and DML (UPSERT) for the
+  parent_chunks table.  Parent records are stored in PostgreSQL — not pgvector —
+  because they are fetched by primary key (record_id), not by vector search.
+
+TABLE: parent_chunks
+  Primary key: record_id (TEXT)
+  Key columns: company, category, ev_supply_chain_role, primary_oems,
+               employment, product_service, updated_location,
+               parent_chunk_text (the full text the LLM reads)
+  UPSERT strategy: ON CONFLICT (record_id) DO UPDATE — safe to re-run indexing
+
+TECHNIQUE:
+  psycopg2.extras.execute_values with page_size=100 for efficient batch insert.
+  All numeric fields (lat, long, employment) are coerced to float before insert.
+
+RELATIONSHIPS:
+  Called by: offline_pipeline/index_pgvector.py
+  Table read by: retrieval/parent_fetcher.py at runtime
+"""
 from __future__ import annotations
 
 import json

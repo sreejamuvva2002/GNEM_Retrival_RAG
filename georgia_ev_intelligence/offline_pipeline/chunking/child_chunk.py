@@ -1,4 +1,39 @@
-"""Child chunk construction for offline embedding."""
+"""Child chunk construction for offline embedding.
+
+WHY THIS FILE EXISTS:
+  Each KB row is split into 5 thematically-focused child chunks so that
+  embedding search can match on specific aspects of a company (identity,
+  products, OEM relationships, location/employment, classification).
+  Embedding a single dense "everything about Acme Corp" text would bury
+  specific signals; 5 focused chunks give both BM25 and dense retrieval
+  more precise targets.
+
+THE 5 CHILD CHUNK TYPES (ChildChunkType enum):
+  IDENTITY            — Company + Category + Industry Group + Location
+                        Answers: "which companies are Tier 1?" or "where is X?"
+  PRODUCT_ROLE        — Company + EV Supply Chain Role + Product/Service + EV Relevant
+                        Answers: "who makes battery packs?" or "EV component suppliers"
+  OEM_RELATIONSHIP    — Company + Primary OEMs + Affiliation Type + Category
+                        Answers: "who supplies Rivian?" or "Hyundai Kia suppliers"
+  LOCATION_EMPLOYMENT — Company + Location + Address + Lat/Long + Employment
+                        Answers: "large employers in Savannah" or "Chatham County companies"
+  CLASSIFICATION      — Company + Facility Type + Classification Method + EV Relevant
+                        Answers: "manufacturing plants" or "directly relevant EV companies"
+
+CHILD CHUNK ID FORMAT:
+  "{parent_record_id}_{CHUNK_TYPE_UPPER}"
+  e.g. "KB_ROW_0042_abc123_IDENTITY"
+
+EMBEDDING TEXT FORMAT (build_embedding_text):
+  "chunk_type: identity\\ncompany: acme corp\\ncategory: Tier 1\\n..."
+  Field names are preserved so BM25 can match on "ev_supply_chain_role: Battery Pack"
+  rather than just loose tokens.
+
+RELATIONSHIPS:
+  Called by: offline_pipeline/chunking/relationship.py
+  Stored in: PostgreSQL child_chunks table with pgvector embeddings
+  Searched at runtime by: retrieval/bm25_retriever.py, retrieval/dense_pgvector_retriever.py
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

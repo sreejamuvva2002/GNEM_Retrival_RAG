@@ -1,4 +1,38 @@
-"""LLM client for answer generation using local Ollama."""
+"""LLM client for answer generation using local Ollama.
+
+WHY THIS FILE EXISTS
+--------------------
+Provides the default ``generate_answer()`` function that all four pipeline
+classes (rag_only, hybrid_rag, pretrained_only, direct_kb) use as their
+answer generator when no explicit adapter is injected.  For multi-model
+baseline runs, ``OllamaAdapter`` (in ``llm_adapter.py``) overrides the
+per-request model name; this module's function uses the global config model.
+
+HOW IT WORKS
+------------
+- Sends a POST request to ``{OLLAMA_BASE_URL}/api/generate`` with the model,
+  prompt, and generation options (temperature, top_p, num_predict) from
+  ``shared.config``.
+- Parses the ``"response"`` field from the Ollama JSON reply.
+- Passes the raw answer through ``_clean_answer()`` to strip common local-model
+  artifacts before returning.
+
+CLEANING HEURISTICS IN ``_clean_answer``
+------------------------------------------
+1. Remove ``<think>...</think>`` blocks (chain-of-thought traces emitted by
+   some models like QwQ and DeepSeek).
+2. Strip accidental markdown code fences (` ```text ` / ` ``` `) that some
+   models wrap prose in.
+These transformations are content-safe: they only remove formatting artifacts,
+never factual content.
+
+CORRECTNESS CONTRACT
+--------------------
+- This function is STATELESS — it does not cache responses.
+- It uses whatever model is set in ``config.OLLAMA_LLM_MODEL`` at call time.
+- For multi-model baseline runs, use ``OllamaAdapter.generate()`` instead,
+  which accepts a per-instance model name.
+"""
 from __future__ import annotations
 
 import re

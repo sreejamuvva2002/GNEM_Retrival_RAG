@@ -1,4 +1,35 @@
-"""Swappable LLM adapter for multi-model baseline runs."""
+"""Swappable LLM adapter for multi-model baseline runs.
+
+WHY THIS FILE EXISTS
+--------------------
+When ``run_baseline.py`` loops over multiple Ollama models, each iteration
+needs to send requests to a DIFFERENT model name.  ``OllamaAdapter`` wraps a
+single model name and exposes a ``generate(prompt, timeout) -> str`` method,
+allowing the same pipeline classes (OnlyRagAnswerPipeline, etc.) to work
+unchanged across all models by injecting the adapter at construction time.
+
+DESIGN
+------
+``LLMAdapter`` is a ``typing.Protocol`` defining the interface: any object with
+a ``model_name: str`` attribute and a ``generate(prompt, timeout)`` method
+qualifies.  ``OllamaAdapter`` is the concrete implementation for local Ollama.
+
+DIFFERENCES FROM ``llm_client.generate_answer``
+------------------------------------------------
+- ``llm_client.generate_answer`` uses ``config.OLLAMA_LLM_MODEL`` (fixed at
+  module load time).
+- ``OllamaAdapter`` accepts a ``model_name`` at instantiation, enabling
+  per-loop model switching in ``run_baseline.py``.
+- Both use identical Ollama API parameters (temperature, top_p, num_predict)
+  and the same ``_clean_answer()`` cleaning step.
+
+CORRECTNESS CONTRACT
+--------------------
+- ``OllamaAdapter.generate()`` re-uses the connection per call (no keep-alive
+  session); Ollama handles concurrent requests on localhost.
+- The ``_clean_answer`` import from ``llm_client`` ensures consistent artifact
+  removal across both the default client and the adapter path.
+"""
 from __future__ import annotations
 
 from typing import Protocol
