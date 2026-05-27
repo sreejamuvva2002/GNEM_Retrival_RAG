@@ -13,5 +13,11 @@ einops>=0.8
 psycopg2-binary>=2.9
 pydantic>=2.0
 
+# RAGAS evaluation
+ragas>=0.1.21
+langchain>=0.2.0
+langchain-community>=0.2.0
+langchain-ollama>=0.1.0
+
 # Development / testing
 pytest>=8.0

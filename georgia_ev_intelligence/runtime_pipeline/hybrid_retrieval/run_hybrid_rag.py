@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import warnings
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -133,12 +134,24 @@ GOLDEN_ANSWER_COLUMN_CANDIDATES = (
     "validated_answer",
 )
 
+# Optional rewritten-query columns produced by multi-query generation.
+# Each non-empty value is an alternative phrasing of the original question.
+REWRITTEN_QUERY_COLUMNS = (
+    "rewritten_query_1",
+    "rewritten_query_2",
+    "rewritten_query_3",
+    "rewritten_query_4",
+    "rewritten_query_5",
+)
+
 
 @dataclass(frozen=True)
 class QuestionRow:
     serial_number: object
     question: str
     golden_answer: str
+    rewritten_queries: tuple[str, ...] = ()
+    """Additional query variants for multi-query retrieval (may be empty)."""
 
 
 def main() -> int:
@@ -200,7 +213,7 @@ def build_prompt(user_question: str, retrieved_parent_chunks: str) -> str:
 
 
 def _load_questions(input_path: Path, sheet_name: str) -> list[QuestionRow]:
-    dataframe = pd.read_excel(input_path, sheet_name=sheet_name)
+    dataframe = _read_sheet_with_fallback(input_path, sheet_name)
     column_map = _question_column_map(dataframe, input_path)
 
     rows: list[QuestionRow] = []
@@ -208,6 +221,15 @@ def _load_questions(input_path: Path, sheet_name: str) -> list[QuestionRow]:
         question = str(record[column_map["question"]]).strip()
         if not question:
             continue
+
+        rewrites: list[str] = []
+        for col in REWRITTEN_QUERY_COLUMNS:
+            if col in dataframe.columns:
+                val = record.get(col)
+                if val is not None and not pd.isna(val):
+                    stripped = str(val).strip()
+                    if stripped:
+                        rewrites.append(stripped)
 
         rows.append(QuestionRow(
             serial_number=record[column_map["serial_number"]],
@@ -217,9 +239,24 @@ def _load_questions(input_path: Path, sheet_name: str) -> list[QuestionRow]:
                 if pd.isna(record[column_map["answer"]])
                 else str(record[column_map["answer"]])
             ),
+            rewritten_queries=tuple(rewrites),
         ))
 
     return rows
+
+
+def _read_sheet_with_fallback(input_path: Path, sheet_name: str) -> pd.DataFrame:
+    """Read the named sheet; fall back to the first sheet with a warning."""
+    xl = pd.ExcelFile(input_path)
+    if sheet_name in xl.sheet_names:
+        return pd.read_excel(xl, sheet_name=sheet_name)
+    warnings.warn(
+        f"Sheet '{sheet_name}' not found in {input_path.name}. "
+        f"Available sheets: {xl.sheet_names}. "
+        f"Falling back to first sheet: '{xl.sheet_names[0]}'.",
+        stacklevel=3,
+    )
+    return pd.read_excel(xl, sheet_name=0)
 
 
 def _question_column_map(dataframe: pd.DataFrame, input_path: Path) -> dict[str, str]:

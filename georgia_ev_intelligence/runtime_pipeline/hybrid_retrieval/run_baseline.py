@@ -25,6 +25,9 @@ from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.pretrained_only_p
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.rag_only_pipeline import (
     OnlyRagAnswerPipeline,
 )
+from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.hybrid_rag_pipeline import (
+    HybridRagAnswerPipeline,
+)
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag import (
     DEFAULT_QUESTIONS_SHEET,
     DEFAULT_QUESTIONS_WORKBOOK,
@@ -34,7 +37,6 @@ from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag im
     _load_questions,
     _project_root,
     _trace_values,
-    build_prompt as build_hybrid_rag_prompt,
 )
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.factory import build_default_pipeline
 from georgia_ev_intelligence.runtime_pipeline.schemas import RetrievedChildChunk
@@ -79,44 +81,70 @@ class BaselineRecord:
         }
 
 
+_MULTI_QUERY_TOP_K_PER_QUERY = 150
+
+
 class RetrievalCache:
-    """Run retrieval once per question and reuse the result across all models."""
+    """Run multi-query retrieval once per question and reuse across all models.
+
+    When a :class:`~run_hybrid_rag.QuestionRow` carries ``rewritten_queries``,
+    each query variant is sent to BM25 and dense retrievers with
+    ``top_k=150``.  All child hits are merged and deduplicated before being
+    mapped to parent chunks; the cross-encoder reranker is applied only to
+    parent chunks, using the original question as the reranking anchor.
+
+    Falls back to single-query retrieval when no rewritten queries are present.
+    """
 
     def __init__(self, pipeline_factory: Callable) -> None:
         self._factory = pipeline_factory
         self._pipeline = None
         self._load_error = ""
-        self._cache: dict[str, dict] = {}
+        self._cache: dict[tuple, dict] = {}
 
-    def retrieve(self, question: str) -> dict:
-        """Return cached retrieval result for a question."""
-        if question in self._cache:
-            return self._cache[question]
-        result = self._run_retrieval(question)
-        self._cache[question] = result
+    def retrieve(self, row: QuestionRow) -> dict:
+        """Return cached retrieval result for a question row."""
+        cache_key = (row.question, row.rewritten_queries)
+        if cache_key in self._cache:
+            return self._cache[cache_key]
+        result = self._run_retrieval(row)
+        self._cache[cache_key] = result
         return result
 
-    def _run_retrieval(self, question: str) -> dict:
+    def _run_retrieval(self, row: QuestionRow) -> dict:
         try:
             pipeline = self._get_pipeline()
-            if hasattr(pipeline, "retrieve_with_sources"):
-                result = pipeline.retrieve_with_sources(question)
+            queries = [row.question] + list(row.rewritten_queries)
+
+            if len(queries) > 1 and hasattr(pipeline, "retrieve_multi_query_with_sources"):
+                # Multi-query path: 150 hits per retriever per query
+                result = pipeline.retrieve_multi_query_with_sources(
+                    queries=queries,
+                    per_query_top_k=_MULTI_QUERY_TOP_K_PER_QUERY,
+                )
+            elif hasattr(pipeline, "retrieve_with_sources"):
+                # Single-query path
+                result = pipeline.retrieve_with_sources(row.question)
+            else:
+                parent_contexts = pipeline.retrieve(row.question)
                 parent_texts = [
-                    p.parent_chunk_text
-                    for p in result.parent_contexts
-                    if p.parent_chunk_text
+                    p.parent_chunk_text for p in parent_contexts if p.parent_chunk_text
                 ]
                 return {
                     "contexts": parent_texts,
                     "formatted_context": "\n\n".join(parent_texts),
-                    "trace": _trace_values(result.trace),
+                    "trace": _empty_trace_values(),
                 }
-            parent_contexts = pipeline.retrieve(question)
-            parent_texts = [p.parent_chunk_text for p in parent_contexts if p.parent_chunk_text]
+
+            parent_texts = [
+                p.parent_chunk_text
+                for p in result.parent_contexts
+                if p.parent_chunk_text
+            ]
             return {
                 "contexts": parent_texts,
                 "formatted_context": "\n\n".join(parent_texts),
-                "trace": _empty_trace_values(),
+                "trace": _trace_values(result.trace),
             }
         except Exception as exc:
             error = f"ERROR: retrieval failed: {exc}"
@@ -212,7 +240,7 @@ class BaselineRunner:
             return self._answer_pretrained(row, model_name, adapter)
         if pipeline_name == "direct_kb":
             return self._answer_direct_kb(row, model_name, direct_kb_pipeline)
-        retrieval = self._retrieval_cache.retrieve(row.question)
+        retrieval = self._retrieval_cache.retrieve(row)
         if pipeline_name == "rag_only":
             return self._answer_rag_only(row, model_name, adapter, retrieval)
         if pipeline_name == "hybrid_rag":
@@ -253,13 +281,12 @@ class BaselineRunner:
         adapter: OllamaAdapter,
         retrieval: dict,
     ) -> BaselineRecord:
+        pipeline = HybridRagAnswerPipeline(answer_generator=adapter.generate)
         answer = _safe_answer(
-            lambda: adapter.generate(
-                build_hybrid_rag_prompt(
-                    user_question=row.question,
-                    retrieved_parent_chunks=retrieval["formatted_context"],
-                ),
-                self._llm_timeout,
+            lambda: pipeline.answer(
+                question=row.question,
+                retrieved_context=retrieval["formatted_context"],
+                timeout=self._llm_timeout,
             ),
             retrieval.get("error"),
         )
