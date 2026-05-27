@@ -1,26 +1,55 @@
 # GNEM Retrieval RAG
 
-Research evaluation system for answering Georgia EV supply-chain questions from
-the GNEM knowledge base using PostgreSQL, pgvector, BM25, cross-encoder reranking,
-and local Ollama generation. Compares 7 LLM models across 4 answer pipelines and
-evaluates them with RAGAS metrics.
+Research evaluation system for answering Georgia EV supply-chain questions using
+PostgreSQL, pgvector, BM25, cross-encoder reranking, and local Ollama generation.
+Compares LLM models across 4 answer pipelines and evaluates with RAGAS metrics.
 
 ---
 
-## What This Project Does
+## System Overview
 
 ```
-Excel KB (205 companies)
-  → normalize → parent/child chunks → PostgreSQL + pgvector + BM25 index
+OFFLINE (run once when KB changes)
+  Excel KB (205 companies)
+    → Normalize → Normalized_kb.xlsx
+    → Build parent + child chunks
+    → Store parent_chunks in PostgreSQL
+    → Embed child_chunks → store in pgvector
 
-Per question at runtime:
-  → BM25 + dense retrieval (parallel) → merge → rerank (cross-encoder)
-  → top-45 parent chunks → LLM answer generation
+RUNTIME (per evaluation run)
+  50 questions (Rewritten_queries.xlsx)
+    → [rag_only / hybrid_rag] BM25 + dense retrieval (parallel, top-150 per query variant)
+        → merge child chunks → deduplicate → map to parent chunks → cross-encoder rerank (top-45)
+        → LLM answer generation
+    → [pretrained_only] LLM answer with NO context
+    → [direct_kb] All 205 KB rows as context → LLM answer generation
 
-Research baseline:
-  → 7 models × 4 pipelines × 50 questions = 1,400 answers (JSONL)
-  → RAGAS evaluation: 4 metrics per answer → comparison report (Excel)
+EVALUATION
+  JSONL answers → RAGAS scoring (judge LLM: qwen2.5:14b) → analysis report
 ```
+
+---
+
+## The 4 Answer Pipelines
+
+| Pipeline | Context passed to LLM | Retrieval |
+|---|---|---|
+| `rag_only` | Retrieved parent chunks ONLY — strict, no outside knowledge | ✅ BM25 + dense |
+| `hybrid_rag` | Retrieved chunks as PRIMARY + pretrained supplement labelled `[From general knowledge: ...]` | ✅ BM25 + dense |
+| `pretrained_only` | None — pure LLM pretrained knowledge, no KB | ❌ None |
+| `direct_kb` | All 205 KB rows (full `Normalized_kb.xlsx`) — no retrieval | ❌ None |
+
+---
+
+## RAGAS Metrics
+
+| Metric | What it measures | Pipelines evaluated |
+|---|---|---|
+| `answer_correctness` | Correctness vs golden answer | All 4 |
+| `answer_relevancy` | Answer stays on-topic | All 4 |
+| `faithfulness` | Claims supported by context (no hallucination) | `rag_only`, `hybrid_rag`, `direct_kb` |
+| `context_precision` | Retrieved context contains relevant info | `rag_only`, `hybrid_rag`, `direct_kb` |
+| `context_recall` | Relevant info is actually retrieved | `rag_only`, `hybrid_rag`, `direct_kb` |
 
 ---
 
@@ -28,285 +57,377 @@ Research baseline:
 
 ```
 kb/
-  GNEM - Auto Landscape Lat Long Updated.xlsx     # raw source data
-  Human validated 50 questions.xlsx               # 50 QA pairs with golden answers
-  Rewritten_50_questions.xlsx
+  GNEM - Auto Landscape Lat Long Updated.xlsx   # raw source KB (205 companies)
+  Rewritten_queries.xlsx                         # 50 questions with golden answers + 5 variations each
+  Human validated 50 questions.xlsx             # original QA pairs (reference)
 
 georgia_ev_intelligence/
   shared/
     config/settings.py          # .env-backed settings and paths
-    data/loader.py              # KB Excel normalization
-    embeddings.py               # SentenceTransformer loading
+    data/loader.py              # KB normalization (Excel → Normalized_kb.xlsx)
+    data/schema.py              # KBRecord dataclass
+    embeddings.py               # SentenceTransformer loading + document/query prefix helpers
 
   offline_pipeline/
-    index_pgvector.py           # parent/child chunk build + PostgreSQL indexing
-    postgres_store.py           # parent_chunks table
-    pgvector_store.py           # child_chunks table and vector index
-    chunking/                   # parent and child chunk builders
+    index_pgvector.py           # ENTRY POINT: build chunks → store in PostgreSQL + pgvector
+    postgres_store.py           # writes parent_chunks table
+    pgvector_store.py           # writes child_chunks table with vector embeddings
+    chunking/                   # parent_chunk.py, child_chunk.py, relationship.py, operations.py
 
   runtime_pipeline/
-    schemas.py                  # shared dataclasses (ParentContext, RetrievedChildChunk)
+    schemas.py                  # ParentContext, RetrievedChildChunk dataclasses
 
     generation/
-      llm_client.py             # single-model Ollama client (used by legacy runners)
-      llm_adapter.py            # swappable OllamaAdapter for multi-model baseline runs
+      llm_client.py             # generate_answer() using config model
+      llm_adapter.py            # OllamaAdapter for per-loop model switching
 
-    retrieval/                  # BM25, dense pgvector, parent fetch (legacy path)
+    retrieval/                  # low-level: bm25_retriever, dense_pgvector_retriever, parent_fetcher
 
     hybrid_retrieval/
-      config.py                 # retriever/reranker top-k defaults
-      interfaces.py             # ChildRetriever, ParentReranker protocols
-      factory.py                # builds the default BM25 + dense + reranker pipeline
-      orchestrator.py           # parallel retrieval, merge, rerank, parent expansion
-      bm25_retriever.py         # BM25 child retrieval
-      dense_retriever.py        # pgvector dense child retrieval
-      merger.py                 # child result deduplication and merging
-      parent_mapper.py          # child → parent chunk mapping
+      config.py                 # top-k defaults (retriever=250, reranker=45)
+      interfaces.py             # Protocol definitions (ChildRetriever, ParentReranker, etc.)
+      factory.py                # build_default_pipeline() wires all components
+      orchestrator.py           # parallel retrieval → merge → rerank → parent expansion
+      bm25_retriever.py         # BM25 wrapper (ChildRetriever protocol)
+      dense_retriever.py        # pgvector dense wrapper (ChildRetriever protocol)
+      merger.py                 # child chunk deduplication by chunk_id
       reranker.py               # cross-encoder parent reranking
+      parent_mapper.py          # child hits → parent records (batch SQL fetch)
+      models.py                 # HybridRetrievalResult, HybridRetrievalTrace dataclasses
 
-      # Answer pipelines
-      rag_only_pipeline.py          # strict context-only prompt (no LLM reasoning beyond context)
-      pretrained_only_pipeline.py   # no KB context — pure LLM pretrained knowledge
-      direct_kb_pipeline.py         # full Normalized_kb.xlsx as context, no retrieval
+      rag_only_pipeline.py          # strict context-only prompt
+      hybrid_rag_pipeline.py        # context-primary + pretrained supplement prompt
+      pretrained_only_pipeline.py   # no context — pure pretrained knowledge
+      direct_kb_pipeline.py         # full Normalized_kb.xlsx as context
 
-      # Batch runners
-      run_hybrid_rag.py             # single-model hybrid RAG answer generation
-      run_retrieval_only.py         # retrieval only, no LLM (inspection/debug)
-      run_all_pipelines.py          # rag_only + hybrid_rag + pretrained_only (3-mode comparison)
-      run_baseline.py               # 7 models × 4 pipelines → JSONL (research baseline)
-      build_ragas_report.py         # JSONL → RAGAS-compatible Excel workbook
+      run_hybrid_rag.py             # shared utilities: QuestionRow, _load_questions(), etc.
+      run_baseline.py               # ENTRY POINT: all models × 4 pipelines → JSONL
+      build_ragas_report.py         # JSONL → Excel workbook (optional, for archiving/legacy)
+      evaluate_ragas.py             # ENTRY POINT: JSONL → RAGAS scores (JSON)
+      analyze_results.py            # ENTRY POINT: scores → Markdown report + CSVs
 
   outputs/
-    Normalized_kb.xlsx            # generated by normalization
-    parent_chunks.xlsx            # generated by indexing (dry-run)
-    child_chunks.xlsx             # generated by indexing (dry-run)
-    baselines/{timestamp}/        # generated by run_baseline.py
+    Normalized_kb.xlsx              # generated by loader.py
+    parent_chunks.xlsx              # generated by dry-run (preview only)
+    child_chunks.xlsx               # generated by dry-run (preview only)
+    baselines/{timestamp}/          # generated by run_baseline.py
+      *.jsonl                       # one file per model+pipeline combination
+      config.json                   # run metadata
+      ragas_scores.json             # generated by evaluate_ragas.py
+      analysis.md                   # generated by analyze_results.py
+      per_question_scores.csv       # generated by analyze_results.py
+      pipeline_summary.csv          # generated by analyze_results.py
 
 tests/
   runtime_pipeline/
+    __init__.py
     test_hybrid_retrieval_orchestrator.py
-    test_run_all_pipelines.py
-    test_run_retrieval_only.py
-
-ragas_evaluation/                 # separate evaluation environment
-  evaluate_ragas_ollama.py        # scores answers with 4 RAGAS metrics
 ```
-
----
-
-## The 4 Answer Pipelines
-
-| Pipeline | What it does | Contexts passed to LLM |
-|---|---|---|
-| `rag_only` | Retrieval → strict context-only prompt | Retrieved parent chunks |
-| `hybrid_rag` | Retrieval → allows LLM reasoning on top | Retrieved parent chunks |
-| `pretrained_only` | No retrieval — pure LLM knowledge | None |
-| `direct_kb` | Loads all 205 KB rows directly, no retrieval | All KB records |
-
----
-
-## The 4 RAGAS Metrics
-
-| Metric | What it measures | Pipelines |
-|---|---|---|
-| `answer_accuracy` | Correctness vs golden answer | All 4 |
-| `faithfulness` | Claims supported by context (no hallucination) | rag_only, hybrid_rag, direct_kb |
-| `response_groundedness` | How much of the response is anchored in context | rag_only, hybrid_rag, direct_kb |
-| `answer_relevancy` | Answer stays on-topic with the question | All 4 |
 
 ---
 
 ## Setup
 
-### 1. Create Environment
+### 1. Create Python environment
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
+source .venv/bin/activate          # Linux/Mac
+# .venv\Scripts\activate           # Windows
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
 ### 2. Configure `.env`
 
-```bash
+Create a `.env` file in the project root:
+
+```env
+# Neon PostgreSQL connection (pgvector extension required)
 NEON_DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 
+# Ollama
 OLLAMA_BASE_URL="http://localhost:11434"
-OLLAMA_LLM_MODEL="qwen2.5:14b"      # used only by legacy single-model runners
+OLLAMA_LLM_MODEL="gemma3:27b"
 OLLAMA_TEMPERATURE="0.1"
 OLLAMA_TOP_P="0.9"
 OLLAMA_NUM_PREDICT="4096"
 
+# Embedding model (nomic-ai asymmetric embed)
 EMBEDDING_MODEL="nomic-ai/nomic-embed-text-v1.5"
 EMBEDDING_LOCAL_FILES_ONLY="false"
 EMBEDDING_TRUST_REMOTE_CODE="true"
 EMBEDDING_DOCUMENT_PREFIX="search_document:"
 EMBEDDING_QUERY_PREFIX="search_query:"
 
-PGVECTOR_BATCH_SIZE="64"
-
+# Retrieval config (optional overrides)
 HYBRID_RETRIEVER_TOP_K="250"
 HYBRID_RERANKER_TOP_K="45"
 HYBRID_RERANKER_MODEL="cross-encoder/ms-marco-MiniLM-L12-v2"
+PGVECTOR_BATCH_SIZE="64"
 ```
 
-### 3. Start Ollama
+### 3. Start Ollama and pull models
 
 ```bash
 ollama serve
 ```
 
-Pull all models used by the baseline run:
+Pull models used by the baseline run:
 
 ```bash
+ollama pull gemma3:27b            # primary test model
+ollama pull qwen2.5:14b           # RAGAS judge LLM
+ollama pull nomic-embed-text      # embedding model for RAGAS answer_relevancy metric
+
+# Optional: pull all 7 baseline models
 ollama pull qwen2.5:7b
 ollama pull llama3.1:8b
 ollama pull mistral-small3.2:24b
 ollama pull qwen3.5:35b-a3b
 ollama pull qwen2.5:32b
-ollama pull gemma3:27b
-ollama pull qwen2.5:14b
-ollama pull nomic-embed-text   # required by RAGAS answer_relevancy metric
 ```
 
 ---
 
-## Offline Pipeline (run once)
+## Step 1 — Normalize the Knowledge Base
 
-### 4. Normalize the KB
+Reads `kb/GNEM - Auto Landscape Lat Long Updated.xlsx`, normalizes 205 company
+rows, and writes `georgia_ev_intelligence/outputs/Normalized_kb.xlsx`.
 
 ```bash
 python -m georgia_ev_intelligence.shared.data.loader
 ```
 
-Reads `kb/GNEM - Auto Landscape Lat Long Updated.xlsx`, writes
-`georgia_ev_intelligence/outputs/Normalized_kb.xlsx` (205 rows, 16 columns).
+Expected output:
+```
+Normalized 205 rows → georgia_ev_intelligence/outputs/Normalized_kb.xlsx
+```
 
-### 5. Preview Chunking (dry-run, no DB writes)
+---
+
+## Step 2 — Preview Chunks (dry-run, no DB writes)
+
+Builds parent + child chunks and writes them to Excel for inspection.
 
 ```bash
-python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --dry-run --preview 3
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector \
+    --dry-run --preview 3
 ```
 
-Writes debug workbooks:
+Output files:
 ```
-georgia_ev_intelligence/outputs/parent_chunks.xlsx   (205 chunks)
-georgia_ev_intelligence/outputs/child_chunks.xlsx    (1025 chunks)
+georgia_ev_intelligence/outputs/parent_chunks.xlsx   (205 rows — one full-text record per company)
+georgia_ev_intelligence/outputs/child_chunks.xlsx    (1,025 rows — 5 focused slices per company)
 ```
 
-### 6. Index into PostgreSQL + pgvector
+---
+
+## Step 3 — Index into PostgreSQL + pgvector
+
+Writes parent chunks to `parent_chunks` table and embeds + stores child chunks
+in the `child_chunks` table with pgvector vectors.
 
 ```bash
+# First-time indexing
 python -m georgia_ev_intelligence.offline_pipeline.index_pgvector
-```
 
-To rebuild from scratch (drops and recreates child_chunks table):
-
-```bash
+# Full re-index (drops and recreates child_chunks table)
 python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --recreate-child-table
 ```
 
----
-
-## Runtime Pipeline
-
-### 7. Retrieval Only (no LLM — for debugging)
-
-```bash
-# Smoke test (5 questions)
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_retrieval_only --limit 5
-
-# Full 50-question run
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_retrieval_only
+Expected output:
+```
+Stored 205 parent chunks
+Embedded and stored 1025 child chunks
 ```
 
-Output saved to `georgia_ev_intelligence/outputs/hybrid_retrieval_human_validated_50/`.
-
-### 8. Single-Model Answer Generation
-
-```bash
-# Smoke test
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag --limit 5
-
-# Full run
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag
-```
-
-Uses `OLLAMA_LLM_MODEL` from `.env`. Outputs one timestamped XLSX per run.
-
-### 9. Three-Pipeline Comparison (legacy)
-
-Runs `rag_only`, `hybrid_rag`, and `pretrained_only` for a single model:
-
-```bash
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_all_pipelines --limit 5
-python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_all_pipelines
-```
-
-Writes `rag_only.xlsx`, `hybrid_rag.xlsx`, `pretrained_only.xlsx` into a timestamped folder.
+**Run Steps 1–3 only once** (or after KB updates). The DB persists between runs.
 
 ---
 
-## Research Baseline (multi-model)
+## Step 4 — Generate Responses
 
-### 10. Generate All Responses
+Loops over models × 4 pipelines × 50 questions and writes one JSONL file per
+model+pipeline combination.
 
-Runs all 7 models × 4 pipelines × 50 questions = **1,400 LLM calls**.
-Estimated time: **6–12 hours**.
+**Default input file:** `kb/Rewritten_queries.xlsx` (50 questions + 5 query variations each)
+
+### Smoke test (3 questions, 1 model)
 
 ```bash
-# Smoke test (2 models, 3 questions)
 python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline \
-    --models qwen2.5:7b llama3.1:8b \
+    --models gemma3:27b \
     --limit 3
+```
 
-# Full baseline run (all 7 models)
+### Single model, all 4 pipelines (50 questions)
+
+```bash
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline \
+    --models gemma3:27b
+```
+
+### Specific pipelines only
+
+```bash
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline \
+    --models gemma3:27b \
+    --pipelines rag_only hybrid_rag
+```
+
+### All 7 models, all 4 pipelines (full baseline — ~6–12 hours)
+
+```bash
 python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline
 ```
 
-Note the output directory printed at startup — you need it for the next step:
+**Note the output directory** printed at startup — needed for Steps 5 and 6:
 ```
 Output directory: georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS
 ```
 
-Writes 28 JSONL files (one per model+pipeline combination) into a timestamped folder.
+### CLI flags
 
-### 11. Build RAGAS Report
+| Flag | Default | Description |
+|---|---|---|
+| `--models` | All 7 models | Space-separated list of Ollama model names |
+| `--pipelines` | All 4 pipelines | One or more of: `rag_only hybrid_rag pretrained_only direct_kb` |
+| `--input` | `kb/Rewritten_queries.xlsx` | Path to QA workbook |
+| `--sheet` | `Sheet1` | Sheet name inside the workbook |
+| `--limit N` | None | Stop after N questions (for smoke tests) |
+| `--llm-timeout N` | 300 | Seconds per LLM call |
 
-Converts JSONL files into the Excel format the RAGAS evaluator expects:
+---
+
+## Step 5 — Evaluate with RAGAS
+
+Scores all JSONL files in a run directory using a judge LLM (default: `qwen2.5:14b`).
+
+```bash
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.evaluate_ragas \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS \
+    --judge-model qwen2.5:14b
+```
+
+### Evaluate specific pipelines or models only
+
+```bash
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.evaluate_ragas \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS \
+    --judge-model qwen2.5:14b \
+    --pipelines rag_only hybrid_rag \
+    --models gemma3:27b
+```
+
+Output: `ragas_scores.json` inside the run directory.
+
+### CLI flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--run-dir` | required | Path to the timestamped run folder |
+| `--judge-model` | `qwen2.5:14b` | Ollama model used as RAGAS judge LLM |
+| `--embed-model` | `nomic-embed-text` | Ollama embedding model for `answer_relevancy` |
+| `--ollama-url` | `http://localhost:11434` | Ollama base URL |
+| `--output` | `<run-dir>/ragas_scores.json` | Output JSON path |
+| `--pipelines` | All found | Evaluate only these pipelines |
+| `--models` | All found | Use only JSONL files from these models |
+
+---
+
+## Step 6 — Analyse Results
+
+Reads `ragas_scores.json` (or legacy `ragas_report_ragas.xlsx`) and produces a
+Markdown report with pipeline rankings, head-to-head comparisons, and retrieval
+lift analysis.
+
+```bash
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.analyze_results \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS
+```
+
+### Custom output directory or thresholds
+
+```bash
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.analyze_results \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS \
+    --output-dir /path/to/reports \
+    --struggle-threshold 0.2 \
+    --top-n 5
+```
+
+Output files:
+
+| File | Contents |
+|---|---|
+| `analysis.md` | Full Markdown report (6 sections) |
+| `per_question_scores.csv` | One row per question × pipeline, all metric scores |
+| `pipeline_summary.csv` | Aggregate mean ± std per pipeline × metric |
+
+### Report sections
+
+1. **Aggregate scores per pipeline** — mean ± std for all metrics, best value bolded
+2. **Pipeline ranking** — ranked by `answer_correctness`
+3. **Head-to-head comparisons** — `hybrid_rag` vs `rag_only`, `rag_only` vs `direct_kb`
+4. **Retrieval lift** — `rag_only` vs `pretrained_only` (shows retrieval value)
+5. **Struggling questions** — questions where all retrieval pipelines scored < threshold
+6. **Full metric detail** — mean / std / min / max / N per pipeline
+
+### CLI flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--run-dir` | required | Path to the run folder |
+| `--output-dir` | same as `--run-dir` | Where to write output files |
+| `--struggle-threshold` | `0.3` | Score threshold for "struggling" questions |
+| `--top-n` | `5` | Top N questions shown in head-to-head tables |
+
+---
+
+## Optional — Build RAGAS Excel Report (for archiving)
+
+Converts JSONL files into a human-readable Excel workbook. Not required for the
+standard evaluation flow.
 
 ```bash
 python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.build_ragas_report \
     --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS
 ```
 
-Creates `ragas_report.xlsx` inside the run folder.
-
-### 12. Run RAGAS Evaluation
-
-Uses the anaconda environment (separate from the project venv).
-Estimated time: **8–10 hours**. Resumable via cache if interrupted.
-
 ```bash
-cd /home/sm11926/Downloads/Comparision_Report
-
-/home/sm11926/anaconda3/bin/python evaluate_ragas_ollama.py \
-    --report /home/sm11926/GNEM_Retrival_RAG/georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS/ragas_report.xlsx \
-    --data /home/sm11926/GNEM_Retrival_RAG/georgia_ev_intelligence/outputs/Normalized_kb.xlsx \
-    --judge-model qwen2.5:14b \
-    --cache /home/sm11926/GNEM_Retrival_RAG/georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS/ragas_cache.json \
-    --responses qwen2.5_7b__rag_only,qwen2.5_7b__hybrid_rag,qwen2.5_7b__pretrained_only,qwen2.5_7b__direct_kb,llama3.1_8b__rag_only,llama3.1_8b__hybrid_rag,llama3.1_8b__pretrained_only,llama3.1_8b__direct_kb,mistral-small3.2_24b__rag_only,mistral-small3.2_24b__hybrid_rag,mistral-small3.2_24b__pretrained_only,mistral-small3.2_24b__direct_kb,qwen3.5_35b-a3b__rag_only,qwen3.5_35b-a3b__hybrid_rag,qwen3.5_35b-a3b__pretrained_only,qwen3.5_35b-a3b__direct_kb,qwen2.5_32b__rag_only,qwen2.5_32b__hybrid_rag,qwen2.5_32b__pretrained_only,qwen2.5_32b__direct_kb,gemma3_27b__rag_only,gemma3_27b__hybrid_rag,gemma3_27b__pretrained_only,gemma3_27b__direct_kb,qwen2.5_14b__rag_only,qwen2.5_14b__hybrid_rag,qwen2.5_14b__pretrained_only,qwen2.5_14b__direct_kb
+# Filter to specific models or pipelines
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.build_ragas_report \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS \
+    --models gemma3:27b \
+    --pipelines rag_only hybrid_rag direct_kb
 ```
 
-Final results land in `ragas_report_ragas.xlsx` with four sheets:
+Output: `ragas_report.xlsx` with sheets: `responses`, `retrieval`, `golden_answers`, `run_info`.
 
-| Sheet | Contents |
-|---|---|
-| `ragas_scores_long` | One row per (question, model+pipeline) with all metric scores |
-| `ragas_scores_wide` | One row per question, one column per (model+pipeline, metric) |
-| `ragas_summary` | Mean scores per model+pipeline, ranked by composite score |
-| `ragas_references` | Reference answers used by the judge |
+---
+
+## Complete Run (single command sequence)
+
+Replace `YYYYMMDD_HHMMSS` with the actual timestamp from Step 4's output.
+
+```bash
+# Activate environment
+source .venv/bin/activate
+
+# Step 4 — Generate responses (gemma3:27b, all 4 pipelines, 50 questions)
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline \
+    --models gemma3:27b
+
+# Step 5 — Score with RAGAS (replace timestamp)
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.evaluate_ragas \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS \
+    --judge-model qwen2.5:14b
+
+# Step 6 — Analyse results (replace timestamp)
+python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.analyze_results \
+    --run-dir georgia_ev_intelligence/outputs/baselines/YYYYMMDD_HHMMSS
+```
 
 ---
 
@@ -316,67 +437,89 @@ Final results land in `ragas_report_ragas.xlsx` with four sheets:
 pytest -q tests/runtime_pipeline/
 ```
 
-10 tests covering the orchestrator, retrieval-only runner, and all-pipelines runner.
+Covers orchestrator logic: retrieval, deduplication, reranking, parent mapping.
 
 ---
 
 ## Retrieval Config
 
-Defaults in `georgia_ev_intelligence/runtime_pipeline/hybrid_retrieval/config.py`:
-
-| Setting | Default | Env override |
+| Setting | Default | Env variable |
 |---|---|---|
-| Retriever top-k (BM25 + dense each) | 250 | `HYBRID_RETRIEVER_TOP_K` |
-| Reranker top-k (parent chunks kept) | 45 | `HYBRID_RERANKER_TOP_K` |
+| BM25 + dense top-k per query | 250 (single-query) / 150 (multi-query) | `HYBRID_RETRIEVER_TOP_K` |
+| Cross-encoder reranker top-k | 45 parent chunks kept | `HYBRID_RERANKER_TOP_K` |
 | Reranker model | `cross-encoder/ms-marco-MiniLM-L12-v2` | `HYBRID_RERANKER_MODEL` |
+
+**Multi-query retrieval:** when `Rewritten_queries.xlsx` provides query variations
+(columns `Variation 1`–`Variation 5`), retrieval runs independently for each
+non-empty variation with `top_k=150` per retriever per query. All child hits are
+merged, deduplicated, mapped to parent records, then cross-encoder reranked on
+the **original question** only.
 
 ---
 
-## Output Cleanup
+## Output File Reference
 
-Safe to delete after a run:
+### JSONL format (one line per answer)
+
+```json
+{
+  "question_id": 1,
+  "question": "Which Georgia Battery Cell suppliers are sole-sourced by a specific OEM?",
+  "ground_truth": "...",
+  "answer": "...",
+  "contexts": ["parent chunk text 1", "parent chunk text 2", "..."],
+  "pipeline": "rag_only",
+  "model": "gemma3:27b",
+  "trace": {
+    "sparse_child_count": 900,
+    "dense_child_count": 900,
+    "merged_child_result_count": 1800,
+    "unique_child_chunk_count": 312,
+    "unique_parent_id_count": 89,
+    "parent_context_count_before_rerank": 89,
+    "parent_context_count_after_rerank": 45
+  }
+}
+```
+
+### JSONL filenames
+
+Files are named `{model}__{pipeline}.jsonl` with `:` and `/` replaced by `_`:
 
 ```
-georgia_ev_intelligence/outputs/hybrid_retrieval_human_validated_50/
-georgia_ev_intelligence/outputs/baselines/
+gemma3_27b__rag_only.jsonl
+gemma3_27b__hybrid_rag.jsonl
+gemma3_27b__pretrained_only.jsonl
+gemma3_27b__direct_kb.jsonl
 ```
 
-Keep these (rebuilding is slow):
+---
 
+## Troubleshooting
+
+**Ollama not running**
+```bash
+ollama serve
+curl http://localhost:11434/api/tags    # should list pulled models
 ```
-georgia_ev_intelligence/outputs/Normalized_kb.xlsx
-georgia_ev_intelligence/outputs/parent_chunks.xlsx
-georgia_ev_intelligence/outputs/child_chunks.xlsx
-kb/*.xlsx
+
+**Model not found**
+```bash
+ollama list                            # list available models
+ollama pull gemma3:27b                 # pull missing model
 ```
 
-Commands:
+**DB connection error**
+```bash
+# Check NEON_DATABASE_URL in .env
+python3 -c "import psycopg2; from dotenv import load_dotenv; import os; load_dotenv(); conn = psycopg2.connect(os.environ['NEON_DATABASE_URL']); print('OK')"
+```
 
+**BM25 index out of date after re-indexing**  
+The BM25 index is built in memory on first query. Restart the Python process after
+any DB re-index and the index rebuilds automatically.
 
-  cd /home/sm11926/GNEM_Retrival_RAG
-  source .venv/bin/activate
-
-  Step 1:
-  python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_baseline
-
-  Step 2 (replace timestamp):
-  python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.build_ragas_report \
-      --run-dir georgia_ev_intelligence/outputs/baselines/20260521_XXXXXX
-      
-  Step 3 (replace timestamp in 3 places):
-  cd /home/sm11926/Downloads/Comparision_Report
-  
-  /home/sm11926/anaconda3/bin/python evaluate_ragas_ollama.py \
-      --report /home/sm11926/GNEM_Retrival_RAG/georgia_ev_intelligence/outputs/baselines/20260521_XXXXXX/ragas_report.xlsx \
-      --data /home/sm11926/GNEM_Retrival_RAG/georgia_ev_intelligence/outputs/Normalized_kb.xlsx \
-      --judge-model qwen2.5:14b \
-      --cache /home/sm11926/GNEM_Retrival_RAG/georgia_ev_intelligence/outputs/baselines/20260521_XXXXXX/ragas_cache.json \
-      --responses qwen2.5_7b__rag_only,qwen2.5_7b__hybrid_rag,qwen2.5_7b__pretrained_only,qwen2.5_7b__direct_kb,llama3.1_8b__rag_only,lla
-  ma3.1_8b__hybrid_rag,llama3.1_8b__pretrained_only,llama3.1_8b__direct_kb,mistral-small3.2_24b__rag_only,mistral-small3.2_24b__hybrid_ra
-  g,mistral-small3.2_24b__pretrained_only,mistral-small3.2_24b__direct_kb,qwen3.5_35b-a3b__rag_only,qwen3.5_35b-a3b__hybrid_rag,qwen3.5_3
-  5b-a3b__pretrained_only,qwen3.5_35b-a3b__direct_kb,qwen2.5_32b__rag_only,qwen2.5_32b__hybrid_rag,qwen2.5_32b__pretrained_only,qwen2.5_3
-  2b__direct_kb,gemma3_27b__rag_only,gemma3_27b__hybrid_rag,gemma3_27b__pretrained_only,gemma3_27b__direct_kb,qwen2.5_14b__rag_only,qwen2
-  .5_14b__hybrid_rag,qwen2.5_14b__pretrained_only,qwen2.5_14b__direct_kb
-
-  Step 3 uses /home/sm11926/anaconda3/bin/python explicitly because that's the environment where RAGAS is installed — not the project
-  venv.
+**RAGAS import error**
+```bash
+pip install ragas langchain langchain-community langchain-ollama
+```
