@@ -333,6 +333,7 @@ Output: `ragas_scores.json` inside the run directory.
 | `--output` | `<run-dir>/ragas_scores.json` | Output JSON path |
 | `--pipelines` | All found | Evaluate only these pipelines |
 | `--models` | All found | Use only JSONL files from these models |
+| `--judge-timeout` | `300` | Seconds per judge LLM call — increase to `600` for large models like `qwen2.5:14b` on slow hardware |
 
 ---
 

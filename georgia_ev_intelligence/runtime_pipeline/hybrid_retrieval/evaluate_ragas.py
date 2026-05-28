@@ -58,7 +58,11 @@ USAGE
 -----
     python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.evaluate_ragas \\
         --run-dir georgia_ev_intelligence/outputs/baselines/<timestamp> \\
-        --judge-model qwen2.5:14b
+        --judge-model qwen2.5:14b \\
+        --judge-timeout 600
+
+    # Use a smaller/faster judge model to avoid timeouts on slower hardware:
+    python -m ... --judge-model qwen2.5:7b --judge-timeout 300
 
 Reads the JSONL files produced by ``run_baseline.py`` and computes RAGAS
 metrics per pipeline.  Results are written as a JSON file inside the run
@@ -128,11 +132,16 @@ def _import_ragas():
         ) from exc
 
 
-def _import_langchain(judge_model: str, embed_model: str, ollama_base_url: str):
+def _import_langchain(
+    judge_model: str,
+    embed_model: str,
+    ollama_base_url: str,
+    timeout: int = 300,
+):
     """Build LangChain-wrapped Ollama LLM and embedding model."""
     try:
         from langchain_ollama import OllamaLLM, OllamaEmbeddings
-        llm = OllamaLLM(model=judge_model, base_url=ollama_base_url)
+        llm = OllamaLLM(model=judge_model, base_url=ollama_base_url, timeout=timeout)
         embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
         return llm, embeddings
     except ImportError:
@@ -142,7 +151,7 @@ def _import_langchain(judge_model: str, embed_model: str, ollama_base_url: str):
     try:
         from langchain_community.llms import Ollama
         from langchain_community.embeddings import OllamaEmbeddings
-        llm = Ollama(model=judge_model, base_url=ollama_base_url)
+        llm = Ollama(model=judge_model, base_url=ollama_base_url, timeout=timeout)
         embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
         return llm, embeddings
     except ImportError as exc:
@@ -380,6 +389,7 @@ def main() -> int:
         judge_model=args.judge_model,
         embed_model=args.embed_model,
         ollama_base_url=args.ollama_url,
+        timeout=args.judge_timeout,
     )
     ragas_llm = ragas_ns["LangchainLLMWrapper"](raw_llm)
     ragas_embed = ragas_ns["LangchainEmbeddingsWrapper"](raw_embed)
@@ -490,6 +500,15 @@ def _parse_args() -> argparse.Namespace:
         default=None,
         metavar="MODEL",
         help="Use only JSONL files from these models (e.g. gemma3:27b).",
+    )
+    parser.add_argument(
+        "--judge-timeout",
+        type=int,
+        default=300,
+        help=(
+            "Timeout in seconds per judge LLM call (default: 300). "
+            "Increase to 600 for large judge models like qwen2.5:14b on slow hardware."
+        ),
     )
     return parser.parse_args()
 
