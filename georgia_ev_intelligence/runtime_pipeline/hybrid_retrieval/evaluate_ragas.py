@@ -54,6 +54,22 @@ OUTPUT
       }
     }
 
+TIMEOUT ARCHITECTURE
+--------------------
+There are TWO independent timeouts that must both be large enough:
+
+  1. LangChain client timeout  (``--judge-timeout``, default 300s)
+     Controls how long the HTTP call to Ollama waits per token chunk.
+     Passed to ``OllamaLLM(timeout=...)``.
+
+  2. RAGAS RunConfig timeout  (also ``--judge-timeout``, same value)
+     Controls how long RAGAS waits for a complete metric evaluation job.
+     Passed to ``RunConfig(timeout=...)``.
+
+Both are set from the same ``--judge-timeout`` flag.  ``max_workers=1``
+is also set in RunConfig to prevent concurrent Ollama calls which cause
+resource contention and increase timeout probability on local hardware.
+
 USAGE
 -----
     python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.evaluate_ragas \\
@@ -114,6 +130,7 @@ def _import_ragas():
             ContextPrecision,
             ContextRecall,
         )
+        from ragas.run_config import RunConfig
         return {
             "Dataset": Dataset,
             "evaluate": evaluate,
@@ -124,6 +141,7 @@ def _import_ragas():
             "Faithfulness": Faithfulness,
             "ContextPrecision": ContextPrecision,
             "ContextRecall": ContextRecall,
+            "RunConfig": RunConfig,
         }
     except ImportError as exc:
         raise ImportError(
@@ -332,6 +350,7 @@ def evaluate_pipeline(
     ragas_ns: dict,
     ragas_llm,
     ragas_embed,
+    judge_timeout: int = 300,
 ) -> dict:
     """Evaluate one pipeline and return per-question + aggregate scores."""
     print(f"  Evaluating pipeline '{pipeline}' ({len(records)} questions) ...")
@@ -340,8 +359,16 @@ def evaluate_pipeline(
     dataset = _build_ragas_dataset(records, pipeline, ragas_ns)
     metrics = _build_metrics(metric_names, ragas_ns, ragas_llm, ragas_embed)
 
+    # max_workers=1 prevents concurrent Ollama calls which cause resource
+    # contention and make timeouts more likely on local hardware.
+    run_config = ragas_ns["RunConfig"](
+        timeout=judge_timeout,
+        max_retries=1,
+        max_workers=1,
+    )
+
     evaluate_fn = ragas_ns["evaluate"]
-    result = evaluate_fn(dataset=dataset, metrics=metrics)
+    result = evaluate_fn(dataset=dataset, metrics=metrics, run_config=run_config)
 
     # Convert to pandas then to list-of-dicts for JSON serialisation
     result_df = result.to_pandas()
@@ -405,6 +432,7 @@ def main() -> int:
                 ragas_ns=ragas_ns,
                 ragas_llm=ragas_llm,
                 ragas_embed=ragas_embed,
+                judge_timeout=args.judge_timeout,
             )
         except Exception as exc:
             print(f"  ERROR evaluating '{pipeline_name}': {exc}")
