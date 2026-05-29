@@ -12,27 +12,27 @@ METRICS PER PIPELINE
 Metrics are chosen based on what each pipeline provides:
 
   ``rag_only``        → answer_correctness, answer_relevancy, faithfulness,
-                        context_recall
+                        context_precision, context_recall
                         (has retrieved contexts)
 
   ``hybrid_rag``      → answer_correctness, answer_relevancy, faithfulness,
-                        context_recall
+                        context_precision, context_recall
                         (same retrieved contexts as rag_only)
 
   ``pretrained_only`` → answer_correctness, answer_relevancy only
                         (no contexts → context metrics not meaningful)
 
   ``direct_kb``       → answer_correctness, answer_relevancy, faithfulness,
-                        context_recall
+                        context_precision, context_recall
                         (has all 205 KB rows as contexts)
 
-NOTE: context_precision is intentionally excluded. It requires the judge LLM
-to output a clean Yes/No per retrieved chunk. Local 14b models (qwen2.5:14b)
-respond with verbose reasoning instead, which RAGAS cannot parse — causing
-context_precision to score 0.0 for all pipelines regardless of actual retrieval
-quality. This is confirmed by context_recall=0.88 co-existing with
-context_precision=0.0, a contradiction that indicates judge calibration failure.
-The four remaining metrics are reliably scoreable by local 14b judges.
+NOTE on context_precision judge calibration:
+  context_precision requires the judge to output a clean Yes/No per chunk.
+  Verbose models (e.g. qwen2.5:14b) append reasoning which breaks the RAGAS
+  parser, producing 0.0 for all chunks regardless of actual retrieval quality —
+  confirmed by context_recall=0.88 co-existing with context_precision=0.0.
+  Use a concise instruction-following model as judge (e.g. gemma2:9b,
+  llama3.1:8b) via --judge-model for reliable context_precision scores.
 
 JUDGE LLM SETUP
 ---------------
@@ -125,14 +125,14 @@ Usage:
         --output ragas_scores.json
 
 Metrics computed per pipeline:
-    rag_only        — answer_correctness, answer_relevancy, faithfulness, context_recall
-    hybrid_rag      — answer_correctness, answer_relevancy, faithfulness, context_recall
+    rag_only        — answer_correctness, answer_relevancy, faithfulness, context_precision, context_recall
+    hybrid_rag      — answer_correctness, answer_relevancy, faithfulness, context_precision, context_recall
     pretrained_only — answer_correctness, answer_relevancy
-    direct_kb       — answer_correctness, answer_relevancy, faithfulness, context_recall
+    direct_kb       — answer_correctness, answer_relevancy, faithfulness, context_precision, context_recall
 
-    context_precision is excluded: local 14b judges output verbose reasoning
-    instead of clean Yes/No, causing RAGAS to score it 0.0 for all pipelines
-    regardless of actual retrieval quality (judge calibration failure).
+    context_precision requires a concise Yes/No judge. Use gemma2:9b or
+    llama3.1:8b via --judge-model; verbose models like qwen2.5:14b break the
+    parser and score 0.0 for all chunks regardless of actual relevance.
 """
 from __future__ import annotations
 
@@ -161,6 +161,7 @@ def _import_ragas():
             AnswerRelevancy,
             Faithfulness,
             ContextRecall,
+            ContextPrecision,
         )
         from ragas.run_config import RunConfig
         return {
@@ -172,6 +173,7 @@ def _import_ragas():
             "AnswerRelevancy": AnswerRelevancy,
             "Faithfulness": Faithfulness,
             "ContextRecall": ContextRecall,
+            "ContextPrecision": ContextPrecision,
             "RunConfig": RunConfig,
         }
     except ImportError as exc:
@@ -214,23 +216,24 @@ def _import_langchain(
 # Metrics configuration per pipeline
 # ---------------------------------------------------------------------------
 
-# context_precision is excluded: it requires the judge LLM to output a clean
-# Yes/No per chunk. Local 14b models (qwen2.5:14b) respond with verbose
-# reasoning instead, which RAGAS cannot parse, causing all chunks to score 0
-# regardless of actual relevance. This is confirmed by context_recall=0.88
-# appearing alongside context_precision=0.0 — a contradiction that indicates
-# judge calibration failure, not retrieval failure.
+# context_precision requires the judge to output a clean Yes/No per chunk.
+# Verbose models (e.g. qwen2.5:14b) append reasoning and break the parser,
+# producing 0.0 for all chunks regardless of actual relevance quality.
+# Use a concise instruction-following model (e.g. gemma2:9b, llama3.1:8b)
+# via --judge-model to get reliable context_precision scores.
 _PIPELINE_METRICS: dict[str, list[str]] = {
     "rag_only": [
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
+        "context_precision",
         "context_recall",
     ],
     "hybrid_rag": [
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
+        "context_precision",
         "context_recall",
     ],
     "pretrained_only": [
@@ -241,6 +244,7 @@ _PIPELINE_METRICS: dict[str, list[str]] = {
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
+        "context_precision",
         "context_recall",
     ],
 }
@@ -344,6 +348,7 @@ def _build_metrics(metric_names: list[str], ragas_ns: dict, ragas_llm, ragas_emb
         "answer_relevancy": ragas_ns["AnswerRelevancy"],
         "faithfulness": ragas_ns["Faithfulness"],
         "context_recall": ragas_ns["ContextRecall"],
+        "context_precision": ragas_ns["ContextPrecision"],
     }
     metrics = []
     for name in metric_names:
