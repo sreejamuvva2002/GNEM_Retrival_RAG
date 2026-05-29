@@ -48,8 +48,13 @@ EVALUATION
 | `answer_correctness` | Correctness vs golden answer | All 4 |
 | `answer_relevancy` | Answer stays on-topic | All 4 |
 | `faithfulness` | Claims supported by context (no hallucination) | `rag_only`, `hybrid_rag`, `direct_kb` |
-| `context_precision` | Retrieved context contains relevant info | `rag_only`, `hybrid_rag`, `direct_kb` |
 | `context_recall` | Relevant info is actually retrieved | `rag_only`, `hybrid_rag`, `direct_kb` |
+
+> **Why `context_precision` is excluded:** it requires the judge LLM to output a clean Yes/No
+> per retrieved chunk. Local 14b models respond with verbose reasoning instead, which RAGAS
+> cannot parse — causing 0.0 scores regardless of actual retrieval quality. This is confirmed
+> by `context_recall = 0.88` co-existing with `context_precision = 0.0`: a direct contradiction
+> that signals judge calibration failure, not a retrieval problem.
 
 ---
 

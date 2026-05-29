@@ -12,20 +12,27 @@ METRICS PER PIPELINE
 Metrics are chosen based on what each pipeline provides:
 
   ``rag_only``        → answer_correctness, answer_relevancy, faithfulness,
-                        context_precision, context_recall
-                        (has retrieved contexts → all retrieval metrics apply)
+                        context_recall
+                        (has retrieved contexts)
 
   ``hybrid_rag``      → answer_correctness, answer_relevancy, faithfulness,
-                        context_precision, context_recall
-                        (has same retrieved contexts as rag_only → same metrics)
+                        context_recall
+                        (same retrieved contexts as rag_only)
 
   ``pretrained_only`` → answer_correctness, answer_relevancy only
                         (no contexts → context metrics not meaningful)
 
   ``direct_kb``       → answer_correctness, answer_relevancy, faithfulness,
-                        context_precision, context_recall
-                        (has all 205 KB rows as contexts; context_precision and
-                        context_recall will be trivially high — interpret carefully)
+                        context_recall
+                        (has all 205 KB rows as contexts)
+
+NOTE: context_precision is intentionally excluded. It requires the judge LLM
+to output a clean Yes/No per retrieved chunk. Local 14b models (qwen2.5:14b)
+respond with verbose reasoning instead, which RAGAS cannot parse — causing
+context_precision to score 0.0 for all pipelines regardless of actual retrieval
+quality. This is confirmed by context_recall=0.88 co-existing with
+context_precision=0.0, a contradiction that indicates judge calibration failure.
+The four remaining metrics are reliably scoreable by local 14b judges.
 
 JUDGE LLM SETUP
 ---------------
@@ -97,12 +104,14 @@ Usage:
         --output ragas_scores.json
 
 Metrics computed per pipeline:
-    rag_only        — answer_correctness, answer_relevancy, faithfulness,
-                      context_precision, context_recall
-    hybrid_rag      — answer_correctness, answer_relevancy, faithfulness
+    rag_only        — answer_correctness, answer_relevancy, faithfulness, context_recall
+    hybrid_rag      — answer_correctness, answer_relevancy, faithfulness, context_recall
     pretrained_only — answer_correctness, answer_relevancy
-    direct_kb       — answer_correctness, answer_relevancy, faithfulness,
-                      context_precision, context_recall
+    direct_kb       — answer_correctness, answer_relevancy, faithfulness, context_recall
+
+    context_precision is excluded: local 14b judges output verbose reasoning
+    instead of clean Yes/No, causing RAGAS to score it 0.0 for all pipelines
+    regardless of actual retrieval quality (judge calibration failure).
 """
 from __future__ import annotations
 
@@ -127,7 +136,6 @@ def _import_ragas():
             AnswerCorrectness,
             AnswerRelevancy,
             Faithfulness,
-            ContextPrecision,
             ContextRecall,
         )
         from ragas.run_config import RunConfig
@@ -139,7 +147,6 @@ def _import_ragas():
             "AnswerCorrectness": AnswerCorrectness,
             "AnswerRelevancy": AnswerRelevancy,
             "Faithfulness": Faithfulness,
-            "ContextPrecision": ContextPrecision,
             "ContextRecall": ContextRecall,
             "RunConfig": RunConfig,
         }
@@ -183,20 +190,23 @@ def _import_langchain(
 # Metrics configuration per pipeline
 # ---------------------------------------------------------------------------
 
-# Each entry: (metric_name, needs_context)
+# context_precision is excluded: it requires the judge LLM to output a clean
+# Yes/No per chunk. Local 14b models (qwen2.5:14b) respond with verbose
+# reasoning instead, which RAGAS cannot parse, causing all chunks to score 0
+# regardless of actual relevance. This is confirmed by context_recall=0.88
+# appearing alongside context_precision=0.0 — a contradiction that indicates
+# judge calibration failure, not retrieval failure.
 _PIPELINE_METRICS: dict[str, list[str]] = {
     "rag_only": [
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
-        "context_precision",
         "context_recall",
     ],
     "hybrid_rag": [
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
-        "context_precision",
         "context_recall",
     ],
     "pretrained_only": [
@@ -207,7 +217,6 @@ _PIPELINE_METRICS: dict[str, list[str]] = {
         "answer_correctness",
         "answer_relevancy",
         "faithfulness",
-        "context_precision",
         "context_recall",
     ],
 }
@@ -306,7 +315,6 @@ def _build_metrics(metric_names: list[str], ragas_ns: dict, ragas_llm, ragas_emb
         "answer_correctness": ragas_ns["AnswerCorrectness"],
         "answer_relevancy": ragas_ns["AnswerRelevancy"],
         "faithfulness": ragas_ns["Faithfulness"],
-        "context_precision": ragas_ns["ContextPrecision"],
         "context_recall": ragas_ns["ContextRecall"],
     }
     metrics = []
