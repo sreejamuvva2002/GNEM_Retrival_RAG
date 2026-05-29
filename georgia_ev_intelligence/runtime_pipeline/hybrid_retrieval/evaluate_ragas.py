@@ -42,11 +42,32 @@ Requires Ollama running locally with the judge model pulled.
 
 RAGAS DATASET FORMAT
 --------------------
-RAGAS ``evaluate()`` expects a HuggingFace ``Dataset`` with columns:
-  - ``question``      : the user question
-  - ``answer``        : the LLM-generated answer
-  - ``ground_truth``  : the human-validated answer
-  - ``contexts``      : list of retrieved text strings (or ``[""]`` if none)
+RAGAS ``evaluate()`` expects a HuggingFace ``Dataset``.  Column names changed
+between RAGAS versions, so the dataset includes both old and new names:
+
+  Old API (< 0.4): ``ground_truth``, ``contexts``
+  New API (>= 0.4): ``reference``,   ``retrieved_contexts``
+
+Both sets are written so all metric implementations find their required fields
+regardless of the installed RAGAS version.
+
+  - ``question``            : the user question
+  - ``answer``              : the LLM-generated answer
+  - ``ground_truth``        : human-validated answer (RAGAS < 0.4)
+  - ``reference``           : same value (RAGAS >= 0.4)
+  - ``contexts``            : retrieved text strings list (RAGAS < 0.4)
+  - ``retrieved_contexts``  : same value (RAGAS >= 0.4)
+
+EVENT LOOP ISOLATION
+--------------------
+RAGAS 0.4.x closes the asyncio event loop when ``evaluate()`` returns.
+Evaluating multiple pipelines sequentially in the same process therefore
+fails with ``RuntimeError: Event loop is closed`` on the second pipeline.
+
+The fix: each pipeline is evaluated in its own ``multiprocessing`` subprocess
+(``spawn`` context).  Each subprocess gets a fresh Python interpreter with a
+new event loop.  Results are returned via a temp JSON file so they survive the
+subprocess exit cleanly.
 
 OUTPUT
 ------
@@ -117,7 +138,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import multiprocessing
 import statistics
+import tempfile
+import traceback as _traceback
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -300,11 +324,15 @@ def _build_ragas_dataset(records: list[dict], pipeline: str, ragas_ns: dict):
         else:
             contexts_list.append([str(c) for c in raw_ctx if c])
 
+    # Include both old (< 0.4) and new (>= 0.4) RAGAS column names so all
+    # metric implementations find their required fields regardless of version.
     data = {
         "question": questions,
         "answer": answers,
-        "ground_truth": ground_truths,
-        "contexts": contexts_list,
+        "ground_truth": ground_truths,       # RAGAS < 0.4
+        "reference": ground_truths,           # RAGAS >= 0.4
+        "contexts": contexts_list,            # RAGAS < 0.4
+        "retrieved_contexts": contexts_list,  # RAGAS >= 0.4
     }
     return Dataset.from_dict(data)
 
@@ -398,6 +426,95 @@ def evaluate_pipeline(
     return {"per_question": per_question, "aggregate": aggregate}
 
 
+# ---------------------------------------------------------------------------
+# Subprocess isolation (RAGAS 0.4.x closes asyncio loop after evaluate())
+# ---------------------------------------------------------------------------
+
+def _evaluate_pipeline_worker(
+    pipeline: str,
+    records: list[dict],
+    judge_model: str,
+    embed_model: str,
+    ollama_base_url: str,
+    judge_timeout: int,
+    result_file: str,
+) -> None:
+    """Subprocess entry point. Writes a JSON result to result_file.
+
+    Each pipeline must run in its own subprocess because RAGAS 0.4.x closes
+    the asyncio event loop when evaluate() returns, making subsequent in-process
+    calls to evaluate() fail with 'Event loop is closed'.  A fresh subprocess
+    gets a new event loop automatically.
+    """
+    try:
+        ragas_ns = _import_ragas()
+        raw_llm, raw_embed = _import_langchain(
+            judge_model=judge_model,
+            embed_model=embed_model,
+            ollama_base_url=ollama_base_url,
+            timeout=judge_timeout,
+        )
+        ragas_llm = ragas_ns["LangchainLLMWrapper"](raw_llm)
+        ragas_embed = ragas_ns["LangchainEmbeddingsWrapper"](raw_embed)
+        result = evaluate_pipeline(
+            pipeline=pipeline,
+            records=records,
+            ragas_ns=ragas_ns,
+            ragas_llm=ragas_llm,
+            ragas_embed=ragas_embed,
+            judge_timeout=judge_timeout,
+        )
+        Path(result_file).write_text(
+            json.dumps({"ok": True, "result": result}), encoding="utf-8"
+        )
+    except Exception as exc:
+        Path(result_file).write_text(
+            json.dumps({"ok": False, "error": str(exc), "tb": _traceback.format_exc()}),
+            encoding="utf-8",
+        )
+
+
+def _run_pipeline_in_subprocess(
+    pipeline_name: str,
+    records: list[dict],
+    judge_model: str,
+    embed_model: str,
+    ollama_url: str,
+    judge_timeout: int,
+) -> dict:
+    """Spawn a fresh process for one pipeline, return its result dict."""
+    with tempfile.NamedTemporaryFile(suffix=".json", delete=False) as tf:
+        result_file = tf.name
+
+    ctx = multiprocessing.get_context("spawn")
+    p = ctx.Process(
+        target=_evaluate_pipeline_worker,
+        args=(
+            pipeline_name, records, judge_model, embed_model,
+            ollama_url, judge_timeout, result_file,
+        ),
+    )
+    p.start()
+    # Outer timeout: give the subprocess 2× the per-call judge timeout to
+    # account for multiple questions × multiple metrics per pipeline.
+    p.join(timeout=judge_timeout * len(records) + 120)
+    if p.is_alive():
+        p.terminate()
+        p.join()
+        return {"error": f"Subprocess for '{pipeline_name}' timed out"}
+
+    result_path = Path(result_file)
+    if not result_path.exists() or result_path.stat().st_size == 0:
+        return {"error": f"Subprocess for '{pipeline_name}' produced no output (exit code {p.exitcode})"}
+
+    payload = json.loads(result_path.read_text(encoding="utf-8"))
+    result_path.unlink(missing_ok=True)
+
+    if payload.get("ok"):
+        return payload["result"]
+    return {"error": payload.get("error", "unknown subprocess error")}
+
+
 def main() -> int:
     args = _parse_args()
     run_dir = Path(args.run_dir).resolve()
@@ -417,34 +534,24 @@ def main() -> int:
     print(f"Embed model   : {args.embed_model}")
     print(f"Ollama URL    : {args.ollama_url}")
 
-    # Lazy imports
-    print("\nLoading RAGAS + LangChain ...")
-    ragas_ns = _import_ragas()
-    raw_llm, raw_embed = _import_langchain(
-        judge_model=args.judge_model,
-        embed_model=args.embed_model,
-        ollama_base_url=args.ollama_url,
-        timeout=args.judge_timeout,
-    )
-    ragas_llm = ragas_ns["LangchainLLMWrapper"](raw_llm)
-    ragas_embed = ragas_ns["LangchainEmbeddingsWrapper"](raw_embed)
-
-    # Evaluate
+    # Evaluate — each pipeline runs in its own subprocess to get a fresh
+    # asyncio event loop (RAGAS 0.4.x closes the loop after evaluate() returns,
+    # which would break subsequent in-process evaluate() calls).
     results_by_pipeline: dict[str, dict] = {}
     for pipeline_name in sorted(by_pipeline):
         records = by_pipeline[pipeline_name]
-        try:
-            results_by_pipeline[pipeline_name] = evaluate_pipeline(
-                pipeline=pipeline_name,
-                records=records,
-                ragas_ns=ragas_ns,
-                ragas_llm=ragas_llm,
-                ragas_embed=ragas_embed,
-                judge_timeout=args.judge_timeout,
-            )
-        except Exception as exc:
-            print(f"  ERROR evaluating '{pipeline_name}': {exc}")
-            results_by_pipeline[pipeline_name] = {"error": str(exc)}
+        print(f"\nSpawning subprocess for pipeline '{pipeline_name}' ...")
+        result = _run_pipeline_in_subprocess(
+            pipeline_name=pipeline_name,
+            records=records,
+            judge_model=args.judge_model,
+            embed_model=args.embed_model,
+            ollama_url=args.ollama_url,
+            judge_timeout=args.judge_timeout,
+        )
+        if "error" in result:
+            print(f"  ERROR in '{pipeline_name}': {result['error']}")
+        results_by_pipeline[pipeline_name] = result
 
     # Write output
     output_path = (
