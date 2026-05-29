@@ -1,9 +1,51 @@
-"""Shared utility helpers for pipeline runners.
+"""Shared constants, data models, and helpers used by run_baseline.py.
 
-This module exposes constants, dataclasses, and helper functions that are
-imported by the top-level runner (``run_baseline.py``) and the evaluation
-scripts.  It does **not** contain a ``main()`` entry point — use
+WHY THIS FILE EXISTS
+--------------------
+``run_baseline.py`` needs question loading, column-name resolution, trace
+formatting, and path utilities.  Rather than embedding all of that logic inside
+the runner, these helpers live here so they can be imported cleanly and tested
+in isolation.  This module has NO ``main()`` entry point — use
 ``run_baseline.py`` to launch pipeline runs.
+
+WHAT IT PROVIDES
+----------------
+  ``QuestionRow``          — frozen dataclass holding one QA row: question,
+                             golden answer, serial number, and an optional
+                             tuple of rewritten query variants for multi-query
+                             retrieval.
+
+  ``_load_questions()``    — reads an Excel QA workbook, resolves column names
+                             using multiple candidate names (supports both the
+                             original 50-question file and the rewritten-query
+                             variants file), and populates ``rewritten_queries``
+                             from any ``Variation N`` / ``rewritten_query_N``
+                             columns present.
+
+  ``REWRITTEN_QUERY_COLUMNS`` — ordered tuple of column-name candidates for
+                             the 5 query variations.  Supports both naming
+                             conventions used across file versions.
+
+  ``_empty_trace_values()`` / ``_trace_values()`` — convert
+                             ``HybridRetrievalTrace`` objects to plain dicts for
+                             JSON serialisation in the JSONL output.
+
+  ``_format_retrieved_context()`` — joins parent chunk texts with double
+                             newlines into the single string passed as
+                             ``{retrieved_context}`` in prompt templates.
+
+COLUMN RESOLUTION STRATEGY
+---------------------------
+``_load_questions()`` accepts workbooks where the question column may be named
+``question``, ``Question``, or ``Original Question``, and the answer column
+may be named any of a dozen variants.  If the specified sheet does not exist,
+``_read_sheet_with_fallback()`` warns and falls back to the first sheet.
+
+RELATIONSHIPS
+-------------
+  Imported by: ``run_baseline.py`` (QuestionRow, _load_questions,
+               _trace_values, _empty_trace_values, _project_root,
+               DEFAULT_QUESTIONS_WORKBOOK, DEFAULT_QUESTIONS_SHEET)
 """
 from __future__ import annotations
 
