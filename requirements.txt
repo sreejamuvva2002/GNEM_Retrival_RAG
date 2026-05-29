@@ -13,8 +13,12 @@ einops>=0.8
 psycopg2-binary>=2.9
 pydantic>=2.0
 
-# RAGAS evaluation
-ragas>=0.1.21
+# RAGAS evaluation — official explodinggradients release (NOT the vibrantlabsai fork).
+# 0.1.x uses text-based prompting for all metrics, including context_precision,
+# which works correctly with Ollama. The vibrantlabsai 0.4.x fork uses the
+# `instructor` library (structured JSON via OpenAI function-calling) for
+# context_precision, which is incompatible with Ollama and scores 0 for every chunk.
+ragas>=0.1.9,<0.2.0
 langchain>=0.2.0
 langchain-community>=0.2.0
 langchain-ollama>=0.1.0

@@ -52,27 +52,31 @@ NOTE on context_precision judge calibration:
 
 JUDGE LLM SETUP
 ---------------
-Uses LangChain Ollama wrappers (``langchain_ollama`` preferred, falls back to
-``langchain_community``) wrapped with RAGAS's ``LangchainLLMWrapper``.
-Requires Ollama running locally with the judge model pulled.
+Requires official ragas from explodinggradients (``pip install 'ragas>=0.1.9,<0.2.0'``).
+Do NOT use the vibrantlabsai fork (ragas 0.4.x): that fork uses the ``instructor``
+library to enforce structured JSON output via OpenAI function-calling, which is
+incompatible with Ollama — context_precision scores 0 for every chunk regardless
+of model size.  Official ragas 0.1.x uses text-based prompting for all metrics
+and works correctly with Ollama.
+
+Uses ``ChatOllama`` (chat model), NOT ``OllamaLLM`` (completion model).  Official
+ragas sends each metric evaluation as a structured chat message (system + user
+roles).  A completion model receives only the flattened raw text and cannot
+maintain the role boundaries, causing metrics to silently return 0.  ChatOllama
+is the correct LangChain class for ragas + Ollama.
+
+The LLM and embeddings are passed globally to ``evaluate(llm=..., embeddings=...)``,
+not to individual metric constructors.  This is the standard pattern for
+official ragas 0.1.x.
 
 RAGAS DATASET FORMAT
 --------------------
-RAGAS ``evaluate()`` expects a HuggingFace ``Dataset``.  Column names changed
-between RAGAS versions, so the dataset includes both old and new names:
+Official ragas 0.1.x standard columns:
 
-  Old API (< 0.4): ``ground_truth``, ``contexts``
-  New API (>= 0.4): ``reference``,   ``retrieved_contexts``
-
-Both sets are written so all metric implementations find their required fields
-regardless of the installed RAGAS version.
-
-  - ``question``            : the user question
-  - ``answer``              : the LLM-generated answer
-  - ``ground_truth``        : human-validated answer (RAGAS < 0.4)
-  - ``reference``           : same value (RAGAS >= 0.4)
-  - ``contexts``            : retrieved text strings list (RAGAS < 0.4)
-  - ``retrieved_contexts``  : same value (RAGAS >= 0.4)
+  - ``question``      : the user question
+  - ``answer``        : the LLM-generated answer
+  - ``ground_truth``  : the human-validated answer
+  - ``contexts``      : list of retrieved text strings (or ``[""]`` if none)
 
 EVENT LOOP ISOLATION
 --------------------
@@ -205,10 +209,18 @@ def _import_langchain(
     ollama_base_url: str,
     timeout: int = 300,
 ):
-    """Build LangChain-wrapped Ollama LLM and embedding model."""
+    """Build LangChain-wrapped Ollama chat LLM and embedding model.
+
+    Uses ``ChatOllama`` (chat model), NOT ``OllamaLLM`` (completion model).
+    Official ragas (explodinggradients 0.1.x) sends every metric evaluation
+    as a chat message (system + user roles).  A completion model receives only
+    the raw concatenated text and cannot correctly handle those role boundaries,
+    causing metrics to fail silently or return 0.  ChatOllama preserves the
+    chat structure and is the supported interface for ragas + Ollama.
+    """
     try:
-        from langchain_ollama import OllamaLLM, OllamaEmbeddings
-        llm = OllamaLLM(model=judge_model, base_url=ollama_base_url, timeout=timeout)
+        from langchain_ollama import ChatOllama, OllamaEmbeddings
+        llm = ChatOllama(model=judge_model, base_url=ollama_base_url, timeout=timeout)
         embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
         return llm, embeddings
     except ImportError:
@@ -216,9 +228,9 @@ def _import_langchain(
 
     # Fallback to langchain-community
     try:
-        from langchain_community.llms import Ollama
+        from langchain_community.chat_models import ChatOllama
         from langchain_community.embeddings import OllamaEmbeddings
-        llm = Ollama(model=judge_model, base_url=ollama_base_url, timeout=timeout)
+        llm = ChatOllama(model=judge_model, base_url=ollama_base_url, timeout=timeout)
         embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
         return llm, embeddings
     except ImportError as exc:
@@ -342,21 +354,24 @@ def _build_ragas_dataset(records: list[dict], pipeline: str, ragas_ns: dict):
         else:
             contexts_list.append([str(c) for c in raw_ctx if c])
 
-    # Include both old (< 0.4) and new (>= 0.4) RAGAS column names so all
-    # metric implementations find their required fields regardless of version.
+    # Official ragas (explodinggradients) 0.1.x standard column names.
     data = {
         "question": questions,
         "answer": answers,
-        "ground_truth": ground_truths,       # RAGAS < 0.4
-        "reference": ground_truths,           # RAGAS >= 0.4
-        "contexts": contexts_list,            # RAGAS < 0.4
-        "retrieved_contexts": contexts_list,  # RAGAS >= 0.4
+        "ground_truth": ground_truths,
+        "contexts": contexts_list,
     }
     return Dataset.from_dict(data)
 
 
-def _build_metrics(metric_names: list[str], ragas_ns: dict, ragas_llm, ragas_embed):
-    """Instantiate requested RAGAS metric objects."""
+def _build_metrics(metric_names: list[str], ragas_ns: dict) -> list:
+    """Instantiate RAGAS metric objects without LLM.
+
+    In official ragas (explodinggradients) 0.1.x, the LLM and embeddings are
+    injected globally by passing ``llm=`` and ``embeddings=`` to ``evaluate()``.
+    Metric constructors do not accept LLM arguments — the LLM is set on the
+    metric objects internally by evaluate() before scoring begins.
+    """
     metric_map = {
         "answer_correctness": ragas_ns["AnswerCorrectness"],
         "answer_relevancy": ragas_ns["AnswerRelevancy"],
@@ -364,19 +379,7 @@ def _build_metrics(metric_names: list[str], ragas_ns: dict, ragas_llm, ragas_emb
         "context_recall": ragas_ns["ContextRecall"],
         "context_precision": ragas_ns["ContextPrecision"],
     }
-    metrics = []
-    for name in metric_names:
-        cls = metric_map[name]
-        try:
-            m = cls(llm=ragas_llm, embeddings=ragas_embed)
-        except TypeError:
-            # Some metrics don't accept embeddings
-            try:
-                m = cls(llm=ragas_llm)
-            except TypeError:
-                m = cls()
-        metrics.append(m)
-    return metrics
+    return [metric_map[name]() for name in metric_names]
 
 
 # ---------------------------------------------------------------------------
@@ -412,7 +415,7 @@ def evaluate_pipeline(
     metric_names = _PIPELINE_METRICS.get(pipeline, ["answer_correctness", "answer_relevancy"])
 
     dataset = _build_ragas_dataset(records, pipeline, ragas_ns)
-    metrics = _build_metrics(metric_names, ragas_ns, ragas_llm, ragas_embed)
+    metrics = _build_metrics(metric_names, ragas_ns)
 
     # max_workers=1 prevents concurrent Ollama calls which cause resource
     # contention and make timeouts more likely on local hardware.
@@ -422,8 +425,16 @@ def evaluate_pipeline(
         max_workers=1,
     )
 
+    # Official ragas 0.1.x: LLM and embeddings are injected at evaluate() level,
+    # not on individual metric objects.
     evaluate_fn = ragas_ns["evaluate"]
-    result = evaluate_fn(dataset=dataset, metrics=metrics, run_config=run_config)
+    result = evaluate_fn(
+        dataset=dataset,
+        metrics=metrics,
+        llm=ragas_llm,
+        embeddings=ragas_embed,
+        run_config=run_config,
+    )
 
     # Convert to pandas then to list-of-dicts for JSON serialisation
     result_df = result.to_pandas()
