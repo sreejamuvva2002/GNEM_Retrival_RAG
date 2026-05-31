@@ -127,7 +127,29 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
+<<<<<<< HEAD
 ### 2. Configure `.env`
+=======
+If you use Conda instead, activate your Conda environment and then run:
+
+```bash
+pip install -r requirements.txt
+```
+
+## 1.1. Install Tesseract OCR (Required for Image Extraction)
+
+To extract text from images, the `pytesseract` library requires the Tesseract OCR engine to be installed on your system:
+
+- **Windows**: Download the installer from the [UB-Mannheim Tesseract wiki](https://github.com/UB-Mannheim/tesseract/wiki) and install it. Ensure that the installation directory (typically `C:\Program Files\Tesseract-OCR`) is added to your system's `PATH` environment variable.
+- **macOS**: Install via Homebrew by running `brew install tesseract`.
+- **Linux (Ubuntu/Debian)**: Install via APT by running `sudo apt-get install tesseract-ocr`.
+
+## 2. Configure `.env`
+
+Create `.env` in the repository root. The app loads it automatically.
+
+Required variables used by the current code:
+>>>>>>> 5a88f5f6bdfd168cbdcd403e194d87cb8cadf6a4
 
 ```bash
 NEON_DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
