@@ -41,16 +41,22 @@ def render() -> None:
             chosen = labels[index]
         ui_state.set_view_mode(keys[labels.index(chosen)])
     with bar_right:
-        right_a, right_b, right_c = st.columns(3)
-        with right_a:
-            if st.button("📚 Sources", key="hdr_sources", use_container_width=True):
-                ui_state.toggle_sources_panel()
-        with right_b:
-            theme_icon = "🌙 Dark" if settings_state.settings().is_dark_mode else "☀ Light"
-            if st.button(theme_icon, key="hdr_theme", use_container_width=True):
-                settings_state.toggle_theme()
+        _spacer, theme_col, settings_col = st.columns([0.6, 0.25, 0.15])
+        with theme_col:
+            # Icon-only sun/moon switch — no text label.
+            is_dark = settings_state.settings().is_dark_mode
+            current_icon = "🌙" if is_dark else "☀"
+            picked = st.segmented_control(
+                "Theme",
+                options=["☀", "🌙"],
+                default=current_icon,
+                key="hdr_theme_switch",
+                label_visibility="collapsed",
+            )
+            if picked is not None and (picked == "🌙") != is_dark:
+                settings_state.set_dark_mode(picked == "🌙")
                 st.rerun()
-        with right_c:
-            if st.button("⚙ Settings", key="hdr_settings", use_container_width=True):
+        with settings_col:
+            if st.button("⚙", key="hdr_settings", use_container_width=True, help="Settings"):
                 ui_state.set_settings_open(True)
                 st.rerun()

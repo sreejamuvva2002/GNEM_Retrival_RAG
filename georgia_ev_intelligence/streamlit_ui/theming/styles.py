@@ -69,12 +69,20 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             border-right: 1px solid var(--sidebar-border);
         }}
 
-        [data-testid="stSidebar"] * {{
-            color: var(--fg) !important;
-        }}
-
+        /* Color sidebar *text* with --fg, but do NOT blanket-override every
+           descendant — that would force button labels to --fg and wreck the
+           contrast on the active (primary) history button. */
+        [data-testid="stSidebar"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] strong,
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
         [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
             color: var(--fg) !important;
+        }}
+        /* Primary (active) sidebar button keeps readable on-primary text. */
+        [data-testid="stSidebar"] button[kind="primary"],
+        [data-testid="stSidebar"] button[kind="primary"] * {{
+            color: var(--primary-fg) !important;
         }}
 
         /* Apply Inter only to text containers. Including span/div forces
@@ -288,16 +296,6 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             color: var(--muted-fg);
             margin: 0;
             overflow-wrap: anywhere;
-        }}
-        .source-type-pill {{
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-            padding: 0.18rem 0.5rem;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            margin-bottom: 0.4rem;
         }}
         .source-rank-bar {{
             margin-top: 0.45rem;

@@ -98,6 +98,34 @@ class MapService(IMapDataService):
         return MapResult(records=records, context=context)
 
 
+def filter_records_to_companies(
+    records: List[Dict[str, Any]], normalized_names: set
+) -> List[Dict[str, Any]]:
+    """Keep only map records whose company matches one of the cited companies.
+
+    `normalized_names` is a set of normalized company names (see
+    chat_service.extract_cited_company_names). Matching is done on the same
+    normalized form. If the cited set is empty we return the records unchanged
+    so the map still shows something (e.g. no-result / non-company answers).
+    """
+    if not normalized_names:
+        return records
+
+    from .chat_service import normalize_company_name
+
+    kept: List[Dict[str, Any]] = []
+    for record in records:
+        haystack = normalize_company_name(str(record.get("company") or ""))
+        if not haystack:
+            continue
+        if any(
+            needle and (needle in haystack or haystack in needle)
+            for needle in normalized_names
+        ):
+            kept.append(record)
+    return kept
+
+
 def _safe_float(value: Any) -> Optional[float]:
     if value is None:
         return None

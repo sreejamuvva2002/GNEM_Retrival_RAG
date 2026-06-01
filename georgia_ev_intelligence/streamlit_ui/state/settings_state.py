@@ -9,7 +9,7 @@ def initialize() -> None:
     session.ensure("settings__show_citations", True)
     session.ensure("settings__show_confidence", True)
     session.ensure("settings__compact_mode", False)
-    session.ensure("settings__is_dark_mode", True)
+    session.ensure("settings__is_dark_mode", False)
 
 
 def settings() -> Settings:
@@ -17,7 +17,7 @@ def settings() -> Settings:
         show_citations=bool(session.get("settings__show_citations", True)),
         show_confidence=bool(session.get("settings__show_confidence", True)),
         compact_mode=bool(session.get("settings__compact_mode", False)),
-        is_dark_mode=bool(session.get("settings__is_dark_mode", True)),
+        is_dark_mode=bool(session.get("settings__is_dark_mode", False)),
     )
 
 

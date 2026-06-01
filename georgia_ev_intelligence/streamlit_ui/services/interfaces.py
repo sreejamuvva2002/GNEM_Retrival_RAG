@@ -7,7 +7,7 @@ free of implementation details, satisfies DIP, and makes testing trivial
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Protocol
+from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
@@ -40,7 +40,9 @@ class DispatchResult:
 
 
 class IChatService(Protocol):
-    def answer(self, query: str) -> ChatResult: ...
+    def answer(
+        self, query: str, on_step: Optional[Callable[[str], None]] = None
+    ) -> ChatResult: ...
 
 
 class IMapDataService(Protocol):

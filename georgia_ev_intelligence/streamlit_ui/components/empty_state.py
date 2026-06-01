@@ -28,12 +28,3 @@ def render(on_pick) -> None:
                 use_container_width=True,
             ):
                 on_pick(question)
-
-    st.markdown(
-        """
-        <p style="text-align:center; font-size:0.7rem; color:var(--muted-fg); margin-top:1.4rem;">
-            Powered by hybrid retrieval (BM25 + pgvector) + local LLM. Responses are grounded in retrieved sources.
-        </p>
-        """,
-        unsafe_allow_html=True,
-    )

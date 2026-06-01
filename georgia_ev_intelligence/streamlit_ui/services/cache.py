@@ -122,17 +122,27 @@ def get_county_geojson() -> dict:
 
 
 @st.cache_data(show_spinner=False, ttl=1800)
-def dispatch_query_cached(query: str) -> DispatchResult:
-    """Run dispatch once per unique query (30-minute TTL)."""
+def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
+    """Run dispatch once per unique query (30-minute TTL).
+
+    `_on_step` is prefixed with an underscore so st.cache_data ignores it when
+    hashing the call. It only fires on a cache miss (a cache hit is already
+    instant, so no step UI is needed).
+    """
     dispatcher = get_query_dispatcher()
-    return dispatcher.dispatch(query)
+    return dispatcher.dispatch(query, on_step=_on_step)
+
+
+#: Markers shown on the baseline (no-query) map. Kept small so the first map
+#: paint is fast; a real query narrows the map to just the cited companies.
+BASELINE_MAP_MARKER_CAP = 60
 
 
 @st.cache_data(show_spinner=False, ttl=3600)
 def baseline_map_payload() -> tuple:
     """Map records + context for the baseline (no-query) view, cached for 1 hour."""
     result = get_map_service().locate("")
-    return list(result.records), result.context.to_dict()
+    return list(result.records)[:BASELINE_MAP_MARKER_CAP], result.context.to_dict()
 
 
 @lru_cache(maxsize=1)

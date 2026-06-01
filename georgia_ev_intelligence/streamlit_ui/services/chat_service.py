@@ -61,7 +61,13 @@ Style rules for the "answer" string follow these rules exactly.
      Then add one short sentence explaining the conclusion is based on the
      provided evidence. Do not speculate beyond the context.
 
-2. BODY (when listing matching items)
+2. BODY (when listing matching items) — REQUIRED, NOT OPTIONAL
+   - The body is mandatory whenever the question asks for a list, count, or set
+     of matching items. NEVER return only the opening line. After the opening
+     line, you MUST list every matching item, one per line.
+   - If the opening line states a count of N items, the body MUST contain
+     exactly N item lines — one for each item included in that count. A
+     response that states a count but omits the item lines is INVALID.
    - One item per line. No bullets, no numbering, no markdown tables.
    - Format each line as:
        <Company Name> [<Tier>] | <FieldLabel>: <value> | <FieldLabel>: <value>
@@ -119,6 +125,10 @@ Rules for the "used_companies" array:
      return an empty list: [].
    - Do not invent companies that are not in the retrieved context.
 
+Final check before you answer: if your "answer" states that there are N
+matching items, confirm the body lists all N of them, each on its own line. If
+it does not, add the missing item lines before returning the JSON.
+
 Generate the JSON now."""
 
 
@@ -148,18 +158,31 @@ class ChatService(IChatService):
             self._pipeline = self._retrieval_pipeline_factory()
         return self._pipeline
 
-    def answer(self, query: str) -> ChatResult:
+    def answer(self, query: str, on_step: Callable[[str], None] | None = None) -> ChatResult:
+        def _step(name: str) -> None:
+            if on_step is not None:
+                try:
+                    on_step(name)
+                except Exception:
+                    pass
+
         query = (query or "").strip()
         if not query:
             return ChatResult(answer="", parent_contexts=[], trace={}, error="Empty question.")
 
         try:
             pipeline = self._pipeline_lazy()
+            _step("retrieval")
             retrieval = pipeline.retrieve_with_sources(query)
+            # Deduplication + reranking run inside retrieve_with_sources; surface
+            # them as their own completed steps for the progress UI.
+            _step("dedup")
+            _step("rerank")
         except Exception as exc:
             return ChatResult(answer="", parent_contexts=[], trace={}, error=f"Retrieval failed: {exc}")
 
         try:
+            _step("generation")
             prompt = PROMPT_TEMPLATE.format(
                 retrieved_parent_chunks=_format_retrieved_context(retrieval.parent_contexts),
                 user_question=query,
@@ -272,6 +295,28 @@ def _filter_parent_contexts_by_companies(
         seen_keys.add(haystack)
         kept.append(parent)
     return kept
+
+
+def extract_cited_company_names(parents: List[ParentContext]) -> set:
+    """Normalized company names cited across the given parent contexts.
+
+    Used by the map view to restrict markers to only the companies the answer
+    actually drew on (the parents are already filtered to `used_companies`).
+    """
+    names: set = set()
+    for parent in parents:
+        match = _COMPANY_LINE.search(parent.parent_chunk_text or "")
+        if not match:
+            continue
+        normalized = _normalize_company(match.group(1))
+        if normalized:
+            names.add(normalized)
+    return names
+
+
+def normalize_company_name(value: str) -> str:
+    """Public wrapper around the internal normalizer (for the map filter)."""
+    return _normalize_company(value)
 
 
 def _trace_to_dict(trace) -> dict:

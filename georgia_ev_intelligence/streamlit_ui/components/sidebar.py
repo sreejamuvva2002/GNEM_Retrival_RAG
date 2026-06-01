@@ -83,8 +83,9 @@ def render() -> None:
                 if st.button("✕", key=f"sb_del_{entry.id}", use_container_width=True):
                     chat_state.remove_history_entry(entry.id)
                     st.rerun()
-            preview_text = entry.preview if len(entry.preview) <= 48 else entry.preview[:47] + "…"
-            st.caption(f"{preview_text} · {relative} · {entry.message_count} msgs")
+            # The title button already shows the question — the caption only adds
+            # metadata (no repeated question text).
+            st.caption(f"{relative} · {entry.message_count} msgs")
 
         st.markdown(
             "<p style='color: var(--muted-fg); font-size:0.7rem; text-align:center; margin-top:1.2rem;'>"

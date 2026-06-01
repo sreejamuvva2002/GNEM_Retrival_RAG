@@ -10,7 +10,7 @@ Layers in render order:
 """
 from __future__ import annotations
 
-import html
+import hashlib
 import json
 import math
 from typing import Any, Dict, List
@@ -37,6 +37,27 @@ COORDINATE_SOURCE_COLORS = {
     "missing": [185, 75, 92, 190],
     "unknown": [88, 100, 113, 185],
 }
+
+
+def _theme_colors(is_dark: bool) -> Dict[str, Any]:
+    """Marker / overlay / tooltip colors that adapt to the active theme."""
+    if is_dark:
+        return {
+            "marker_line": [231, 238, 245, 200],
+            "county_line": [231, 238, 245, 90],
+            "center_fill": [231, 238, 245, 235],
+            "center_line": [15, 23, 42, 220],
+            "tooltip_bg": "#102433",
+            "tooltip_fg": "#ffffff",
+        }
+    return {
+        "marker_line": [17, 38, 58, 190],
+        "county_line": [17, 38, 58, 120],
+        "center_fill": [15, 23, 42, 235],
+        "center_line": [255, 255, 255, 220],
+        "tooltip_bg": "#ffffff",
+        "tooltip_fg": "#102433",
+    }
 
 
 def _normalize_coordinate_source(value: Any) -> str:
@@ -76,28 +97,20 @@ def _build_radius_circle_geojson(center_lat: float, center_lon: float, radius_km
     }
 
 
-def _build_county_overlay_geojson(df: pd.DataFrame, map_context: Dict) -> Dict | None:
+@st.cache_data(show_spinner=False)
+def _build_overlay_cached(
+    counts_items: tuple, gap_names: frozenset, selected: frozenset
+) -> Dict | None:
+    """Deep-copy the base GeoJSON and paint per-county fills, cached by signature.
+
+    The 18 MB base GeoJSON is only deep-copied + recolored once per distinct
+    (counts, gap, selected) combination instead of on every rerun / tab switch.
+    """
     base = get_county_geojson()
     if not base:
         return None
 
-    counts: Dict[str, int] = {}
-    if "county" in df.columns:
-        counts = (
-            df["county"].fillna("").astype(str).str.strip().replace("", pd.NA).dropna().value_counts().to_dict()
-        )
-
-    gap_report = map_context.get("gap_report") or {}
-    gap_names = {
-        str(item.get("county") or "").strip().lower()
-        for item in (gap_report.get("gap_counties") or [])
-        if str(item.get("county") or "").strip()
-    }
-    selected = {
-        str(c or "").strip().lower().replace(" county", "")
-        for c in (map_context.get("counties") or [])
-        if str(c or "").strip()
-    }
+    counts = dict(counts_items)
     max_count = max(counts.values()) if counts else 1
 
     overlay = json.loads(json.dumps(base))
@@ -118,9 +131,29 @@ def _build_county_overlay_geojson(df: pd.DataFrame, map_context: Dict) -> Dict |
             fill = [110, 126, 142, 10]
 
         props["fill_color"] = fill
-        props["line_color"] = [17, 38, 58, 130]
         props["facility_count"] = count
     return overlay
+
+
+def _build_county_overlay_geojson(df: pd.DataFrame, map_context: Dict) -> Dict | None:
+    counts: Dict[str, int] = {}
+    if "county" in df.columns:
+        counts = (
+            df["county"].fillna("").astype(str).str.strip().replace("", pd.NA).dropna().value_counts().to_dict()
+        )
+
+    gap_report = map_context.get("gap_report") or {}
+    gap_names = frozenset(
+        str(item.get("county") or "").strip().lower()
+        for item in (gap_report.get("gap_counties") or [])
+        if str(item.get("county") or "").strip()
+    )
+    selected = frozenset(
+        str(c or "").strip().lower().replace(" county", "")
+        for c in (map_context.get("counties") or [])
+        if str(c or "").strip()
+    )
+    return _build_overlay_cached(tuple(sorted(counts.items())), gap_names, selected)
 
 
 def _build_center_and_arc_frames(df: pd.DataFrame, map_context: Dict) -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -138,7 +171,14 @@ def _build_center_and_arc_frames(df: pd.DataFrame, map_context: Dict) -> tuple[p
     arc_df = df.copy()
     arc_df["source_latitude"] = float(center_lat)
     arc_df["source_longitude"] = float(center_lon)
-    arc_df["arc_width"] = arc_df.get("map_weight", 0.5).apply(lambda v: 1 + int(float(v) * 4))
+    # df.get("map_weight", 0.5) returns the scalar 0.5 (no .apply) when the
+    # column is absent — build a real Series so .apply always works.
+    weights = (
+        arc_df["map_weight"]
+        if "map_weight" in arc_df.columns
+        else pd.Series(0.5, index=arc_df.index)
+    )
+    arc_df["arc_width"] = weights.apply(lambda v: 1 + int(float(v) * 4))
     return center_df, arc_df.head(60)
 
 
@@ -173,6 +213,26 @@ def _legend_html() -> str:
     """
 
 
+def _deck_signature(
+    records: List[Dict[str, Any]], map_context: Dict[str, Any], is_dark: bool
+) -> str:
+    """Stable hash so a tab switch with identical inputs reuses the built deck."""
+    key = json.dumps(
+        {
+            "companies": sorted(str(r.get("company")) for r in records),
+            "n": len(records),
+            "dark": is_dark,
+            "mode": map_context.get("map_mode"),
+            "center": (map_context.get("center_lat"), map_context.get("center_lon")),
+            "radius": map_context.get("radius_km"),
+            "counties": sorted(str(c) for c in (map_context.get("counties") or [])),
+        },
+        default=str,
+        sort_keys=True,
+    )
+    return hashlib.md5(key.encode("utf-8")).hexdigest()
+
+
 def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dark: bool) -> None:
     st.markdown(_legend_html(), unsafe_allow_html=True)
 
@@ -180,17 +240,36 @@ def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dar
         st.info("No mapped companies for this query.")
         return
 
+    # Reuse the previously built deck when nothing changed (instant tab switch).
+    signature = _deck_signature(records, map_context, is_dark)
+    cached = st.session_state.get("_map_deck_cache")
+    if cached and cached[0] == signature:
+        st.pydeck_chart(cached[1], use_container_width=True)
+        return
+
+    deck = _build_deck(records, map_context, is_dark)
+    if deck is None:
+        return
+    st.session_state["_map_deck_cache"] = (signature, deck)
+    st.pydeck_chart(deck, use_container_width=True)
+
+
+def _build_deck(
+    records: List[Dict[str, Any]], map_context: Dict[str, Any], is_dark: bool
+):
+    colors = _theme_colors(is_dark)
+
     df = pd.DataFrame(records).copy()
     if "latitude" not in df.columns or "longitude" not in df.columns:
         st.info("Returned company rows do not contain latitude/longitude columns.")
-        return
+        return None
 
     df["latitude"] = pd.to_numeric(df["latitude"], errors="coerce")
     df["longitude"] = pd.to_numeric(df["longitude"], errors="coerce")
     df = df.dropna(subset=["latitude", "longitude"]).copy()
     if df.empty:
         st.info("No valid coordinates available.")
-        return
+        return None
 
     if "map_weight" not in df.columns:
         df["map_weight"] = 0.6
@@ -241,7 +320,7 @@ def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dar
         data=df,
         get_position="[longitude, latitude]",
         get_fill_color="fill_color",
-        get_line_color=[17, 38, 58, 190],
+        get_line_color=colors["marker_line"],
         line_width_min_pixels=1,
         stroked=True,
         filled=True,
@@ -259,7 +338,7 @@ def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dar
             stroked=True,
             filled=True,
             get_fill_color="properties.fill_color",
-            get_line_color="properties.line_color",
+            get_line_color=colors["county_line"],
             line_width_min_pixels=2,
             pickable=False,
         ))
@@ -302,8 +381,8 @@ def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dar
             "ScatterplotLayer",
             data=center_df,
             get_position="[longitude, latitude]",
-            get_fill_color=[15, 23, 42, 235],
-            get_line_color=[255, 255, 255, 220],
+            get_fill_color=colors["center_fill"],
+            get_line_color=colors["center_line"],
             stroked=True,
             filled=True,
             line_width_min_pixels=2,
@@ -316,7 +395,7 @@ def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dar
         "html": (
             "<div style='font-family:Inter, sans-serif; min-width:220px;'>"
             "<div style='font-size:14px; font-weight:800; margin-bottom:8px;'>{tooltip_company}</div>"
-            "<div style='font-size:12px; line-height:1.6; color:#e5eef3;'>"
+            f"<div style='font-size:12px; line-height:1.6; color:{colors['tooltip_fg']};'>"
             "<b>Role:</b> {tooltip_role}<br/>"
             "<b>Product:</b> {tooltip_product}<br/>"
             "<b>Location:</b> {tooltip_location}<br/>"
@@ -325,20 +404,17 @@ def render(records: List[Dict[str, Any]], map_context: Dict[str, Any], *, is_dar
             "</div></div>"
         ),
         "style": {
-            "backgroundColor": "#102433",
-            "color": "#ffffff",
+            "backgroundColor": colors["tooltip_bg"],
+            "color": colors["tooltip_fg"],
             "borderRadius": "16px",
             "padding": "14px 16px",
-            "border": "1px solid rgba(255,255,255,0.10)",
+            "border": "1px solid rgba(127,127,127,0.18)",
         },
     }
 
-    st.pydeck_chart(
-        pdk.Deck(
-            map_style="dark_no_labels" if is_dark else "light_no_labels",
-            initial_view_state=view_state,
-            tooltip=tooltip,
-            layers=layers,
-        ),
-        use_container_width=True,
+    return pdk.Deck(
+        map_style="dark_no_labels" if is_dark else "light_no_labels",
+        initial_view_state=view_state,
+        tooltip=tooltip,
+        layers=layers,
     )

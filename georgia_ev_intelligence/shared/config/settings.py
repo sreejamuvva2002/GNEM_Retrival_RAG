@@ -79,3 +79,31 @@ B2_KEY_ID:          str = _env_optional_str("B2_KEY_ID", "")
 B2_APPLICATION_KEY: str = _env_optional_str("B2_APPLICATION_KEY", "")
 B2_BUCKET_NAME:     str = _env_optional_str("B2_BUCKET_NAME", "")
 B2_ENDPOINT_URL:    str = _env_optional_str("B2_ENDPOINT_URL", "")
+
+# ---------------------------------------------------------------------------
+# markdown_extraction pipeline (raw B2 documents → Markdown corpus)
+# All optional — safe defaults provided.
+# ---------------------------------------------------------------------------
+
+def _env_optional_list(name: str, default: str) -> list[str]:
+    """Comma-separated env var → list of stripped, non-empty strings."""
+    raw = os.environ.get(name, default)
+    return [item.strip() for item in raw.split(",") if item.strip()]
+
+
+# B2 prefixes the crawler writes raw bytes to (flat, one per file type).
+RAW_B2_PREFIXES: list[str] = _env_optional_list(
+    "RAW_B2_PREFIXES",
+    "raw-html,raw-pdf,raw-docx,raw-excel,raw-csv,raw-json,raw-xml,raw-text,raw-image",
+)
+# Where converted Markdown + manifests live (never overlap the raw prefixes).
+MARKDOWN_B2_PREFIX: str = _env_optional_str("MARKDOWN_B2_PREFIX", "processed/markdown/v1/")
+MANIFEST_B2_PREFIX: str = _env_optional_str("MANIFEST_B2_PREFIX", "manifests/")
+
+# Local mirrors (authoritative storage remains B2).
+LOCAL_RAW_CACHE: Path = ROOT / _env_optional_str("LOCAL_RAW_CACHE", "data/raw_cache/web_documents")
+LOCAL_MARKDOWN_DIR: Path = ROOT / _env_optional_str("LOCAL_MARKDOWN_DIR", "data/processed/markdown/v1")
+LOCAL_MANIFEST_DIR: Path = ROOT / _env_optional_str("LOCAL_MANIFEST_DIR", "data/manifests")
+
+EXTRACTION_VERSION: str = _env_optional_str("EXTRACTION_VERSION", "v1")
+MAX_FILE_SIZE_MB: int = _env_optional_int("MAX_FILE_SIZE_MB", 100)

@@ -26,6 +26,9 @@ ddgs>=8.0.0
 pytesseract>=0.3.10
 Pillow>=10.0.0
 
+# markdown_extraction — raw documents → Markdown corpus
+PyYAML>=6.0
+
 
 # streamlit_ui — Python Streamlit chat UI + pydeck map
 streamlit>=1.40

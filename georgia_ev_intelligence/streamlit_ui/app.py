@@ -21,19 +21,24 @@ if __package__ in {None, ""}:
 
 from georgia_ev_intelligence.streamlit_ui.components import (
     chat_messages,
-    dashboard,
     empty_state,
     header,
     map_view,
     settings_panel,
     sidebar,
     sources_panel,
-)
+)  # dashboard intentionally not imported — widget row commented out (see main()).
 from georgia_ev_intelligence.streamlit_ui.models.source import SourceViewModel
 from georgia_ev_intelligence.streamlit_ui.services.cache import (
     baseline_map_payload,
     dispatch_query_cached,
     get_xlsx_lookup,
+)
+from georgia_ev_intelligence.streamlit_ui.services.chat_service import (
+    extract_cited_company_names,
+)
+from georgia_ev_intelligence.streamlit_ui.services.map_service import (
+    filter_records_to_companies,
 )
 from georgia_ev_intelligence.streamlit_ui.state import chat_state, settings_state, ui_state
 from georgia_ev_intelligence.streamlit_ui.theming.styles import inject_styles
@@ -57,13 +62,40 @@ def _enrich_sources() -> List[SourceViewModel]:
     ]
 
 
+_STEP_SEQUENCE = [
+    ("retrieval", "Retrieving relevant sources"),
+    ("dedup", "Deduplicating results"),
+    ("rerank", "Reranking results"),
+    ("generation", "Generating the final answer"),
+]
+
+
 def _process_query(query: str) -> None:
-    """Push user message → call dispatch under a spinner → push assistant message."""
+    """Push user message → run dispatch with a 4-step status → push answer."""
     chat_state.append_message(chat_state.make_user_message(query))
 
     try:
-        with st.spinner("Searching the knowledge base and generating an answer..."):
-            dispatch = dispatch_query_cached(query)
+        with st.status("Working on your question…", expanded=True) as status:
+            labels = {key: label for key, label in _STEP_SEQUENCE}
+            placeholders = {key: st.empty() for key, _ in _STEP_SEQUENCE}
+            for key, label in _STEP_SEQUENCE:
+                placeholders[key].markdown(f"⚪ {label}")
+
+            done: list[str] = []
+
+            def _on_step(name: str) -> None:
+                # Mark every earlier step done, and the current one as running.
+                for prev in done:
+                    placeholders[prev].markdown(f"✅ {labels[prev]}")
+                if name in placeholders:
+                    placeholders[name].markdown(f"⏳ {labels[name]}")
+                    done.append(name)
+
+            dispatch = dispatch_query_cached(query, _on_step=_on_step)
+
+            for key, label in _STEP_SEQUENCE:
+                placeholders[key].markdown(f"✅ {label}")
+            status.update(label="Done", state="complete", expanded=False)
     except Exception as exc:
         st.error(f"Backend unavailable: {exc}")
         chat_state.append_message(
@@ -90,7 +122,8 @@ def _process_query(query: str) -> None:
         )
 
     chat_state.set_last_dispatch(dispatch)
-    ui_state.set_sources_panel_open(True)
+    # Sources are no longer auto-opened — the user reveals them via the
+    # "Sources" button rendered under the assistant message.
 
     msgs = chat_state.messages()
     if msgs:
@@ -124,7 +157,11 @@ def _render_map_pane(is_dark: bool) -> None:
             return
         map_view.render(records, context_dict, is_dark=is_dark)
         return
-    map_view.render(dispatch.map.records, dispatch.map.context.to_dict(), is_dark=is_dark)
+
+    # Show only the companies (and therefore counties) the answer actually cited.
+    cited = extract_cited_company_names(dispatch.chat.parent_contexts)
+    records = filter_records_to_companies(dispatch.map.records, cited)
+    map_view.render(records, dispatch.map.context.to_dict(), is_dark=is_dark)
 
 
 def _handle_submit(query: str) -> None:
@@ -148,7 +185,7 @@ def main() -> None:
     settings_panel.render()
 
     header.render()
-    dashboard.render()
+    # dashboard.render()  # Stat-card widget row commented out per request (#3).
 
     sources = _enrich_sources()
     mode = ui_state.view_mode()
