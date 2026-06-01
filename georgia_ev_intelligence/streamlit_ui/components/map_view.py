@@ -178,39 +178,25 @@ def _build_center_and_arc_frames(df: pd.DataFrame, map_context: Dict) -> tuple[p
         if "map_weight" in arc_df.columns
         else pd.Series(0.5, index=arc_df.index)
     )
-    arc_df["arc_width"] = weights.apply(lambda v: 1 + int(float(v) * 4))
+    arc_df["arc_width"] = weights.apply(lambda v: 1 + int(float(v) * 3))
     return center_df, arc_df.head(60)
 
 
 def _legend_html() -> str:
-    return """
-    <div style="display:flex; flex-wrap:wrap; gap:0.5rem; margin: 0.4rem 0 0.8rem 0;">
-        <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.6rem;
-                     border-radius:999px; background: var(--glass-bg); border:1px solid var(--glass-border);
-                     font-size:0.72rem; color:var(--muted-fg);">
-            <span style="width:9px; height:9px; border-radius:999px; background:#12897f;"></span>
-            Coordinate Workbook
-        </span>
-        <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.6rem;
-                     border-radius:999px; background: var(--glass-bg); border:1px solid var(--glass-border);
-                     font-size:0.72rem; color:var(--muted-fg);">
-            <span style="width:9px; height:9px; border-radius:999px; background:#386fa4;"></span>
-            Source Excel
-        </span>
-        <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.6rem;
-                     border-radius:999px; background: var(--glass-bg); border:1px solid var(--glass-border);
-                     font-size:0.72rem; color:var(--muted-fg);">
-            <span style="width:9px; height:9px; border-radius:999px; background:#d8902f;"></span>
-            County Centroid
-        </span>
-        <span style="display:inline-flex; align-items:center; gap:0.35rem; padding:0.3rem 0.6rem;
-                     border-radius:999px; background: var(--glass-bg); border:1px solid var(--glass-border);
-                     font-size:0.72rem; color:var(--muted-fg);">
-            <span style="width:9px; height:9px; border-radius:999px; background:#b94b5c;"></span>
-            Missing
-        </span>
-    </div>
-    """
+    # Lighter pills (hairline border, no glass fill) styled via .map-legend in
+    # theming/styles.py. The four semantic colors are unchanged.
+    items = (
+        ("#12897f", "Coordinate Workbook"),
+        ("#386fa4", "Source Excel"),
+        ("#d8902f", "County Centroid"),
+        ("#b94b5c", "Missing"),
+    )
+    pills = "".join(
+        f'<span class="map-legend__item">'
+        f'<span class="map-legend__dot" style="background:{color};"></span>{label}</span>'
+        for color, label in items
+    )
+    return f'<div class="map-legend">{pills}</div>'
 
 
 def _deck_signature(
@@ -274,7 +260,8 @@ def _build_deck(
     if "map_weight" not in df.columns:
         df["map_weight"] = 0.6
     df["map_weight"] = pd.to_numeric(df["map_weight"], errors="coerce").fillna(0.5).clip(0.05, 1.0)
-    df["radius"] = df["map_weight"].apply(lambda v: 2800.0 + float(v) * 22000.0)
+    # Smaller markers reduce clutter while keeping the relative weight encoding.
+    df["radius"] = df["map_weight"].apply(lambda v: 2200.0 + float(v) * 16000.0)
     df["heat_weight"] = df["map_weight"].apply(lambda v: 8.0 + float(v) * 88.0)
     if "coordinate_source" not in df.columns:
         df["coordinate_source"] = "unknown"
@@ -312,7 +299,7 @@ def _build_deck(
         radius_pixels=42,
         intensity=0.82,
         threshold=0.06,
-        opacity=0.42,
+        opacity=0.34,
     )
 
     scatter_layer = pdk.Layer(
@@ -371,7 +358,7 @@ def _build_deck(
             data=arc_df,
             get_source_position="[source_longitude, source_latitude]",
             get_target_position="[longitude, latitude]",
-            get_source_color=[18, 137, 127, 155],
+            get_source_color=[18, 137, 127, 110],
             get_target_color="fill_color",
             get_width="arc_width",
             pickable=False,

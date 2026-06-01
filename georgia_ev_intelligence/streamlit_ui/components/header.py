@@ -23,9 +23,9 @@ def render() -> None:
     bar_center, bar_right = st.columns([0.55, 0.45])
     with bar_center:
         view_modes = [
-            ("chat", "💬 Chat"),
-            ("split", "▥ Split"),
-            ("map", "🗺 Map"),
+            ("chat", ":material/chat: Chat"),
+            ("split", ":material/space_dashboard: Split"),
+            ("map", ":material/map: Map"),
         ]
         current = ui_state.view_mode()
         labels = [label for _, label in view_modes]
@@ -52,11 +52,12 @@ def render() -> None:
                 value=is_dark,
                 key="hdr_theme_toggle",
                 label_visibility="collapsed",
+                help="Toggle dark mode" if not is_dark else "Toggle light mode",
             )
             if toggled != is_dark:
                 settings_state.set_dark_mode(toggled)
                 st.rerun()
         with settings_col:
             # Compact icon-only button (sized via .st-key-hdr_settings CSS).
-            if st.button("⚙", key="hdr_settings", help="Settings"):
+            if st.button(":material/settings:", key="hdr_settings", help="Open settings"):
                 settings_panel.open_settings()

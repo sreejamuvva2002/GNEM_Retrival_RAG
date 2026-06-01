@@ -50,7 +50,8 @@ LIGHT_PALETTE = {
     "secondary": "#eaf0f6",
     "secondary_foreground": "#11263a",
     "muted": "#eaf0f6",
-    "muted_foreground": "#5d7187",
+    # Darkened from #5d7187 to clear WCAG AA (4.5:1) on the #f4f7f9 background.
+    "muted_foreground": "#4d6175",
     "accent": "#12897f",
     "accent_foreground": "#ffffff",
     "destructive": "#b94b5c",
@@ -76,6 +77,33 @@ LIGHT_PALETTE = {
 
 def palette(is_dark: bool) -> dict:
     return DARK_PALETTE if is_dark else LIGHT_PALETTE
+
+
+# Theme-agnostic design tokens (radius / spacing / shadow / z-index). Emitted as
+# CSS variables by theming/styles.py so component CSS stops hardcoding magic
+# numbers and stays internally consistent.
+TOKENS = {
+    # Radius scale
+    "radius_sm": "8px",
+    "radius_md": "12px",
+    "radius_lg": "16px",
+    "radius_xl": "20px",
+    "radius_pill": "9999px",
+    # Spacing scale (rem)
+    "space_1": "0.25rem",
+    "space_2": "0.5rem",
+    "space_3": "0.75rem",
+    "space_4": "1rem",
+    "space_5": "1.5rem",
+    "space_6": "2rem",
+    # Soft, consistent shadows
+    "shadow_sm": "0 1px 2px rgba(15, 23, 42, 0.06)",
+    "shadow_md": "0 8px 24px rgba(15, 23, 42, 0.10)",
+    "shadow_lg": "0 18px 36px rgba(15, 23, 42, 0.16)",
+    # Z-index layers
+    "z_header": "50",
+    "z_overlay": "100",
+}
 
 
 # Source-type colors are stable across themes (match the React palette).

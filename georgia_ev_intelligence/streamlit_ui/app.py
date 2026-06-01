@@ -196,7 +196,9 @@ def main() -> None:
         _render_map_pane(is_dark=s.is_dark_mode)
     elif mode == "split":
         if show_sources:
-            chat_col, map_col, src_col = st.columns([0.34, 0.44, 0.22])
+            # Give the chat column more room so it no longer feels sparse beside
+            # the dense map (was 0.34 / 0.44 / 0.22).
+            chat_col, map_col, src_col = st.columns([0.40, 0.40, 0.20])
         else:
             chat_col, map_col = st.columns([0.5, 0.5])
             src_col = None

@@ -52,7 +52,8 @@ class Settings:
     show_citations: bool = True
     show_confidence: bool = True
     compact_mode: bool = False
-    is_dark_mode: bool = True
+    # Light on first load — matches settings_state.initialize() so both defaults agree.
+    is_dark_mode: bool = False
 
 
 def make_message_id() -> str:

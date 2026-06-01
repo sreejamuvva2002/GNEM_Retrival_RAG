@@ -5,3 +5,7 @@
 # of leaking a dark background under the light theme.
 [theme]
 base = "light"
+# Brand blue drives Streamlit's own accents (segmented control active pill,
+# toggle, focus). Without this Streamlit falls back to its default red (#ff4b4b),
+# which is what made the active "Split" tab clash with the product color system.
+primaryColor = "#3863c4"
