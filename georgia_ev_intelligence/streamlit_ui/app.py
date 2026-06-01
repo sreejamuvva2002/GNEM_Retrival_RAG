@@ -24,10 +24,9 @@ from georgia_ev_intelligence.streamlit_ui.components import (
     empty_state,
     header,
     map_view,
-    settings_panel,
     sidebar,
     sources_panel,
-)  # dashboard intentionally not imported — widget row commented out (see main()).
+)  # dashboard not imported (widgets commented out); settings dialog opens from header.
 from georgia_ev_intelligence.streamlit_ui.models.source import SourceViewModel
 from georgia_ev_intelligence.streamlit_ui.services.cache import (
     baseline_map_payload,
@@ -182,7 +181,9 @@ def main() -> None:
     inject_styles(is_dark=s.is_dark_mode, compact=s.compact_mode)
 
     sidebar.render()
-    settings_panel.render()
+    # The settings dialog is opened on demand from the header button
+    # (settings_panel.open_settings) — no persistent render call here, which
+    # previously caused the dialog to re-open on every rerun.
 
     header.render()
     # dashboard.render()  # Stat-card widget row commented out per request (#3).

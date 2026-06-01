@@ -53,6 +53,7 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         html, body, .stApp {{
             background: var(--bg) !important;
             color: var(--fg) !important;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }}
 
         [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
@@ -443,6 +444,71 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             border: 1px solid var(--glass-border);
             padding: 3px;
             gap: 2px;
+        }}
+
+        /* ===== Header: compact settings icon button (#2) ===== */
+        .st-key-hdr_settings button {{
+            width: 40px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            padding: 0 !important;
+            border-radius: 10px !important;
+            background: var(--glass-bg) !important;
+            border: 1px solid var(--glass-border) !important;
+            color: var(--fg) !important;
+            font-size: 1.05rem !important;
+        }}
+        .st-key-hdr_settings button:hover {{ border-color: var(--primary) !important; }}
+
+        /* ===== Header: sun/moon sliding theme toggle (#3) ===== */
+        .st-key-hdr_theme_toggle {{
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+        }}
+        .st-key-hdr_theme_toggle::before {{ content: "☀"; font-size: 0.95rem; line-height: 1; }}
+        .st-key-hdr_theme_toggle::after {{ content: "🌙"; font-size: 0.9rem; line-height: 1; }}
+        .st-key-hdr_theme_toggle [data-baseweb="checkbox"] > div {{
+            transition: all 0.25s ease !important;
+        }}
+
+        /* ===== Tuck the per-message copy icon right under its bubble (#1) ===== */
+        [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{
+            gap: 0.3rem;
+        }}
+        [data-testid="stMainBlockContainer"] [data-testid="stCustomComponentV1"] {{
+            margin-top: -0.55rem !important;
+            margin-bottom: 0 !important;
+        }}
+
+        /* ===== Theme the docked bottom chrome so light mode has no dark band (#5) ===== */
+        [data-testid="stBottom"],
+        [data-testid="stBottom"] > div,
+        [data-testid="stBottomBlockContainer"] {{
+            background: var(--bg) !important;
+        }}
+
+        /* ===== ChatGPT-style bottom input pill (#7) ===== */
+        [data-testid="stChatInput"] {{
+            max-width: 760px;
+            margin: 0 auto;
+            border-radius: 9999px !important;
+            border: 1px solid var(--glass-border) !important;
+            background: var(--card) !important;
+            box-shadow: 0 6px 24px rgba(15, 23, 42, 0.12);
+            padding: 0.15rem 0.4rem 0.15rem 0.4rem;
+        }}
+        [data-testid="stChatInput"] textarea {{
+            background: transparent !important;
+            border: none !important;
+            border-radius: 9999px !important;
+        }}
+        [data-testid="stChatInput"] textarea::placeholder {{ color: var(--muted-fg) !important; }}
+        [data-testid="stChatInput"] button {{
+            background: var(--primary) !important;
+            color: var(--primary-fg) !important;
+            border-radius: 9999px !important;
         }}
         </style>
         """,

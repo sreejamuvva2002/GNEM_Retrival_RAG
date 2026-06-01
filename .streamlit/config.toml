@@ -1,0 +1,7 @@
+# Pin Streamlit's base theme to light so it does not follow the OS into dark
+# mode. The app drives its own light/dark look via injected CSS
+# (georgia_ev_intelligence/streamlit_ui/theming/styles.py); pinning the base
+# keeps docked chrome (bottom input bar, scrollbars) light by default instead
+# of leaking a dark background under the light theme.
+[theme]
+base = "light"

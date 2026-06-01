@@ -102,7 +102,7 @@ def _copy_control(text: str, align: str) -> None:
           }}
         </script>
         """,
-        height=30,
+        height=24,
     )
 
 

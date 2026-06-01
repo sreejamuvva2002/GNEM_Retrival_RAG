@@ -33,21 +33,11 @@ def render(sources: List[SourceViewModel], settings: Settings) -> None:
         st.info("Submit a question to see retrieved sources here.")
         return
 
-    total = len(sources)
     # Native fixed-height container = scrollable list. Each source shows only the
-    # company/county name; full details live behind its own expander.
+    # company/county name; expanding it reveals just the full chunk text (the old
+    # snippet was a truncated copy of this, so it duplicated the content).
     with st.container(height=420):
         for source in sources:
             name = source.title or source.record_id or "Source"
             with st.expander(name):
-                st.markdown(f"**Rank:** #{source.rank} of {total}")
-                st.markdown(f"**Record ID:** `{source.record_id}`")
-                if source.location_name:
-                    st.markdown(f"**Location:** 📍 {source.location_name}")
-                if settings.show_confidence:
-                    pct = int(round(source.rank_score * 100))
-                    st.markdown(f"**Position score:** {pct}%")
-                if source.snippet:
-                    st.markdown(f"**Snippet:** {source.snippet}")
-                st.markdown("**Full chunk text:**")
                 st.code(source.parent_chunk_text or "(empty)", language=None)

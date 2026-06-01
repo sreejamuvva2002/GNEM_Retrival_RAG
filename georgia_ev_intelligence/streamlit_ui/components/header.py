@@ -4,6 +4,7 @@ from __future__ import annotations
 import streamlit as st
 
 from ..state import settings_state, ui_state
+from . import settings_panel
 
 
 def render() -> None:
@@ -41,22 +42,21 @@ def render() -> None:
             chosen = labels[index]
         ui_state.set_view_mode(keys[labels.index(chosen)])
     with bar_right:
-        _spacer, theme_col, settings_col = st.columns([0.6, 0.25, 0.15])
+        _spacer, theme_col, settings_col = st.columns([0.62, 0.23, 0.15])
         with theme_col:
-            # Icon-only sun/moon switch — no text label.
+            # Sliding sun/moon switch (sun/moon icons drawn on the track via CSS
+            # scoped to .st-key-hdr_theme_toggle). ON = dark mode.
             is_dark = settings_state.settings().is_dark_mode
-            current_icon = "🌙" if is_dark else "☀"
-            picked = st.segmented_control(
+            toggled = st.toggle(
                 "Theme",
-                options=["☀", "🌙"],
-                default=current_icon,
-                key="hdr_theme_switch",
+                value=is_dark,
+                key="hdr_theme_toggle",
                 label_visibility="collapsed",
             )
-            if picked is not None and (picked == "🌙") != is_dark:
-                settings_state.set_dark_mode(picked == "🌙")
+            if toggled != is_dark:
+                settings_state.set_dark_mode(toggled)
                 st.rerun()
         with settings_col:
-            if st.button("⚙", key="hdr_settings", use_container_width=True, help="Settings"):
-                ui_state.set_settings_open(True)
-                st.rerun()
+            # Compact icon-only button (sized via .st-key-hdr_settings CSS).
+            if st.button("⚙", key="hdr_settings", help="Settings"):
+                settings_panel.open_settings()
