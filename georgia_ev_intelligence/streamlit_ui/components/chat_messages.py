@@ -28,10 +28,10 @@ def _user_row(message: Message) -> str:
     # as literal text in st.markdown(unsafe_allow_html=True).
     safe = html.escape(message.content).replace("\n", "<br>")
     timestamp = _format_time(message.timestamp)
+    # No avatars — matches chat-interface-with-map (bubble is simply right-aligned).
     return (
         '<div class="chat-row chat-row--user">'
-        '<span class="chat-avatar chat-avatar--user">U</span>'
-        '<div>'
+        '<div class="chat-col">'
         f'<div class="chat-bubble chat-bubble--user">{safe}</div>'
         f'<div class="chat-meta" style="text-align:right;">{timestamp}</div>'
         '</div>'
@@ -44,8 +44,7 @@ def _assistant_row(message: Message) -> str:
     timestamp = _format_time(message.timestamp)
     return (
         '<div class="chat-row">'
-        '<span class="chat-avatar chat-avatar--assistant">●</span>'
-        '<div>'
+        '<div class="chat-col">'
         f'<div class="chat-bubble chat-bubble--assistant">{rendered}</div>'
         f'<div class="chat-meta">{timestamp}</div>'
         '</div>'
@@ -123,7 +122,7 @@ def render(messages: List[Message], sources: List[SourceViewModel]) -> None:
     if last.role == "assistant" and sources:
         count = len(sources)
         open_now = ui_state.sources_panel_open()
-        label = "📚 Hide sources" if open_now else f"📚 Sources ({count})"
+        label = "Hide Sources" if open_now else f"View Sources ({count})"
         if st.button(label, key="chat_sources_toggle"):
             ui_state.toggle_sources_panel()
             st.rerun()

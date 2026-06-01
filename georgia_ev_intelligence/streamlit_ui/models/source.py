@@ -13,6 +13,19 @@ from typing import Any, Dict, Optional
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
 
+def _clean(value: Any) -> Optional[str]:
+    """Normalize a workbook cell to a trimmed string, or None if blank/NaN."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    if not text or text.lower() == "nan":
+        return None
+    # Integer-like floats (e.g. employment 100.0) read better without the .0
+    if text.endswith(".0") and text[:-2].isdigit():
+        return text[:-2]
+    return text
+
+
 SOURCE_TYPE_CATEGORY_HINTS: Dict[str, str] = {
     "OEM": "company",
     "Tier 1": "supply_chain",
@@ -41,6 +54,18 @@ class SourceViewModel:
     parent_chunk_text: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
+    # Extra workbook fields surfaced in the React-style sources grid.
+    category: Optional[str] = None
+    industry_group: Optional[str] = None
+    location: Optional[str] = None
+    address: Optional[str] = None
+    facility_type: Optional[str] = None
+    ev_supply_chain_role: Optional[str] = None
+    primary_oems: Optional[str] = None
+    supplier_type: Optional[str] = None
+    employment: Optional[str] = None
+    product_service: Optional[str] = None
+    ev_battery_relevant: Optional[str] = None
 
     @classmethod
     def from_parent_context(
@@ -60,6 +85,7 @@ class SourceViewModel:
         is_kb = (parent.record_id or "").startswith("KB_ROW_")
         row = (xlsx_lookup or {}).get(int(parent.source_row_id)) if is_kb else None
 
+        extra: Dict[str, Any] = {}
         if row is None:
             title = parent.record_id or "Source"
             source_type = "unknown" if is_kb else "web"
@@ -75,6 +101,19 @@ class SourceViewModel:
             )
             latitude = row.get("latitude")
             longitude = row.get("longitude")
+            extra = {
+                "category": _clean(row.get("category")),
+                "industry_group": _clean(row.get("industry_group")),
+                "location": _clean(row.get("location")),
+                "address": _clean(row.get("address")),
+                "facility_type": _clean(row.get("facility_type")),
+                "ev_supply_chain_role": _clean(row.get("ev_supply_chain_role")),
+                "primary_oems": _clean(row.get("primary_oems")),
+                "supplier_type": _clean(row.get("supplier_type")),
+                "employment": _clean(row.get("employment")),
+                "product_service": _clean(row.get("product_service")),
+                "ev_battery_relevant": _clean(row.get("ev_battery_relevant")),
+            }
 
         rank_score = 0.0 if total <= 0 else max(0.0, 1.0 - (rank - 1) / total)
         return cls(
@@ -90,4 +129,5 @@ class SourceViewModel:
             parent_chunk_text=parent.parent_chunk_text or "",
             latitude=latitude,
             longitude=longitude,
+            **extra,
         )

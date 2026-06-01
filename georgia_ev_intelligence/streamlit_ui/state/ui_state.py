@@ -16,6 +16,20 @@ def initialize() -> None:
     session.ensure("settings_open", False)
     session.ensure("view_mode", VIEW_MODE_CHAT)
     session.ensure("selected_source_id", None)
+    session.ensure("pending_query", None)
+
+
+def pending_query() -> str | None:
+    """The query awaiting dispatch (user bubble already shown, answer pending)."""
+    return session.get("pending_query")
+
+
+def set_pending_query(value: str) -> None:
+    session.set("pending_query", value)
+
+
+def clear_pending_query() -> None:
+    session.set("pending_query", None)
 
 
 def sources_panel_open() -> bool:

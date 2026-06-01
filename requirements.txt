@@ -30,8 +30,10 @@ Pillow>=10.0.0
 PyYAML>=6.0
 
 
-# streamlit_ui — Python Streamlit chat UI + pydeck map
+# streamlit_ui — Python Streamlit chat UI + folium/Leaflet map
 streamlit>=1.40
+folium>=0.17
+streamlit-folium>=0.21
 pydeck>=0.9
 duckdb>=1.0
 geopy>=2.4

@@ -73,6 +73,9 @@ def get_xlsx_lookup() -> Dict[int, Dict[str, Any]]:
         "longitude": "longitude",
         "ev_supply_chain_role": "ev_supply_chain_role",
         "primary_oems": "primary_oems",
+        "supplier_or_affiliation_type": "supplier_type",
+        "employment": "employment",
+        "primary_facility_type": "facility_type",
         "product___service": "product_service",
         "ev___battery_relevant": "ev_battery_relevant",
     }
@@ -82,13 +85,20 @@ def get_xlsx_lookup() -> Dict[int, Dict[str, Any]]:
         lookup[int(row_index)] = {
             "company": row.get("company"),
             "category": row.get("category"),
+            "industry_group": row.get("industry_group"),
             "location": row.get("location"),
             "city": _city_from_location(row.get("location")),
             "county": _county_from_location(row.get("location")),
+            "address": row.get("address"),
             "latitude": row.get("latitude"),
             "longitude": row.get("longitude"),
+            "facility_type": row.get("facility_type"),
             "ev_supply_chain_role": row.get("ev_supply_chain_role"),
+            "primary_oems": row.get("primary_oems"),
+            "supplier_type": row.get("supplier_type"),
+            "employment": row.get("employment"),
             "product_service": row.get("product_service"),
+            "ev_battery_relevant": row.get("ev_battery_relevant"),
         }
     return lookup
 
@@ -121,13 +131,16 @@ def get_county_geojson() -> dict:
         return json.load(fh)
 
 
-@st.cache_data(show_spinner=False, ttl=1800)
 def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
-    """Run dispatch once per unique query (30-minute TTL).
+    """Run dispatch for one query, emitting live step events via `_on_step`.
 
-    `_on_step` is prefixed with an underscore so st.cache_data ignores it when
-    hashing the call. It only fires on a cache miss (a cache hit is already
-    instant, so no step UI is needed).
+    NOT cached: `_on_step` writes to a Streamlit layout block (the loading-card
+    placeholder) created by the caller, which is illegal inside an
+    `@st.cache_resource`/`cache_data` function ("a streamlit element is called
+    on some layout block created outside the function"). Caching would also skip
+    the step animation on a hit. The heavy state (models, pipeline, spatial
+    engine) is still cached in `get_query_dispatcher`, and the pending-query flow
+    calls this exactly once per question, so nothing is recomputed on rerun.
     """
     dispatcher = get_query_dispatcher()
     return dispatcher.dispatch(query, on_step=_on_step)

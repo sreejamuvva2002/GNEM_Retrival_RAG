@@ -15,11 +15,10 @@ import streamlit as st
 from .colors import TOKENS, palette
 
 
-def inject_styles(is_dark: bool, compact: bool = False) -> None:
-    p = palette(is_dark)
+def inject_styles(is_dark: bool = False, compact: bool = False) -> None:
+    p = palette(False)
     t = TOKENS
-    body_padding = "0.2rem 0.6rem" if compact else "0.4rem 1rem"
-    chat_font_size = "0.88rem" if compact else "0.95rem"
+    chat_font_size = "0.95rem"
 
     st.markdown(
         f"""
@@ -54,6 +53,13 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             --warning: {p['warning']};
             --destructive: {p['destructive']};
 
+            /* Loading-card accents (React from-blue-500 to-indigo-600) */
+            --accent-blue: {p['accent_blue']};
+            --accent-indigo: {p['accent_indigo']};
+            --accent-blue-light: {p['accent_blue_light']};
+            --accent-emerald: {p['accent_emerald']};
+            --loading-track: {p['loading_track']};
+
             /* ===== Design tokens ===== */
             --radius-sm: {t['radius_sm']};
             --radius-md: {t['radius_md']};
@@ -74,9 +80,22 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         }}
 
         html, body, .stApp {{
-            background: var(--bg) !important;
             color: var(--fg) !important;
             transition: background-color 0.3s ease, color 0.3s ease;
+        }}
+
+        /* Chat-panel background stack (React chat-panel.tsx): base slate→white
+           gradient + two radial tints + a faint dot grid. Applied app-wide; the
+           map iframe covers the right half so the gradient reads as the chat bg. */
+        .stApp {{
+            background-color: #f1f5f9 !important;
+            background-image:
+                radial-gradient(ellipse at top right, rgba(239, 246, 255, 0.4), transparent 60%),
+                radial-gradient(ellipse at bottom left, rgba(238, 242, 255, 0.3), transparent 60%),
+                radial-gradient(circle at 1px 1px, rgba(203, 213, 225, 0.4) 1px, transparent 0),
+                linear-gradient(to bottom right, #f1f5f9, #f8fafc 50%, #ffffff) !important;
+            background-size: 100% 100%, 100% 100%, 24px 24px, 100% 100% !important;
+            background-attachment: fixed !important;
         }}
 
         [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
@@ -84,7 +103,7 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         }}
 
         [data-testid="stMainBlockContainer"] {{
-            padding: {body_padding} !important;
+            padding: 0.75rem 1.25rem !important;
             max-width: 100% !important;
         }}
 
@@ -92,11 +111,8 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         a:focus-visible,
         button:focus-visible,
         input:focus-visible,
-        textarea:focus-visible,
         select:focus-visible,
-        [role="button"]:focus-visible,
-        [data-testid="stSegmentedControl"] button:focus-visible,
-        [data-testid="stChatInput"] textarea:focus-visible {{
+        [role="button"]:focus-visible {{
             outline: 2px solid var(--primary) !important;
             outline-offset: 2px !important;
             border-radius: var(--radius-sm);
@@ -113,24 +129,7 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         }}
 
         [data-testid="stSidebar"] {{
-            background: var(--sidebar) !important;
-            border-right: 1px solid var(--sidebar-border);
-        }}
-
-        /* Color sidebar *text* with --fg, but do NOT blanket-override every
-           descendant — that would force button labels to --fg and wreck the
-           contrast on the active (primary) history button. */
-        [data-testid="stSidebar"] p,
-        [data-testid="stSidebar"] label,
-        [data-testid="stSidebar"] strong,
-        [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
-        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {{
-            color: var(--fg) !important;
-        }}
-        /* Primary (active) sidebar button keeps readable on-primary text. */
-        [data-testid="stSidebar"] button[kind="primary"],
-        [data-testid="stSidebar"] button[kind="primary"] * {{
-            color: var(--primary-fg) !important;
+            display: none !important;
         }}
 
         /* Apply Inter only to text containers. Including span/div forces
@@ -141,69 +140,92 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             font-family: 'Inter', 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif !important;
         }}
 
-        /* ===== Header bar ===== */
-        .gnem-header {{
-            position: sticky;
-            top: 0;
-            z-index: var(--z-header);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: var(--space-3);
-            padding: var(--space-3) var(--space-4);
-            background: var(--glass-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid var(--glass-border);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
-            margin-bottom: var(--space-3);
-        }}
+        /* ===== Header / GNEM badge =====
+           The full glass header bar is gone — only the small blue GNEM pill
+           remains. The wrapper just provides a top anchor and a positioning
+           context for the hover tooltip. */
+        .gnem-header,
         .gnem-header__brand {{
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            padding: 0 !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+        }}
+        /* ===== Chat-panel header (badge + title + subtitle) ===== */
+        .chat-header {{
             display: flex;
             align-items: center;
-            gap: 0.6rem;
+            gap: 1rem;
+            padding: 0.55rem 0.25rem 0.85rem 0.25rem;
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }}
+        .chat-header__title {{
+            font-weight: 600;
+            font-size: 1rem;
+            color: #1e293b;
+            line-height: 1.2;
+        }}
+        .chat-header__subtitle {{
+            font-size: 0.75rem;
+            color: var(--muted-fg);
+            margin-top: 1px;
         }}
         .gnem-logo {{
-            min-width: 64px;
-            height: 30px;
-            padding: 0 0.6rem;
+            min-width: 56px;
+            height: 34px;
+            padding: 0 0.75rem;
             border-radius: var(--radius-sm);
-            background: var(--primary);
-            color: var(--primary-fg);
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #ffffff;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
+            font-weight: 700;
             font-size: 0.8rem;
-            letter-spacing: 0.06em;
-            box-shadow: var(--shadow-sm);
+            letter-spacing: 0.04em;
+            box-shadow: 0 4px 6px -1px rgba(148, 163, 184, 0.5);
+        }}
+        /* Hover tooltip for the GNEM badge — uses a sibling <span> because
+           Streamlit's HTML sanitizer strips custom data-* attributes (so
+           `content: attr(data-tooltip)` resolved to empty). */
+        .gnem-logo-wrap {{
+            position: relative;
+            display: inline-flex;
+            outline: none;
+        }}
+        .gnem-tooltip {{
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            padding: 0.4rem 0.7rem;
+            border-radius: var(--radius-md);
+            background: var(--fg);
+            color: var(--bg);
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.01em;
+            white-space: nowrap;
+            box-shadow: var(--shadow-md);
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(-4px);
+            transition: opacity 160ms ease, transform 160ms ease;
+            z-index: var(--z-overlay);
+        }}
+        .gnem-logo-wrap:hover .gnem-tooltip,
+        .gnem-logo-wrap:focus-within .gnem-tooltip,
+        .gnem-logo-wrap:focus-visible .gnem-tooltip {{
+            opacity: 1;
+            transform: translateY(0);
         }}
         .gnem-header__title {{
             font-weight: 700;
             font-size: 0.92rem;
             color: var(--fg);
             letter-spacing: -0.01em;
-        }}
-
-        /* ===== Mode tabs (st.segmented_control) ===== */
-        /* primaryColor in config.toml already paints the active pill brand-blue;
-           here we add hover/spacing polish and a non-color active cue (weight). */
-        [data-testid="stSegmentedControl"] {{
-            display: flex;
-            justify-content: center;
-        }}
-        [data-testid="stSegmentedControl"] button {{
-            border-radius: var(--radius-md) !important;
-            font-weight: 600 !important;
-            transition: background 140ms ease, color 140ms ease, border-color 140ms ease;
-        }}
-        [data-testid="stSegmentedControl"] button:hover {{
-            border-color: var(--primary) !important;
-        }}
-        [data-testid="stSegmentedControl"] button[aria-checked="true"],
-        [data-testid="stSegmentedControl"] button[kind="primary"] {{
-            font-weight: 700 !important;
         }}
 
         /* ===== Glass cards ===== */
@@ -223,14 +245,25 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         }}
 
         /* ===== Chat bubbles ===== */
+        @keyframes fadeInUp {{
+            from {{ opacity: 0; transform: translateY(10px); }}
+            to {{ opacity: 1; transform: translateY(0); }}
+        }}
         .chat-row {{
             display: flex;
             gap: 0.7rem;
-            margin-bottom: 0.9rem;
+            margin-bottom: 1.25rem;
+            animation: fadeInUp 0.4s ease both;
         }}
         .chat-row--user {{
-            flex-direction: row-reverse;
+            justify-content: flex-end;
         }}
+        .chat-col {{
+            display: flex;
+            flex-direction: column;
+            max-width: 85%;
+        }}
+        .chat-row--user .chat-col {{ align-items: flex-end; }}
         .chat-avatar {{
             width: 32px;
             height: 32px;
@@ -251,23 +284,23 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             color: var(--primary);
         }}
         .chat-bubble {{
-            padding: 0.7rem 0.95rem;
+            padding: 0.9rem 1.15rem;
             border-radius: var(--radius-lg);
-            max-width: 78%;
             font-size: {chat_font_size};
             line-height: 1.65;
             color: var(--fg);
             overflow-wrap: anywhere;
         }}
         .chat-bubble--user {{
-            background: var(--user-bubble);
-            color: var(--user-bubble-text);
-            border-top-right-radius: 4px;
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: #ffffff;
+            box-shadow: 0 10px 15px -3px rgba(148, 163, 184, 0.3);
         }}
         .chat-bubble--assistant {{
-            background: var(--assistant-bubble);
-            border: 1px solid var(--glass-border);
-            border-top-left-radius: 4px;
+            background: #ffffff;
+            color: #334155;
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(226, 232, 240, 0.5);
         }}
         .chat-bubble p {{ margin: 0 0 0.45rem 0; }}
         .chat-bubble ul, .chat-bubble ol {{ margin: 0.2rem 0 0.5rem 1.1rem; padding: 0; }}
@@ -299,39 +332,42 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
         /* ===== Empty state ===== */
         .empty-shell {{
             text-align: center;
-            padding: 1.4rem 1rem 0;
+            padding: 4rem 1rem 0;
             max-width: 760px;
             margin: 0 auto;
         }}
         .empty-logo {{
             width: 64px;
             height: 64px;
-            border-radius: var(--radius-xl);
-            background: var(--citation-bg);
-            color: var(--primary);
+            border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: #94a3b8;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.7rem;
+            box-shadow: inset 0 2px 4px 0 rgba(15, 23, 42, 0.06);
         }}
-        .empty-logo [data-testid="stIconMaterial"] {{ font-size: 2rem; }}
         .empty-title {{
-            margin-top: 1.1rem;
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: var(--fg);
-            letter-spacing: -0.02em;
+            margin-top: 1.25rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #334155;
+            letter-spacing: -0.01em;
         }}
         .empty-subtitle {{
             margin-top: 0.5rem;
-            font-size: 0.98rem;
-            line-height: 1.55;
-            color: var(--muted-fg);
+            margin-bottom: 0.9rem;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #64748b;
+            max-width: 24rem;
+            margin-left: auto;
+            margin-right: auto;
         }}
 
         /* ===== Suggested-question cards (rendered as st.button, key=suggest_*) ===== */
         [class*="st-key-suggest_"] {{
-            margin-top: 0.4rem;
+            margin-top: 0.25rem;
         }}
         [class*="st-key-suggest_"] button {{
             min-height: 58px !important;
@@ -376,6 +412,18 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             font-size: 0.75rem;
             color: var(--muted-fg);
         }}
+
+        /* ===== Sources field grid (inside each expander) ===== */
+        .source-grid {{
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }}
+        .source-field {{ display: flex; flex-direction: column; min-width: 0; }}
+        .source-field--full {{ grid-column: span 2; }}
+        .source-field__label {{ color: var(--muted-fg); font-size: 0.75rem; }}
+        .source-field__value {{ color: var(--fg); overflow-wrap: anywhere; }}
 
         .source-card {{
             background: var(--glass-bg);
@@ -422,39 +470,70 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             margin-top: 0.2rem;
         }}
 
-        /* ===== Searching indicator ===== */
-        .search-step {{
+        /* ===== Loading card (replica of loading-steps.tsx) ===== */
+        @keyframes lcBounce {{
+            0%, 100% {{ transform: translateY(-25%); animation-timing-function: cubic-bezier(0.8,0,1,1); }}
+            50% {{ transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }}
+        }}
+        @keyframes lcPulse {{
+            0%, 100% {{ opacity: 0.6; }}
+            50% {{ opacity: 0.2; }}
+        }}
+        .lc-wrap {{ display: flex; justify-content: flex-start; margin-bottom: 1.25rem; }}
+        .lc-card {{
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-lg);
+            box-shadow: 0 10px 15px -3px rgba(226, 232, 240, 0.5);
+            overflow: hidden;
+            width: 100%;
+            max-width: 24rem;
+            animation: fadeInUp 0.3s ease both;
+        }}
+        .lc-body {{ display: flex; align-items: center; gap: 1rem; padding: 1.25rem; }}
+        .lc-iconwrap {{ position: relative; flex-shrink: 0; }}
+        .lc-icon {{
+            width: 3rem;
+            height: 3rem;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #3b82f6, #4f46e5);
             display: flex;
             align-items: center;
-            gap: 0.6rem;
-            padding: 0.6rem 0.8rem;
-            border-radius: var(--radius-md);
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            margin-bottom: 0.5rem;
+            justify-content: center;
+            box-shadow: 0 10px 15px -3px #bfdbfe;
         }}
-        .search-step__spinner {{
-            width: 18px;
-            height: 18px;
-            border-radius: var(--radius-pill);
-            border: 2px solid var(--muted);
-            border-top-color: var(--primary);
-            animation: spin 0.8s linear infinite;
+        .lc-ring {{
+            position: absolute;
+            inset: -4px;
+            border-radius: 14px;
+            border: 2px solid #93c5fd;
+            animation: lcPulse 2s cubic-bezier(0.4,0,0.6,1) infinite;
         }}
-        @keyframes spin {{ 0% {{ transform: rotate(0deg); }} 100% {{ transform: rotate(360deg); }} }}
-        .search-step__label {{ font-size: 0.85rem; font-weight: 600; color: var(--fg); }}
-        .search-progress {{
-            display: flex;
-            gap: 0.25rem;
-            margin-top: 0.45rem;
+        .lc-text {{ flex: 1; min-width: 0; }}
+        .lc-label {{ font-size: 0.875rem; font-weight: 600; color: #1e293b; margin: 0; }}
+        .lc-desc {{ font-size: 0.75rem; color: #64748b; margin: 0.125rem 0 0 0; }}
+        .lc-dots {{ display: flex; gap: 0.25rem; align-items: center; }}
+        .lc-dot {{
+            width: 6px;
+            height: 6px;
+            background: #3b82f6;
+            border-radius: 9999px;
+            animation: lcBounce 1s infinite;
         }}
-        .search-progress__cell {{
-            flex: 1;
-            height: 4px;
-            border-radius: 2px;
-            background: var(--muted);
+        .lc-footer {{ padding: 0 1.25rem 1rem 1.25rem; }}
+        .lc-stepdots {{ display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; }}
+        .lc-stepdot {{ width: 8px; height: 8px; border-radius: 9999px; transition: all 0.3s ease; }}
+        .lc-stepdot--done {{ background: #10b981; }}
+        .lc-stepdot--current {{ background: #3b82f6; width: 24px; }}
+        .lc-stepdot--pending {{ background: #e2e8f0; }}
+        .lc-track {{ height: 4px; background: #f1f5f9; border-radius: 9999px; overflow: hidden; }}
+        .lc-fill {{
+            height: 100%;
+            border-radius: 9999px;
+            background: linear-gradient(to right, #3b82f6, #6366f1);
+            transition: width 0.5s ease-out;
         }}
-        .search-progress__cell--active {{ background: var(--primary); }}
+        .lc-count {{ font-size: 11px; color: #94a3b8; text-align: center; margin: 0.5rem 0 0 0; }}
 
         /* ===== Dashboard widgets ===== */
         .widget-card {{
@@ -489,83 +568,6 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             font-weight: 600;
         }}
 
-        /* ===== Sidebar header + new-chat + history ===== */
-        .sidebar-heading {{
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-bottom: 0.6rem;
-        }}
-        .sidebar-heading__badge {{
-            width: 32px;
-            height: 32px;
-            border-radius: var(--radius-sm);
-            background: var(--primary);
-            color: var(--primary-fg);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-        }}
-        .sidebar-heading__label {{ font-size: 0.95rem; font-weight: 800; }}
-        .sidebar-empty {{
-            color: var(--muted-fg);
-            font-size: 0.8rem;
-            text-align: center;
-            margin-top: 2.4rem;
-        }}
-        .sidebar-footer {{
-            color: var(--muted-fg);
-            font-size: 0.7rem;
-            text-align: center;
-            margin-top: 1.4rem;
-            letter-spacing: 0.02em;
-        }}
-        /* New Chat button — intentional primary-tinted treatment */
-        .st-key-sb_new_chat button {{
-            border-radius: var(--radius-md) !important;
-            font-weight: 700 !important;
-            border: 1px solid var(--primary) !important;
-            color: var(--primary) !important;
-            background: var(--citation-bg) !important;
-            transition: background 140ms ease, transform 140ms ease;
-        }}
-        .st-key-sb_new_chat button:hover {{
-            background: var(--primary) !important;
-            color: var(--primary-fg) !important;
-        }}
-        /* History item buttons — consistent radius + active cue */
-        [class*="st-key-sb_open_"] button {{
-            border-radius: var(--radius-md) !important;
-            justify-content: flex-start !important;
-            text-align: left !important;
-            font-weight: 600 !important;
-        }}
-        [class*="st-key-sb_del_"] button {{
-            border-radius: var(--radius-md) !important;
-            color: var(--muted-fg) !important;
-        }}
-        [class*="st-key-sb_del_"] button:hover {{
-            color: var(--destructive) !important;
-            border-color: var(--destructive) !important;
-        }}
-
-        .history-item {{
-            padding: 0.5rem 0.6rem;
-            border-radius: var(--radius-md);
-            border: 1px solid transparent;
-            transition: background 140ms ease, border-color 140ms ease;
-            margin-bottom: 0.3rem;
-        }}
-        .history-item:hover {{ background: var(--sidebar-accent); border-color: var(--sidebar-border); }}
-        .history-item--active {{
-            background: var(--citation-bg);
-            border-color: var(--primary);
-        }}
-        .history-item__title {{ font-size: 0.82rem; font-weight: 700; color: var(--fg); margin: 0; }}
-        .history-item__preview {{ font-size: 0.7rem; color: var(--muted-fg); margin: 0.1rem 0 0 0; }}
-        .history-item__meta {{ font-size: 0.66rem; color: var(--muted-fg); margin-top: 0.1rem; }}
-
         /* ===== Buttons ===== */
         .stButton > button {{
             border-radius: var(--radius-md);
@@ -581,6 +583,24 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             background: var(--glass-bg) !important;
             color: var(--fg) !important;
             border: 1px solid var(--glass-border) !important;
+        }}
+
+        /* "View Sources (n)" — React outline button under the assistant bubble */
+        [class*="st-key-chat_sources_toggle"] button {{
+            width: auto !important;
+            background: #f8fafc !important;
+            border: 1px solid #e2e8f0 !important;
+            color: #475569 !important;
+            font-size: 0.75rem !important;
+            font-weight: 500 !important;
+            border-radius: var(--radius-sm) !important;
+            padding: 0.4rem 0.8rem !important;
+            min-height: 0 !important;
+        }}
+        [class*="st-key-chat_sources_toggle"] button:hover {{
+            background: #f1f5f9 !important;
+            border-color: #cbd5e1 !important;
+            color: #0f172a !important;
         }}
 
         /* ===== Text inputs ===== */
@@ -618,34 +638,7 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             flex-shrink: 0;
         }}
 
-        /* ===== Header: compact settings icon button (#2) ===== */
-        .st-key-hdr_settings button {{
-            width: 40px !important;
-            height: 40px !important;
-            min-height: 40px !important;
-            padding: 0 !important;
-            border-radius: var(--radius-md) !important;
-            background: var(--glass-bg) !important;
-            border: 1px solid var(--glass-border) !important;
-            color: var(--fg) !important;
-            font-size: 1.05rem !important;
-        }}
-        .st-key-hdr_settings button:hover {{ border-color: var(--primary) !important; }}
-
-        /* ===== Header: sun/moon sliding theme toggle (#3) ===== */
-        .st-key-hdr_theme_toggle {{
-            display: flex !important;
-            align-items: center;
-            justify-content: center;
-            gap: 0.4rem;
-        }}
-        .st-key-hdr_theme_toggle::before {{ content: "☀"; font-size: 0.95rem; line-height: 1; }}
-        .st-key-hdr_theme_toggle::after {{ content: "🌙"; font-size: 0.9rem; line-height: 1; }}
-        .st-key-hdr_theme_toggle [data-baseweb="checkbox"] > div {{
-            transition: all 0.25s ease !important;
-        }}
-
-        /* ===== Tuck the per-message copy icon right under its bubble (#1) ===== */
+        /* ===== Tuck the per-message copy icon right under its bubble ===== */
         [data-testid="stMainBlockContainer"] [data-testid="stVerticalBlock"] {{
             gap: 0.3rem;
         }}
@@ -654,50 +647,61 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             margin-bottom: 0 !important;
         }}
 
-        /* ===== Theme the docked bottom chrome so light mode has no dark band (#5) ===== */
-        [data-testid="stBottom"],
-        [data-testid="stBottom"] > div,
-        [data-testid="stBottomBlockContainer"] {{
-            background: var(--bg) !important;
-            padding-bottom: env(safe-area-inset-bottom, 0px);
+        /* ===== Inline search bar (lives at the bottom of the left chat column) =====
+           A top border + padding mimics React's `border-t … bg-white/80` input
+           area. The input itself is white with a slate focus ring; the send
+           button is the dark slate gradient. */
+        .st-key-chat_input {{
+            border-top: 1px solid var(--border);
+            padding-top: 0.75rem;
+            margin-top: 0.25rem;
         }}
-
-        /* ===== ChatGPT-style bottom input pill (#7) ===== */
         [data-testid="stChatInput"] {{
-            max-width: 820px;
-            margin: 0 auto;
-            border-radius: var(--radius-pill) !important;
-            border: 1px solid var(--glass-border) !important;
-            background: var(--card) !important;
-            box-shadow: var(--shadow-md);
-            padding: 0.15rem 0.4rem 0.15rem 0.4rem;
+            max-width: 100%;
+            margin: 0;
+            border-radius: var(--radius-md) !important;
+            border: 1px solid var(--border) !important;
+            background: #ffffff !important;
+            box-shadow: var(--shadow-sm) !important;
+            padding: 0.1rem 0.3rem;
             transition: border-color 140ms ease, box-shadow 140ms ease;
         }}
         [data-testid="stChatInput"]:focus-within {{
-            border-color: var(--primary) !important;
-            box-shadow: 0 0 0 3px var(--citation-bg);
+            border-color: #94a3b8 !important;
         }}
         [data-testid="stChatInput"] textarea {{
             background: transparent !important;
             border: none !important;
-            border-radius: var(--radius-pill) !important;
+            border-radius: var(--radius-md) !important;
+            outline: none !important;
         }}
         [data-testid="stChatInput"] textarea::placeholder {{ color: var(--muted-fg) !important; }}
         [data-testid="stChatInput"] button {{
-            background: var(--primary) !important;
-            color: var(--primary-fg) !important;
-            border-radius: var(--radius-pill) !important;
-            min-width: 40px;
-            min-height: 40px;
+            background: linear-gradient(135deg, #1e293b, #0f172a) !important;
+            color: #ffffff !important;
+            border-radius: var(--radius-md) !important;
+            min-width: 44px;
+            min-height: 44px;
+            box-shadow: 0 4px 6px -1px rgba(148, 163, 184, 0.5);
         }}
         [data-testid="stChatInput"] button:disabled {{
             opacity: 0.5;
             cursor: not-allowed;
         }}
 
+        /* ===== Map (folium) =====
+           Height is owned by resizable_split.render() (JS), which sizes the
+           iframe + its ancestor chain to fill the column (or 50% when the
+           sources panel is open) and re-tiles Leaflet. We only ensure it can't
+           collapse before the script runs. */
+        .st-key-gnem_map iframe {{
+            width: 100% !important;
+            min-height: 360px;
+        }}
+
         /* ===== Responsive: phones ===== */
         @media (max-width: 640px) {{
-            [data-testid="stMainBlockContainer"] {{ padding: 0.3rem 0.6rem !important; }}
+            [data-testid="stMainBlockContainer"] {{ padding: 0.5rem 0.75rem !important; }}
             .gnem-header {{
                 flex-wrap: wrap;
                 gap: var(--space-2);
@@ -706,8 +710,6 @@ def inject_styles(is_dark: bool, compact: bool = False) -> None:
             .gnem-header__title {{ font-size: 0.82rem; }}
             .empty-title {{ font-size: 1.3rem; }}
             .empty-subtitle {{ font-size: 0.9rem; }}
-            /* Suggestion cards collapse to one column (Streamlit columns stack). */
-            [class*="st-key-suggest_"] button {{ min-height: 52px !important; }}
             [data-testid="stChatInput"] {{ max-width: 100%; }}
         }}
         </style>

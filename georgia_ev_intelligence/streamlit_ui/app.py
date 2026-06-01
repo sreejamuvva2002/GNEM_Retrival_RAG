@@ -23,13 +23,13 @@ from georgia_ev_intelligence.streamlit_ui.components import (
     chat_messages,
     empty_state,
     header,
+    loading_card,
     map_view,
-    sidebar,
+    resizable_split,
     sources_panel,
-)  # dashboard not imported (widgets commented out); settings dialog opens from header.
+)
 from georgia_ev_intelligence.streamlit_ui.models.source import SourceViewModel
 from georgia_ev_intelligence.streamlit_ui.services.cache import (
-    baseline_map_payload,
     dispatch_query_cached,
     get_xlsx_lookup,
 )
@@ -61,56 +61,53 @@ def _enrich_sources() -> List[SourceViewModel]:
     ]
 
 
-_STEP_SEQUENCE = [
-    ("retrieval", "Retrieving relevant sources"),
-    ("dedup", "Deduplicating results"),
-    ("rerank", "Reranking results"),
-    ("generation", "Generating the final answer"),
-]
+def _record_history() -> None:
+    """Add a history entry for the first user turn of a fresh chat."""
+    msgs = chat_state.messages()
+    if not msgs:
+        return
+    first_user = next((m for m in msgs if m.role == "user"), None)
+    if first_user and chat_state.current_chat_id() is None:
+        preview = first_user.content[:60]
+        title = preview if len(preview) < 36 else preview[:34] + "..."
+        chat_state.add_history_entry(title=title, preview=preview, message_count=len(msgs))
 
 
-def _process_query(query: str) -> None:
-    """Push user message → run dispatch with a 4-step status → push answer."""
-    chat_state.append_message(chat_state.make_user_message(query))
+def _run_pending_query(query: str, placeholder) -> None:
+    """Run dispatch for an already-shown user message, animating the loading card.
+
+    The real on_step events (retrieval → dedup → rerank → generation) drive the
+    React-style loading card; on completion we push the answer and rerun.
+    """
+    loading_card.render_step(placeholder, active_index=0, completed_count=0)
+
+    def _on_step(name: str) -> None:
+        idx = loading_card.STEP_INDEX.get(name)
+        if idx is None:
+            return
+        # The current step is "active"; every earlier step is complete.
+        loading_card.render_step(placeholder, active_index=idx, completed_count=idx)
 
     try:
-        with st.status("Working on your question…", expanded=True) as status:
-            labels = {key: label for key, label in _STEP_SEQUENCE}
-            placeholders = {key: st.empty() for key, _ in _STEP_SEQUENCE}
-            for key, label in _STEP_SEQUENCE:
-                placeholders[key].markdown(f"⚪ {label}")
-
-            done: list[str] = []
-
-            def _on_step(name: str) -> None:
-                # Mark every earlier step done, and the current one as running.
-                for prev in done:
-                    placeholders[prev].markdown(f"✅ {labels[prev]}")
-                if name in placeholders:
-                    placeholders[name].markdown(f"⏳ {labels[name]}")
-                    done.append(name)
-
-            dispatch = dispatch_query_cached(query, _on_step=_on_step)
-
-            for key, label in _STEP_SEQUENCE:
-                placeholders[key].markdown(f"✅ {label}")
-            status.update(label="Done", state="complete", expanded=False)
+        dispatch = dispatch_query_cached(query, _on_step=_on_step)
     except Exception as exc:
-        st.error(f"Backend unavailable: {exc}")
+        placeholder.empty()
+        ui_state.clear_pending_query()
         chat_state.append_message(
             chat_state.make_assistant_message(
-                f"⚠️ Could not reach the retrieval pipeline. Please retry once the backend is ready. ({exc})",
+                f"⚠️ Could not reach the retrieval pipeline. Please retry once the "
+                f"backend is ready. ({exc})",
                 source_ids=[],
             )
         )
+        st.rerun()
         return
+
+    placeholder.empty()
 
     if dispatch.chat.error and not dispatch.chat.answer:
         chat_state.append_message(
-            chat_state.make_assistant_message(
-                f"⚠️ {dispatch.chat.error}",
-                source_ids=[],
-            )
+            chat_state.make_assistant_message(f"⚠️ {dispatch.chat.error}", source_ids=[])
         )
     else:
         chat_state.append_message(
@@ -121,20 +118,9 @@ def _process_query(query: str) -> None:
         )
 
     chat_state.set_last_dispatch(dispatch)
-    # Sources are no longer auto-opened — the user reveals them via the
-    # "Sources" button rendered under the assistant message.
-
-    msgs = chat_state.messages()
-    if msgs:
-        first_user = next((m for m in msgs if m.role == "user"), None)
-        if first_user and chat_state.current_chat_id() is None:
-            preview = first_user.content[:60]
-            title = preview if len(preview) < 36 else preview[:34] + "..."
-            chat_state.add_history_entry(
-                title=title,
-                preview=preview,
-                message_count=len(msgs),
-            )
+    _record_history()
+    ui_state.clear_pending_query()
+    st.rerun()
 
 
 def _render_chat_pane(sources: List[SourceViewModel]) -> None:
@@ -145,26 +131,24 @@ def _render_chat_pane(sources: List[SourceViewModel]) -> None:
         chat_messages.render(messages, sources)
 
 
-def _render_map_pane(is_dark: bool) -> None:
+def _render_map_pane(is_dark: bool, height: int = 600) -> None:
     dispatch = chat_state.last_dispatch()
     if dispatch is None:
-        st.info("Submit a question to populate the map, or explore baseline coverage below.")
-        try:
-            records, context_dict = baseline_map_payload()
-        except Exception as exc:
-            st.error(f"Map failed to load: {exc}")
-            return
-        map_view.render(records, context_dict, is_dark=is_dark)
+        # Empty map + "Ask a question…" overlay, matching the React empty state.
+        map_view.render([], {}, is_dark=is_dark, height=height)
         return
 
     # Show only the companies (and therefore counties) the answer actually cited.
     cited = extract_cited_company_names(dispatch.chat.parent_contexts)
     records = filter_records_to_companies(dispatch.map.records, cited)
-    map_view.render(records, dispatch.map.context.to_dict(), is_dark=is_dark)
+    map_view.render(records, dispatch.map.context.to_dict(), is_dark=is_dark, height=height)
 
 
 def _handle_submit(query: str) -> None:
-    _process_query(query)
+    # Show the user bubble immediately; the answer is produced on the next run
+    # (see _run_pending_query) so the loading card renders under the message.
+    chat_state.append_message(chat_state.make_user_message(query))
+    ui_state.set_pending_query(query)
     st.rerun()
 
 
@@ -173,61 +157,50 @@ def main() -> None:
         page_title="Georgia EV Supply Chain Intelligence",
         page_icon="⚡",
         layout="wide",
-        initial_sidebar_state="expanded",
+        initial_sidebar_state="collapsed",
     )
 
     _bootstrap_state()
     s = settings_state.settings()
-    inject_styles(is_dark=s.is_dark_mode, compact=s.compact_mode)
-
-    sidebar.render()
-    # The settings dialog is opened on demand from the header button
-    # (settings_panel.open_settings) — no persistent render call here, which
-    # previously caused the dialog to re-open on every rerun.
-
-    header.render()
-    # dashboard.render()  # Stat-card widget row commented out per request (#3).
+    inject_styles(is_dark=False, compact=False)
 
     sources = _enrich_sources()
-    mode = ui_state.view_mode()
     show_sources = ui_state.sources_panel_open() and bool(sources)
+    pending = ui_state.pending_query()
 
-    if mode == "map":
-        _render_map_pane(is_dark=s.is_dark_mode)
-    elif mode == "split":
-        if show_sources:
-            # Give the chat column more room so it no longer feels sparse beside
-            # the dense map (was 0.34 / 0.44 / 0.22).
-            chat_col, map_col, src_col = st.columns([0.40, 0.40, 0.20])
-        else:
-            chat_col, map_col = st.columns([0.5, 0.5])
-            src_col = None
-        with chat_col:
+    # 50/50 split: chat left, map (+ stacked sources) right — matches React.
+    # Heights (full-viewport columns, scrollable messages, full/50-50 map) are
+    # applied client-side by resizable_split.render().
+    chat_col, map_col = st.columns([0.5, 0.5])
+
+    loading_ph = None
+    with chat_col:
+        resizable_split.anchor()  # sentinel for the divider/layout script
+        header.render()
+        # Scrollable messages region; the inline chat input below it is pinned to
+        # the bottom of the column (the JS makes this container flex:1).
+        with st.container(key="chat_scroll"):
             _render_chat_pane(sources)
-        with map_col:
-            _render_map_pane(is_dark=s.is_dark_mode)
-        if src_col is not None:
-            with src_col:
-                sources_panel.render(sources, s)
-    else:
+            if pending:
+                # Loading card renders here (under the user bubble); filled after
+                # the map renders so the right pane shows during the dispatch.
+                loading_ph = st.empty()
+        # Inline (non-docked) search bar — lives inside the left column.
+        submitted = st.chat_input("Ask about EV companies in Georgia...", key="chat_input")
+    with map_col:
+        _render_map_pane(is_dark=False)  # map wraps itself in st.container(key="gnem_map")
         if show_sources:
-            chat_col, src_col = st.columns([0.7, 0.3])
-        else:
-            chat_col = st.container()
-            src_col = None
-        with chat_col:
-            _render_chat_pane(sources)
-        if src_col is not None:
-            with src_col:
+            with st.container(key="gnem_sources"):
                 sources_panel.render(sources, s)
 
-    # st.chat_input MUST be at the top level of the script — it docks itself to
-    # the bottom of the viewport. Skipped in the pure map view so it doesn't
-    # cover the legend.
-    if mode != "map":
-        submitted = st.chat_input("Ask a question about Georgia's EV ecosystem...")
-        if submitted:
-            _handle_submit(submitted)
+    # Draggable divider + full-height flex layout — all client-side (no rerun).
+    resizable_split.render()
+
+    if pending and loading_ph is not None:
+        _run_pending_query(pending, loading_ph)
+
+    if submitted:
+        _handle_submit(submitted)
 
 
 main()
