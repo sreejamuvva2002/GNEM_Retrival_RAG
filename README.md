@@ -13,9 +13,13 @@ evaluates them with RAGAS metrics.
 Excel KB (205 companies)
   → normalize → parent/child chunks → PostgreSQL + pgvector + BM25 index
 
+Web Documents (ddg_search.jsonl, etc.)
+  → LLM synthesis → persistent wiki with entity pages and relationships
+
 Per question at runtime:
-  → BM25 + dense retrieval (parallel) → merge → rerank (cross-encoder)
-  → top-45 parent chunks → LLM answer generation
+  → Wiki search (10ms) + BM25 + dense retrieval (1000ms parallel)
+  → merge → rerank (cross-encoder) → top-45 parent chunks
+  → combined context (wiki + hybrid) → LLM answer generation
 
 Research baseline:
   → 7 models × 4 pipelines × 50 questions = 1,400 answers (JSONL)
@@ -116,6 +120,36 @@ ragas_evaluation/                 # separate evaluation environment
 
 ---
 
+## LLM-Based Wiki (NEW!)
+
+Build a persistent, synthesized knowledge graph from web documents using Claude.
+
+```
+Raw Documents (ddg_search.jsonl, news.jsonl, etc.)
+  ↓ LLM synthesis
+Structured Wiki (entity pages, relationships, cross-refs)
+  ↓ Query time
+Wiki Search (10ms) + Hybrid Retrieval (1000ms) → LLM
+```
+
+### Quick Start
+
+```bash
+# Ingest documents into wiki
+python -m georgia_ev_intelligence.kb_builder.wiki_cli ingest \
+  --source kb/raw_docs/ddg_search.jsonl --limit 20
+
+# Search
+python -m georgia_ev_intelligence.kb_builder.wiki_cli search "SK Innovation"
+
+# View page
+python -m georgia_ev_intelligence.kb_builder.wiki_cli show "SK Innovation"
+```
+
+**See [QUICKSTART_WIKI.md](QUICKSTART_WIKI.md) or [docs/LLM_WIKI.md](docs/LLM_WIKI.md) for details.**
+
+---
+
 ## Setup
 
 ### 1. Create Environment
@@ -152,8 +186,10 @@ Required variables used by the current code:
 >>>>>>> 5a88f5f6bdfd168cbdcd403e194d87cb8cadf6a4
 
 ```bash
+# Neon PostgreSQL
 NEON_DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 
+# Ollama (for answer generation)
 OLLAMA_BASE_URL="http://localhost:11434"
 OLLAMA_LLM_MODEL="qwen2.5:14b"      # used only by legacy single-model runners
 OLLAMA_TEMPERATURE="0.1"
