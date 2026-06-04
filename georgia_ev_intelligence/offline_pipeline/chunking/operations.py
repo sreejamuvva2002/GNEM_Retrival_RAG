@@ -1,4 +1,26 @@
-"""High-level offline chunking operations."""
+"""High-level offline chunking pipeline: DataFrame → parents + children.
+
+WHY THIS FILE EXISTS:
+  Thin orchestration layer that ties together parent_chunk.py and
+  relationship.py.  Exposes a single clean function (build_parent_child_chunks)
+  that the main index script calls, plus XLSX export helpers for debugging.
+
+MAIN FUNCTION:
+  build_parent_child_chunks(df) → ChunkingArtifacts
+    1. One ParentRecord per DataFrame row (one per KB company record)
+    2. Five ChildChunks per parent (identity / product_role / oem_relationship /
+       location_employment / classification)
+    3. Returns ChunkingArtifacts(parents, children)
+
+EXPORT HELPERS:
+  export_parent_chunks_to_xlsx — writes record_id + source_row_id + parent_chunk_text
+  export_child_chunks_to_xlsx  — writes chunk_id + parent_record_id + chunk_type + embedding_text
+  Both files are written to outputs/ every indexing run for inspection.
+
+RELATIONSHIPS:
+  Calls: parent_chunk.py, relationship.py
+  Called by: offline_pipeline/index_pgvector.py
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass

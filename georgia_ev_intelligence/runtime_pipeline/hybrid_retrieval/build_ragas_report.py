@@ -1,11 +1,37 @@
 """Convert a baseline JSONL run folder into a RAGAS-compatible Excel workbook.
 
-The output workbook has two sheets that the existing evaluate_ragas_ollama.py reads:
-  - responses : Question + one column per (model, pipeline) combination
-  - retrieval : question, rank, chunk_type, text  (one row per context chunk)
+WHY THIS FILE EXISTS
+--------------------
+``run_baseline.py`` writes results as JSONL files (one per model+pipeline).
+Some legacy evaluation scripts (``evaluate_ragas_ollama.py``) expected an
+Excel workbook format.  This script converts the JSONL folder into that Excel
+format as an intermediate step, and also serves as a human-readable summary of
+the raw JSONL outputs.
 
-Usage:
-    python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.build_ragas_report \
+NOTE: The modern evaluation path uses ``evaluate_ragas.py`` directly on JSONL
+files (no Excel conversion needed).  Use this script if you want to:
+  - Inspect results in spreadsheet form
+  - Feed results to the legacy evaluator
+  - Archive a run in a compact Excel format
+
+OUTPUT WORKBOOK SHEETS
+----------------------
+``responses``     — One row per question, one column per (model, pipeline).
+                    Good for comparing answers side-by-side.
+``retrieval``     — One row per (question, pipeline, rank, chunk).
+                    Shows exactly what contexts each pipeline retrieved.
+``golden_answers`` — question + ground_truth for reference.
+``run_info``      — config.json metadata (models, pipelines, timestamps).
+
+CONTEXT TYPES IN RETRIEVAL SHEET
+---------------------------------
+  - ``rag_only`` / ``hybrid_rag`` → ``chunk_type = parent_chunk``
+  - ``direct_kb``                 → ``chunk_type = kb_record``
+  - ``pretrained_only``           → EXCLUDED (no contexts)
+
+USAGE
+-----
+    python -m georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.build_ragas_report \\
         --run-dir georgia_ev_intelligence/outputs/baselines/20260520_143000
 
     # Filter to specific pipelines or models:

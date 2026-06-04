@@ -6,3 +6,13 @@ __pycache__/
 .venv/
 venv/
 .qdrant/
+
+# Logs and runtime caches
+*.log
+ragas_eval_cache.json
+
+# Editor / OS
+.DS_Store
+*.swp
+.idea/
+.vscode/

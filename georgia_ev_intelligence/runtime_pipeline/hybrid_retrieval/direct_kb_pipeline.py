@@ -1,7 +1,46 @@
-"""Answer pipeline that uses the full Normalized_kb.xlsx as context without retrieval."""
+"""Answer pipeline that uses the full Normalized_kb.xlsx as context without retrieval.
+
+WHY THIS FILE EXISTS
+--------------------
+Implements the ``direct_kb`` pipeline: instead of running vector/BM25 retrieval
+to find relevant chunks, ALL 205 rows of the Normalized_kb.xlsx knowledge base
+are formatted into text and passed directly to the LLM as context.
+
+PURPOSE
+-------
+This pipeline is the "oracle retrieval" upper-bound baseline: it tests whether
+the LLM can correctly extract and present the right answer when given the
+complete KB.  A high ``direct_kb`` score with a lower ``rag_only`` score
+indicates the retrieval pipeline is missing relevant content.
+
+HOW THE KB IS FORMATTED
+------------------------
+``_load_and_format_kb()`` reads every row of Normalized_kb.xlsx and converts
+each non-null column to ``FieldName: value`` pairs joined by `` | ``.  The
+result is a list of strings, one per company row.  Example:
+  ``"Company: Novelis Inc. | Tier: Tier 1 | Role: EV Manufacturing | ..."``
+
+The full list is joined with newlines and injected as ``{kb_context}`` in the
+prompt.  The individual strings are also stored in the JSONL ``contexts`` field
+for RAGAS context_precision / context_recall evaluation.
+
+CACHING
+-------
+The KB is loaded and formatted once per ``DirectKBAnswerPipeline`` instance
+(lazy on first call, then cached in ``_kb_context`` / ``_kb_records``).
+
+CORRECTNESS CONTRACT
+--------------------
+✅ This pipeline does NOT perform any retrieval — context is always all 205 rows.
+✅ The ``contexts`` list in JSONL output contains all 205 KB record strings.
+   NOTE: Because all records are passed, ``context_precision`` and
+   ``context_recall`` from RAGAS are expected to be high/trivially satisfied
+   for this pipeline — interpret them with caution relative to rag_only scores.
+✅ ``get_kb_records_as_text_list()`` is called in ``run_baseline.py`` to
+   populate the JSONL ``contexts`` field for evaluation.
+"""
 from __future__ import annotations
 
-import math
 from pathlib import Path
 from typing import Callable
 
@@ -95,7 +134,7 @@ def _load_and_format_kb(kb_path: Path) -> list[str]:
             if col == "_row_id":
                 continue
             value = row[col]
-            if value is None or (isinstance(value, float) and math.isnan(value)):
+            if pd.isna(value):
                 continue
             text = str(value).strip()
             if not text:

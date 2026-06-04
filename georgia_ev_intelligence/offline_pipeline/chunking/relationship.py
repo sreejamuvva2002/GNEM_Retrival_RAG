@@ -1,4 +1,25 @@
-"""Parent-child chunk relationship building and validation."""
+"""Parent-child chunk relationship building and integrity validation.
+
+WHY THIS FILE EXISTS:
+  Provides build_child_chunks() which creates all 5 child chunks for a single
+  parent record, and validate_relationships() which checks that the full set
+  of parent+child artifacts is internally consistent before anything is written
+  to the database.
+
+VALIDATION CHECKS (validate_relationships):
+  1. Total children == N_parents × 5  (no missing or extra chunks)
+  2. No duplicate chunk_id values
+  3. Every child.parent_record_id exists in the parent set (no orphans)
+  4. Every parent has exactly 5 children
+
+  If any check fails, a ValueError is raised before the DB write — protecting
+  the database from partial or corrupt state.
+
+RELATIONSHIPS:
+  Calls: child_chunk.py (build_child_chunk, build_embedding_text, etc.)
+  Called by: operations.py (build_child_chunks_for_parents),
+             index_pgvector.py (validate_relationships before DB write)
+"""
 from __future__ import annotations
 
 from collections import Counter

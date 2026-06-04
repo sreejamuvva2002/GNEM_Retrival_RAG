@@ -1,3 +1,33 @@
+"""Column metadata index for the normalised Knowledge Base DataFrame.
+
+WHY THIS FILE EXISTS:
+  Builds a per-column index (ColumnMeta) that describes how each KB column
+  should be interpreted for filtering and search.  It is used by query-building
+  code that needs to know whether a column supports exact matching (e.g. Category
+  has ≤ 60 distinct values) or partial/substring matching (e.g. Product/Service
+  has long free-text entries).
+
+TECHNIQUES:
+  Heuristic-based classification:
+    - Columns with ≤ 60 unique values and avg token length ≤ 50  → "exact" match
+    - Columns with many unique values or long text               → "partial" match
+    - primary_oems is always "partial" (PARTIAL_OVERRIDE_COLUMNS)
+      because values are compound strings like "Hyundai Kia Rivian"
+  Component extraction: for location columns that contain "City, County"
+    style values, individual components are extracted so "Savannah" matches
+    "Savannah, Chatham County".
+
+DATA MODEL (ColumnMeta):
+  unique_values   — sorted list of all distinct values in the column
+  match_type      — "exact", "partial", or "numeric"
+  is_numeric      — True for employment / lat / long
+  is_filterable   — False for internal metadata columns
+  components      — sub-parts of compound location strings
+
+RELATIONSHIPS:
+  Called by: query-building logic that needs to know how to filter KB rows
+  Reads from: the normalised DataFrame produced by shared/data/loader.py
+"""
 from dataclasses import dataclass, field
 import pandas as pd
 

@@ -1,4 +1,42 @@
-"""BM25 sparse retrieval over child chunks loaded from PostgreSQL."""
+"""BM25 sparse retrieval over child chunks loaded from PostgreSQL.
+
+WHY THIS FILE EXISTS
+--------------------
+Provides keyword-based (sparse) search over the child chunks stored in Neon
+PostgreSQL.  BM25 captures exact and near-exact keyword matches that dense
+vector search may miss (e.g., specific company names, tier identifiers, product
+codes), making it an essential complement to the dense (pgvector) retriever.
+
+TECHNIQUE: BM25 (Best Match 25)
+--------------------------------
+- Uses the ``rank_bm25`` library's ``BM25Okapi`` implementation.
+- The full child_chunks table is loaded once into memory and a BM25 index is
+  built over structured text representations of each chunk.
+- Subsequent searches run in-process without a DB round-trip.
+
+TOKENIZER DETAILS
+-----------------
+``tokenize_bm25`` is domain-aware:
+  - Lowercases and strips possessives (``company's`` → ``company``).
+  - Preserves hyphenated/slash compounds as a single token AND expands them
+    into sub-tokens (``Hyundai-Kia`` → ``[hyundai-kia, hyundai, kia]``).  This
+    means both a compound search and a partial name search can match.
+  - Only tokens with BM25 score > 0 are returned (zero-score tokens are noise).
+
+THREAD SAFETY
+-------------
+``BM25Retriever._load()`` uses a double-checked lock so the expensive DB load
+and index build happen only once even when the first queries arrive concurrently.
+
+CORRECTNESS CONTRACT
+--------------------
+- Returns ``RetrievedChildChunk`` objects (not parent chunks).
+- Results are passed to ``ChildResultMerger`` → ``ParentChildMapper`` →
+  ``CrossEncoderReranker`` in the orchestrator before reaching the LLM.
+- The BM25 index is built from ``_build_bm25_text(chunk_type, metadata)``
+  which preserves field names (e.g., ``"chunk_type: product_role"``) to give
+  BM25 structural context alongside content.
+"""
 from __future__ import annotations
 
 import json

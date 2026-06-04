@@ -1,17 +1,46 @@
-"""Answer generation that is constrained to retrieved context only."""
+"""Answer generation that is constrained to retrieved context only.
+
+WHY THIS FILE EXISTS
+--------------------
+Implements the ``rag_only`` pipeline: the strictest RAG variant where the LLM
+is ONLY allowed to use the retrieved parent chunks.  No pretrained knowledge
+supplementation is permitted.  This pipeline is the RAG baseline — its scores
+reveal how well the retrieval system alone supports answering the questions.
+
+PROMPT DESIGN (correctness-critical)
+--------------------------------------
+The prompt explicitly instructs the model to:
+  1. Use ONLY the provided context.
+  2. Do NOT use outside knowledge.
+  3. Cite every factual claim from the context.
+  4. Say "The provided knowledge base does not contain enough information..." if
+     the context is insufficient — rather than hallucinating.
+
+This strict framing is deliberate: any answer that scores well here means the
+retrieval system successfully retrieved the relevant parent chunks.
+
+CONTEXT PASSED
+--------------
+``retrieved_context`` is the concatenated text of up to 45 reranked parent
+chunks (formatted by ``_format_retrieved_context`` in ``run_hybrid_rag.py``).
+It is injected into ``{retrieved_context}`` in the prompt template.
+
+CORRECTNESS CONTRACT
+--------------------
+✅ This pipeline ONLY receives retrieved context — no KB file, no empty context.
+   Verified in ``run_baseline.py::_answer_rag_only``:
+   ``pipeline.answer(question=..., retrieved_context=retrieval["formatted_context"])``
+✅ ``retrieval["contexts"]`` (the list of individual chunk texts) is stored in
+   the JSONL output and used by RAGAS for context_precision / context_recall.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable, Protocol
+from typing import Callable
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
 
-
-class PromptBuilder(Protocol):
-    """Build a prompt from a question and retrieved context."""
-
-    def build(self, question: str, retrieved_context: str) -> str:
-        """Return the prompt sent to the LLM."""
+from .interfaces import PromptBuilder
 
 
 @dataclass(frozen=True)
