@@ -52,6 +52,8 @@ def _select_records(registry: dict[str, dict], args: argparse.Namespace) -> list
             selected.append(rec)
         elif args.retry_failed and status == "failed":
             selected.append(rec)
+        elif args.reprocess_needs_review and status == "needs_review":
+            selected.append(rec)
         elif status in (None, "pending"):
             selected.append(rec)
     return selected
@@ -115,6 +117,8 @@ def main() -> None:
                         help="Re-process even already-successful documents")
     parser.add_argument("--retry-failed", action="store_true",
                         help="Include previously failed documents")
+    parser.add_argument("--reprocess-needs-review", action="store_true",
+                        help="Re-process documents previously marked needs_review")
     parser.add_argument("--sample", action="store_true",
                         help="Balanced sample across file types (README §31)")
     parser.add_argument("--local-only", action="store_true",

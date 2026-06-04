@@ -12,6 +12,10 @@ from .base import BaseConverter, ConversionResult
 
 # Below this body length the page is treated as low-value (mostly nav/boilerplate).
 _LOW_VALUE_CHARS = 200
+# At/above this length, trafilatura clearly found a real article — trust its cleaned
+# output (boilerplate removed). Below it, trafilatura often returns near-empty on
+# JS-heavy/unusual pages while bs4 recovers far more static text, so compare the two.
+_TRUST_TRAFILATURA_CHARS = 500
 
 
 def _trafilatura_markdown(raw_bytes: bytes) -> tuple[str | None, str | None]:
@@ -52,12 +56,22 @@ class HtmlConverter(BaseConverter):
     def convert(self, raw_bytes: bytes, source_name: str) -> ConversionResult:
         warnings: list[str] = []
 
-        title, body = _trafilatura_markdown(raw_bytes)
-        used_tool = "trafilatura"
-        if body is None:
-            used_tool = "beautifulsoup"
-            t2, body = html_extractor.extract(raw_bytes)
-            title = title or t2
+        title, traf_body = _trafilatura_markdown(raw_bytes)
+        traf_body = (traf_body or "").strip()
+
+        if len(traf_body) >= _TRUST_TRAFILATURA_CHARS:
+            # trafilatura found a substantial article — keep its cleaned output.
+            body, used_tool = traf_body, "trafilatura"
+        else:
+            # trafilatura returned little (None or a tiny snippet). Recover with bs4
+            # and keep whichever extraction yields more content.
+            t2, bs4_body = html_extractor.extract(raw_bytes)
+            bs4_body = (bs4_body or "").strip()
+            if len(bs4_body) > len(traf_body):
+                body, used_tool = bs4_body, "beautifulsoup"
+                title = title or t2
+            else:
+                body, used_tool = traf_body, "trafilatura"
 
         body = (body or "").strip()
         if not title:
