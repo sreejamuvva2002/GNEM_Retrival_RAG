@@ -1,4 +1,1 @@
-"""Runtime answer generation."""
-
-from .synthesizer import synthesize  # noqa: F401
-
+"""Runtime LLM answer generation."""

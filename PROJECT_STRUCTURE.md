@@ -1,98 +1,88 @@
 # Georgia EV Intelligence Project Structure
 
-The codebase is now split into three explicit boundaries:
+This project is split into three code boundaries:
 
 ```text
 georgia_ev_intelligence/
-├── offline_pipeline/   # Index-time pipeline only
-├── shared/             # Code used by both offline and runtime
-└── runtime_pipeline/   # Question-answering runtime only
+├── offline_pipeline/   # Index-time normalization/chunking/storage pipeline
+├── shared/             # Config, data loading, schema helpers, embeddings
+└── runtime_pipeline/   # Question answering and evaluation runtime
 ```
 
-The shared KB workbook remains in top-level `kb/`:
+The active storage backend is PostgreSQL + pgvector. The current pipeline does
+not use Qdrant.
+
+## Data
+
+Source and evaluation workbooks live in top-level `kb/`:
 
 ```text
 kb/GNEM - Auto Landscape Lat Long Updated.xlsx
+kb/Rewritten_50_questions.xlsx
+kb/Human validated 50 questions.xlsx
 ```
 
-That workbook is shared data. Offline indexing reads it to build Qdrant chunks,
-and runtime retrieval reads it to map Qdrant hits back to KB rows.
+Generated artifacts live in:
+
+```text
+georgia_ev_intelligence/outputs/
+```
+
+Core artifacts:
+
+```text
+Normalized_kb.xlsx
+parent_chunks.xlsx
+child_chunks.xlsx
+```
 
 ## Offline Pipeline
 
-Offline code prepares the searchable vector index. It should not import runtime
-query rewriting, retrieval fusion, reasoning, generation, API, or evaluation
-code.
+Offline code prepares PostgreSQL tables for runtime retrieval:
 
 ```text
 georgia_ev_intelligence/offline_pipeline/
-├── index_qdrant.py   # CLI entrypoint for dry-run, preview, and Qdrant indexing
-├── chunking/         # Parent chunks, child chunks, relationships, operations
-└── qdrant_store.py   # Collection creation and vector upserts
+├── index_pgvector.py       # CLI entrypoint for chunking + PostgreSQL indexing
+├── postgres_store.py       # parent_chunks table writes
+├── pgvector_store.py       # child_chunks table/vector writes
+└── chunking/               # parent chunks, child chunks, relationships
 ```
 
-Main command:
+Main commands:
 
 ```bash
-python -m georgia_ev_intelligence.offline_pipeline.index_qdrant --dry-run --preview 3
-python -m georgia_ev_intelligence.offline_pipeline.index_qdrant --recreate
+python -m georgia_ev_intelligence.shared.data.loader
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --dry-run --preview 3
+python -m georgia_ev_intelligence.offline_pipeline.index_pgvector
+```
+
+The indexing command stores:
+
+```text
+parent_chunks      # full parent context rows for generation
+child_chunks       # retrieval-focused child rows with pgvector embeddings
 ```
 
 ## Shared Files
 
-Shared code is allowed to be imported by both offline and runtime. Changes here
-can affect both pipelines, so this folder should stay small and stable.
+Shared code is imported by both offline and runtime code:
 
 ```text
 georgia_ev_intelligence/shared/
-├── config/settings.py   # Env vars, paths, model/backend settings
+├── config/settings.py   # .env variables, paths, model/backend settings
 ├── data/loader.py       # KB Excel loading and normalization
-├── data/schema.py       # Column metadata and filterability
-├── embeddings.py        # SentenceTransformer loading and query/doc prefixes
-└── qdrant_client.py     # Qdrant client construction
+├── data/schema.py       # column metadata helpers
+└── embeddings.py        # SentenceTransformer loading and query/doc prefixes
 ```
 
-Current shared data:
-
-```text
-kb/GNEM - Auto Landscape Lat Long Updated.xlsx
-kb/Human validated 50 questions.xlsx
-```
-
-## Runtime Pipeline
-
-Runtime code answers user questions from the indexed data and loaded KB rows. It
-should not import offline chunking or index-upsert logic.
-
-```text
-georgia_ev_intelligence/runtime_pipeline/
-├── pipeline/runner.py       # End-to-end orchestration
-├── retrieval/               # Qdrant search, dense fallback, BM25, RRF, evidence
-├── query/                   # Rewriting, keyword resolution, term matching
-├── reasoning/               # Counts, ranks, aggregates, SPOF, support labels
-├── generation/              # Final LLM synthesis and hallucination heuristic
-├── api/                     # FastAPI app
-├── evaluation/              # Human QA evaluation helpers
-└── scripts/                 # Runtime eval/smoke/unit-check commands
-```
-
-Main runtime imports:
-
-```python
-from georgia_ev_intelligence.runtime_pipeline import pipeline
-from georgia_ev_intelligence.runtime_pipeline.api import app
-```
-
-## Dependency Rule
-
-Allowed directions:
+Allowed dependency directions:
 
 ```text
 offline_pipeline -> shared
 runtime_pipeline -> shared
 ```
 
-Disallowed directions:
+Avoid:
 
 ```text
 offline_pipeline -> runtime_pipeline
@@ -101,42 +91,55 @@ shared -> offline_pipeline
 shared -> runtime_pipeline
 ```
 
-This keeps normal changes to one pipeline from affecting the other pipeline.
-Only changes inside `shared/` are intentionally cross-cutting.
+## Runtime Pipeline
 
-## Runtime Flow
-
-Short form:
+Runtime code answers questions from PostgreSQL-indexed parent and child chunks:
 
 ```text
-API / eval / script
-→ runtime_pipeline.pipeline.run()
-→ shared KB load
-→ shared schema build
-→ runtime semantic retriever
-→ runtime keyword resolution and query rewrite
-→ runtime retrieval fusion
-→ runtime deterministic reasoning
-→ runtime evidence formatting
-→ runtime final answer generation
+georgia_ev_intelligence/runtime_pipeline/
+├── schemas.py
+├── retrieval/
+│   ├── bm25_retriever.py
+│   ├── dense_pgvector_retriever.py
+│   └── parent_fetcher.py
+├── generation/
+│   └── llm_client.py
+└── hybrid_retrieval/
+    ├── factory.py
+    ├── orchestrator.py
+    ├── merger.py
+    ├── parent_mapper.py
+    ├── reranker.py
+    ├── run_rewritten_50.py
+    ├── run_rewritten_50_retrieval_only.py
+    └── run_rewritten_50_all_modes.py
 ```
 
-## Offline Flow
-
-Short form:
+Runtime flow:
 
 ```text
-offline_pipeline.index_qdrant
-→ shared KB load
-→ offline parent/child chunk creation
-→ shared embedding model
-→ shared Qdrant client
-→ offline Qdrant collection/upsert
+User question
+→ BM25 child retrieval from child_chunks
+→ dense pgvector child retrieval from child_chunks
+→ merge and deduplicate child chunks by chunk_id
+→ map children to parent_record_id
+→ deduplicate parent IDs
+→ fetch parent_chunk_text from parent_chunks
+→ cross-encoder rerank parent chunks
+→ send reranked top-k parent_chunk_text to Ollama
+→ write answer/evaluation workbook
 ```
 
-## Removed Legacy Folders
+The active runtime does not implement Reciprocal Rank Fusion. It performs
+ordered merge/deduplication followed by parent-level cross-encoder reranking.
 
-The old responsibility-based wrapper folders (`data`, `indexing`, `retrieval`,
-`query`, `reasoning`, `generation`, `pipeline`, `api`, `evaluation`, `scripts`,
-and `config`) were removed after the split. New code should import from
-`offline_pipeline`, `runtime_pipeline`, or `shared` directly.
+The final answer workbook includes:
+
+```text
+question
+golden_answer
+retrieved_parent_chunks_after_reranking
+final_llm_answer
+```
+
+See [README.md](README.md) for the full command runbook.

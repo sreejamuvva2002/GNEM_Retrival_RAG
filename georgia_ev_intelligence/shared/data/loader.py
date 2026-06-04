@@ -1,16 +1,15 @@
 import re
+from html import unescape
 from pathlib import Path
 
 import pandas as pd
 
 
 CURRENT_FILE = Path(__file__).resolve()
+ROOT = CURRENT_FILE.parents[3]
 OUTPUTS_DIR = CURRENT_FILE.parents[2] / "outputs"
 NORMALIZED_KB_PATH = OUTPUTS_DIR / "Normalized_kb.xlsx"
-KB_EXCEL_PATH = Path(
-    "/Users/sreejamuvva/Desktop/GNEM_Retrival_RAG/kb/"
-    "GNEM - Auto Landscape Lat Long Updated.xlsx"
-)
+KB_EXCEL_PATH = ROOT / "kb" / "GNEM - Auto Landscape Lat Long Updated.xlsx"
 
 
 # -------------------------------------------------------
@@ -48,6 +47,7 @@ class KBColumns:
     PRIMARY_FACILITY_TYPE = _norm_column("Primary Facility Type")
     EV_SUPPLY_CHAIN_ROLE = _norm_column("EV Supply Chain Role")
     PRIMARY_OEMS = _norm_column("Primary OEMs")
+    OEM_FOOTPRINT = _norm_column("OEM (Footprint)")
     SUPPLIER_OR_AFFILIATION_TYPE = _norm_column("Supplier or Affiliation Type")
     PRODUCT_SERVICE = _norm_column("Product / Service")
     EV_BATTERY_RELEVANT = _norm_column("EV / Battery Relevant")
@@ -63,7 +63,7 @@ MISSING_STRINGS = {"", "nan", "none", "null", "na", "n/a"}
 
 
 def _normalize_formatting(value: str) -> str:
-    value = str(value)
+    value = unescape(str(value))
     value = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", value)
     value = re.sub(r"[\u00a0\t\r\n]+", " ", value)
     value = re.sub(r"\s+", " ", value)
@@ -125,6 +125,51 @@ def clean_company(value):
     return value if value == "Unknown" else value.lower()
 
 
+def clean_category(value):
+    value = clean_text(value)
+
+    if value == "Unknown":
+        return value
+
+    value = re.sub(r"[()]", " ", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    value = re.sub(r"\boem\b", "OEM", value, flags=re.IGNORECASE)
+
+    if value.casefold() == "oem footprint":
+        return "OEM Footprint"
+
+    return value
+
+
+def clean_oem_footprint(value):
+    value = clean_text(value)
+
+    if value == "Unknown":
+        return value
+
+    value = re.sub(r"[()]", " ", value)
+    value = re.sub(r"\s+", " ", value).strip()
+    value = re.sub(r"\boem\b", "OEM", value, flags=re.IGNORECASE)
+
+    return value
+
+
+def clean_primary_facility_type(value):
+    value = clean_text(value)
+
+    if value == "Unknown":
+        return value
+
+    value = normalize_separators(value)
+    value = re.sub(r"\boem\b", "OEM", value, flags=re.IGNORECASE)
+    value = re.sub(r"\br&d\b", "R&D", value, flags=re.IGNORECASE)
+
+    if value.casefold() == "manufacturing plant":
+        return "Manufacturing Plant"
+
+    return value
+
+
 def normalize_separators(value):
     value = clean_text(value)
 
@@ -153,8 +198,11 @@ def clean_product_service(value):
 def normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     text_normalizers = {
         KBColumns.COMPANY: clean_company,
+        KBColumns.CATEGORY: clean_category,
         KBColumns.UPDATED_LOCATION: clean_missing_only,
+        KBColumns.PRIMARY_FACILITY_TYPE: clean_primary_facility_type,
         KBColumns.PRIMARY_OEMS: normalize_separators,
+        KBColumns.OEM_FOOTPRINT: clean_oem_footprint,
         KBColumns.PRODUCT_SERVICE: clean_product_service,
     }
 

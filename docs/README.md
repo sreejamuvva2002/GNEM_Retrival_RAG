@@ -1,11 +1,15 @@
 # Docs
 
-This folder is for project documentation that should live outside the runtime
-package. Use it for architecture notes, runbooks, diagrams, model/backend setup,
-and future refactor plans.
+Project run instructions now live in the root README:
 
-The main structure and runtime-flow guide currently lives in:
+```text
+../README.md
+```
+
+The current structure guide lives in:
 
 ```text
 ../PROJECT_STRUCTURE.md
 ```
+
+Both documents describe the active PostgreSQL + pgvector pipeline.
