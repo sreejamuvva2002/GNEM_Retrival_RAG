@@ -33,9 +33,18 @@ CORRECTNESS CONTRACT
 - After re-indexing, restart the BM25 retriever (its in-memory index is
   stale until the next process start).
 
-USAGE
------
+Usage:
+  # Index the Excel KB (original behaviour — default)
+
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector
+
+  # Index only new web documents from raw_documents table
+  python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source web
+
+  # Index both Excel KB and new web documents in one pass
+  python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --source all
+
+  # Other flags (unchanged)
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --recreate-child-table
   python -m georgia_ev_intelligence.offline_pipeline.index_pgvector --dry-run --preview 3
 """
@@ -53,36 +62,31 @@ from georgia_ev_intelligence.offline_pipeline.chunking.operations import (
     build_parent_child_chunks,
     export_child_chunks_to_xlsx,
     export_parent_chunks_to_xlsx,
+    ChunkingArtifacts,
 )
+from georgia_ev_intelligence.offline_pipeline.chunking.parent_chunk import ParentRecord
 from georgia_ev_intelligence.offline_pipeline.chunking.relationship import (
     validate_relationships,
+    build_child_chunks,
 )
-from georgia_ev_intelligence.offline_pipeline.postgres_store import store_parents_postgres
+from georgia_ev_intelligence.offline_pipeline.chunking.child_chunk import ChildChunk
+from georgia_ev_intelligence.offline_pipeline.postgres_store import (
+    store_parents_postgres,
+    fetch_new_raw_documents,
+    update_raw_doc_status,
+)
 from georgia_ev_intelligence.offline_pipeline.pgvector_store import index_kb_children
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Index Georgia EV KB chunks into PostgreSQL + pgvector."
-    )
-    parser.add_argument("--model", default=config.EMBEDDING_MODEL)
-    parser.add_argument(
-        "--recreate-child-table",
-        action="store_true",
-        help=(
-            "Drop and recreate the child_chunks pgvector table. Use this after "
-            "changing embedding model/vector dimension."
-        ),
-    )
-    parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--preview", type=int, default=0)
-    args = parser.parse_args()
+# ---------------------------------------------------------------------------
+# Excel KB path (original, unchanged)
+# ---------------------------------------------------------------------------
 
+def _index_excel(args: argparse.Namespace) -> ChunkingArtifacts:
     df = kb_loader.load()
     artifacts = build_parent_child_chunks(df)
     validate_relationships(artifacts.parents, artifacts.children)
 
-    # Always export debug Excel files
     outputs_dir = config.OUTPUTS_DIR
     outputs_dir.mkdir(parents=True, exist_ok=True)
     export_parent_chunks_to_xlsx(artifacts.parents, outputs_dir / "parent_chunks.xlsx")
@@ -97,19 +101,134 @@ def main() -> None:
             print(f"  Text:    {child.embedding_text[:120]}")
             print()
 
+    return artifacts
+
+
+# ---------------------------------------------------------------------------
+# Web KB path (new)
+# ---------------------------------------------------------------------------
+
+def _index_web(args: argparse.Namespace) -> ChunkingArtifacts:
+    """Index raw_documents rows with ingestion_status='new' into pgvector."""
+    from georgia_ev_intelligence.offline_pipeline.web_chunk_builder import (
+        build_parent_record_from_raw_doc,
+    )
+
+    batch_size = getattr(args, "web_batch", 500)
+    raw_docs = fetch_new_raw_documents(limit=batch_size)
+    print(f"Fetched {len(raw_docs)} new web documents from raw_documents table.")
+
+    if not raw_docs:
+        return ChunkingArtifacts(parents=[], children=[])
+
+    parents: list[ParentRecord] = []
+    children: list[ChildChunk] = []
+    failed_ids: list[str] = []
+
+    for doc in raw_docs:
+        try:
+            parent = build_parent_record_from_raw_doc(doc)
+            parents.append(parent)
+            # Re-use the existing per-row child chunk builder
+            # We pass an empty pandas Series — child chunk builders that need
+            # structured fields will return empty strings for missing fields.
+            import pandas as pd
+            row = pd.Series(doc)
+            children.extend(build_child_chunks(parent, row))
+        except Exception as exc:
+            print(f"  [warn] Skipping {doc.get('doc_id', '?')}: {exc}")
+            failed_ids.append(doc["doc_id"])
+
+    if args.preview and parents:
+        print(f"\nWeb parents: {len(parents)}  Web children: {len(children)}\n")
+        for child in children[: args.preview]:
+            print(f"[{child.chunk_type.value}] {child.chunk_id}")
+            print(f"  Parent:  {child.parent_record_id}")
+            print(f"  Text:    {child.embedding_text[:120]}")
+            print()
+
+    if failed_ids and not args.dry_run:
+        update_raw_doc_status(failed_ids, "error", "chunk build failed")
+
+    return ChunkingArtifacts(parents=parents, children=children)
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Index Georgia EV KB chunks into PostgreSQL + pgvector.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__,
+    )
+    parser.add_argument("--model", default=config.EMBEDDING_MODEL)
+    parser.add_argument(
+        "--source",
+        choices=["excel", "web", "all"],
+        default="excel",
+        help=(
+            "Which KB source to index. "
+            "'excel' = original GNEM Excel KB (default); "
+            "'web' = new raw_documents rows only; "
+            "'all' = both."
+        ),
+    )
+    parser.add_argument(
+        "--web-batch",
+        type=int,
+        default=500,
+        metavar="N",
+        dest="web_batch",
+        help="Max number of new web docs to index per run (default: 500)",
+    )
+    parser.add_argument(
+        "--recreate-child-table",
+        action="store_true",
+        help=(
+            "Drop and recreate the child_chunks pgvector table. Use this after "
+            "changing embedding model/vector dimension."
+        ),
+    )
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--preview", type=int, default=0)
+    args = parser.parse_args()
+
+    all_parents: list[ParentRecord] = []
+    all_children: list[ChildChunk] = []
+
+    # Excel path
+    if args.source in ("excel", "all"):
+        excel_artifacts = _index_excel(args)
+        all_parents.extend(excel_artifacts.parents)
+        all_children.extend(excel_artifacts.children)
+
+    # Web path
+    if args.source in ("web", "all"):
+        web_artifacts = _index_web(args)
+        all_parents.extend(web_artifacts.parents)
+        all_children.extend(web_artifacts.children)
+
     if args.dry_run:
         print(
-            f"Built {len(artifacts.parents)} parents, "
-            f"{len(artifacts.children)} child chunks. "
+            f"Built {len(all_parents)} parents, "
+            f"{len(all_children)} child chunks. "
             "Dry run only; stores not updated."
         )
         return
 
-    pg_count = store_parents_postgres(artifacts.parents)
+    if not all_parents:
+        print("No documents to index.")
+        return
+
+    combined = ChunkingArtifacts(parents=all_parents, children=all_children)
+
+    pg_count = store_parents_postgres(combined.parents)
     print(f"Stored {pg_count} parent chunks in PostgreSQL (parent_chunks table).")
 
     stats = index_kb_children(
-        artifacts,
+        combined,
         model_name=args.model,
         recreate=args.recreate_child_table,
     )
@@ -117,6 +236,18 @@ def main() -> None:
         f"Indexed {stats.chunks_indexed} child chunks into pgvector (child_chunks table) "
         f"with {stats.vector_size}-dim vectors from {stats.embedding_model}."
     )
+
+    # Mark successfully indexed web docs
+    if args.source in ("web", "all") and combined.parents:
+        web_doc_ids = [
+            p.raw_row.get("doc_id")
+            for p in combined.parents
+            if p.source_type != "excel" and isinstance(p.raw_row, dict)
+        ]
+        web_doc_ids = [d for d in web_doc_ids if d]
+        if web_doc_ids:
+            update_raw_doc_status(web_doc_ids, "indexed")
+            print(f"Marked {len(web_doc_ids)} web docs as indexed in raw_documents.")
 
 
 if __name__ == "__main__":

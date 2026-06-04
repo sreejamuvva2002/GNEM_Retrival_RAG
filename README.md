@@ -28,7 +28,14 @@ EVALUATION
   JSONL answers → RAGAS scoring (judge LLM: qwen2.5:14b) → analysis report
 ```
 
----
+
+Web Documents (ddg_search.jsonl, etc.)
+  → LLM synthesis → persistent wiki with entity pages and relationships
+
+Per question at runtime:
+  → Wiki search (10ms) + BM25 + dense retrieval (1000ms parallel)
+  → merge → rerank (cross-encoder) → top-45 parent chunks
+  → combined context (wiki + hybrid) → LLM answer generation
 
 ## The 4 Answer Pipelines
 
@@ -131,6 +138,58 @@ tests/
 
 ---
 
+## The 4 Answer Pipelines
+
+| Pipeline | What it does | Contexts passed to LLM |
+|---|---|---|
+| `rag_only` | Retrieval → strict context-only prompt | Retrieved parent chunks |
+| `hybrid_rag` | Retrieval → allows LLM reasoning on top | Retrieved parent chunks |
+| `pretrained_only` | No retrieval — pure LLM knowledge | None |
+| `direct_kb` | Loads all 205 KB rows directly, no retrieval | All KB records |
+
+---
+
+## The 4 RAGAS Metrics
+
+| Metric | What it measures | Pipelines |
+|---|---|---|
+| `answer_accuracy` | Correctness vs golden answer | All 4 |
+| `faithfulness` | Claims supported by context (no hallucination) | rag_only, hybrid_rag, direct_kb |
+| `response_groundedness` | How much of the response is anchored in context | rag_only, hybrid_rag, direct_kb |
+| `answer_relevancy` | Answer stays on-topic with the question | All 4 |
+
+---
+
+## LLM-Based Wiki (NEW!)
+
+Build a persistent, synthesized knowledge graph from web documents using Claude.
+
+```
+Raw Documents (ddg_search.jsonl, news.jsonl, etc.)
+  ↓ LLM synthesis
+Structured Wiki (entity pages, relationships, cross-refs)
+  ↓ Query time
+Wiki Search (10ms) + Hybrid Retrieval (1000ms) → LLM
+```
+
+### Quick Start
+
+```bash
+# Ingest documents into wiki
+python -m georgia_ev_intelligence.kb_builder.wiki_cli ingest \
+  --source kb/raw_docs/ddg_search.jsonl --limit 20
+
+# Search
+python -m georgia_ev_intelligence.kb_builder.wiki_cli search "SK Innovation"
+
+# View page
+python -m georgia_ev_intelligence.kb_builder.wiki_cli show "SK Innovation"
+```
+
+**See [QUICKSTART_WIKI.md](QUICKSTART_WIKI.md) or [docs/LLM_WIKI.md](docs/LLM_WIKI.md) for details.**
+
+---
+
 ## Setup
 
 ### 1. Create Python environment
@@ -143,15 +202,31 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 2. Configure `.env`
+If you use Conda instead, activate your Conda environment and then run:
 
-Create a `.env` file in the project root:
+```bash
+pip install -r requirements.txt
+```
 
-```env
-# Neon PostgreSQL connection (pgvector extension required)
+## 1.1. Install Tesseract OCR (Required for Image Extraction)
+
+To extract text from images, the `pytesseract` library requires the Tesseract OCR engine to be installed on your system:
+
+- **Windows**: Download the installer from the [UB-Mannheim Tesseract wiki](https://github.com/UB-Mannheim/tesseract/wiki) and install it. Ensure that the installation directory (typically `C:\Program Files\Tesseract-OCR`) is added to your system's `PATH` environment variable.
+- **macOS**: Install via Homebrew by running `brew install tesseract`.
+- **Linux (Ubuntu/Debian)**: Install via APT by running `sudo apt-get install tesseract-ocr`.
+
+## 2. Configure `.env`
+
+Create `.env` in the repository root. The app loads it automatically.
+
+Required variables used by the current code:
+
+```bash
+# Neon PostgreSQL
 NEON_DATABASE_URL="postgresql://USER:PASSWORD@HOST/DB?sslmode=require"
 
-# Ollama
+# Ollama (for answer generation)
 OLLAMA_BASE_URL="http://localhost:11434"
 OLLAMA_LLM_MODEL="gemma3:27b"
 OLLAMA_TEMPERATURE="0.1"

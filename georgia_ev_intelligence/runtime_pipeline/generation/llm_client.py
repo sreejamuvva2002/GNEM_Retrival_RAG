@@ -60,6 +60,11 @@ def generate_answer(prompt: str, timeout: int = 180) -> str:
             "model": model,
             "prompt": prompt,
             "stream": False,
+            # Disable chain-of-thought for reasoning models (e.g. qwen3): we want
+            # a direct, fast answer for the JSON-output RAG prompt, not reasoning
+            # that consumes the whole num_predict budget. No-op for non-thinking
+            # models (llama3, qwen2.5), so it's safe regardless of OLLAMA_LLM_MODEL.
+            "think": False,
             "options": {
                 "temperature": config.OLLAMA_TEMPERATURE,
                 "top_p": config.OLLAMA_TOP_P,
