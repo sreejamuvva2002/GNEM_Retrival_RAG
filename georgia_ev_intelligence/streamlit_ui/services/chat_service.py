@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Callable, List, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag import (
@@ -18,19 +18,32 @@ from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag im
 )
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
+from ..models.chat import ChatMemory
 from .interfaces import ChatResult, IChatService
 
 
 PROMPT_TEMPLATE = """You are an analyst answering questions about an EV supply chain knowledge base
-for the state of Georgia. Use ONLY the retrieved context below. Do not use
-outside knowledge. Do not invent companies, roles, products, OEMs, locations,
-employment numbers, or counts that are not present in the context.
+for the state of Georgia.
+
+Use ONLY the retrieved context for factual claims. The recent conversation is
+provided only to understand references in the user's latest question. Do not use
+conversation history as evidence for facts unless the same fact appears in the
+retrieved context. If conversation history conflicts with retrieved context, the
+retrieved context wins. Do not use outside knowledge. Do not invent companies,
+roles, products, OEMs, locations, employment numbers, or counts that are not
+present in the context.
+
+Conversation memory:
+{chat_memory}
+
+Original user question:
+{user_question}
+
+Standalone retrieval question:
+{effective_query}
 
 Retrieved context:
 {retrieved_parent_chunks}
-
-User question:
-{user_question}
 
 ---
 
@@ -132,11 +145,66 @@ it does not, add the missing item lines before returning the JSON.
 Generate the JSON now."""
 
 
+REWRITE_PROMPT_TEMPLATE = """You rewrite user questions into standalone retrieval queries for a Georgia EV supply chain RAG system.
+
+Use conversation memory only when the current question depends on prior context.
+Resolve references, filters, entities, locations, categories, tiers, and constraints
+such as "those", "that county", "same category", "near there", "what about them",
+or similar follow-up language.
+
+If the current question is already standalone or introduces a new topic, return
+the current question unchanged.
+
+Do not answer the question.
+Do not add facts that are not implied by the conversation.
+Do not include markdown.
+Return exactly one standalone search query as plain text.
+
+Conversation summary:
+{conversation_summary}
+
+Recent conversation:
+{recent_conversation}
+
+Current user question:
+{user_question}
+
+Standalone retrieval query:"""
+
+
+SUMMARY_PROMPT_TEMPLATE = """You maintain a compact conversation summary for a Georgia EV supply chain RAG system.
+
+The summary is used only to resolve follow-up questions. It is not factual
+evidence for final answers.
+
+Update the existing summary with the new completed turns. Preserve durable
+context useful for future follow-up resolution: companies, counties, cities,
+tiers, categories, EV/battery relevance filters, OEMs, constraints, and unresolved
+references. Do not add outside facts. Do not write a transcript.
+
+Keep the updated summary under 1200 characters. Return plain text only.
+
+Existing summary:
+{existing_summary}
+
+New completed turns:
+{new_turns}
+
+Updated summary:"""
+
+
 _JSON_FENCE_PREFIX = re.compile(r"^```(?:json)?\s*", re.IGNORECASE)
 _JSON_FENCE_SUFFIX = re.compile(r"\s*```$")
 _JSON_OBJECT = re.compile(r"\{.*\}", re.DOTALL)
 _COMPANY_LINE = re.compile(r"^\s*Company:\s*(.+?)\s*$", re.MULTILINE | re.IGNORECASE)
 _NON_ALNUM = re.compile(r"[^a-z0-9]+")
+_REWRITE_LABEL_PREFIX = re.compile(
+    r"^(?:standalone\s+(?:retrieval\s+)?query|search\s+query)\s*:\s*",
+    re.IGNORECASE,
+)
+_SUMMARY_LABEL_PREFIX = re.compile(r"^(?:updated\s+)?summary\s*:\s*", re.IGNORECASE)
+_BAD_REWRITE_PREFIXES = ("the answer", "based on", "according to", "i found", "there are")
+_MAX_SUMMARY_CHARS = 1200
 
 
 class ChatService(IChatService):
@@ -158,7 +226,46 @@ class ChatService(IChatService):
             self._pipeline = self._retrieval_pipeline_factory()
         return self._pipeline
 
-    def answer(self, query: str, on_step: Callable[[str], None] | None = None) -> ChatResult:
+    def _rewrite_query_for_retrieval(
+        self,
+        query: str,
+        chat_memory: ChatMemory | list[dict[str, str]] | None,
+    ) -> tuple[str, bool]:
+        memory = _coerce_chat_memory(chat_memory)
+        conversation_summary = _clean_memory_summary(memory.summary)
+        recent_conversation = _format_chat_messages(memory.recent_messages)
+        if not conversation_summary and not recent_conversation:
+            return query, False
+
+        try:
+            rewrite_prompt = REWRITE_PROMPT_TEMPLATE.format(
+                conversation_summary=conversation_summary or "None",
+                recent_conversation=recent_conversation or "None",
+                user_question=query,
+            )
+            raw = self._generate_answer(
+                rewrite_prompt,
+                timeout=min(self._llm_timeout_seconds, 60),
+            )
+        except Exception:
+            return query, False
+
+        rewritten = _clean_rewrite_response(raw or "")
+        if not rewritten or _is_bad_rewrite(rewritten):
+            return query, False
+
+        if _normalize_query_for_compare(rewritten) == _normalize_query_for_compare(query):
+            return query, False
+
+        return rewritten, True
+
+    def answer(
+        self,
+        query: str,
+        chat_memory: Optional[ChatMemory] = None,
+        on_step: Callable[[str], None] | None = None,
+        chat_history: Optional[List[Dict[str, str]]] = None,
+    ) -> ChatResult:
         def _step(name: str) -> None:
             if on_step is not None:
                 try:
@@ -168,24 +275,44 @@ class ChatService(IChatService):
 
         query = (query or "").strip()
         if not query:
-            return ChatResult(answer="", parent_contexts=[], trace={}, error="Empty question.")
+            return ChatResult(
+                answer="",
+                parent_contexts=[],
+                trace={},
+                error="Empty question.",
+                effective_query=query,
+                history_used=False,
+            )
+
+        memory = _coerce_chat_memory(chat_memory, chat_history=chat_history)
+        formatted_memory = _format_chat_memory(memory)
+        effective_query, history_used = self._rewrite_query_for_retrieval(query, memory)
 
         try:
             pipeline = self._pipeline_lazy()
             _step("retrieval")
-            retrieval = pipeline.retrieve_with_sources(query)
+            retrieval = pipeline.retrieve_with_sources(effective_query)
             # Deduplication + reranking run inside retrieve_with_sources; surface
             # them as their own completed steps for the progress UI.
             _step("dedup")
             _step("rerank")
         except Exception as exc:
-            return ChatResult(answer="", parent_contexts=[], trace={}, error=f"Retrieval failed: {exc}")
+            return ChatResult(
+                answer="",
+                parent_contexts=[],
+                trace={},
+                error=f"Retrieval failed: {exc}",
+                effective_query=effective_query,
+                history_used=history_used,
+            )
 
         try:
             _step("generation")
             prompt = PROMPT_TEMPLATE.format(
+                chat_memory=formatted_memory or "None",
                 retrieved_parent_chunks=_format_retrieved_context(retrieval.parent_contexts),
                 user_question=query,
+                effective_query=effective_query,
             )
             raw_response = self._generate_answer(prompt, timeout=self._llm_timeout_seconds)
         except Exception as exc:
@@ -194,6 +321,8 @@ class ChatService(IChatService):
                 parent_contexts=retrieval.parent_contexts,
                 trace=_trace_to_dict(retrieval.trace),
                 error=f"LLM generation failed: {exc}",
+                effective_query=effective_query,
+                history_used=history_used,
             )
 
         answer_text, used_companies, parse_ok = _parse_json_response(raw_response or "")
@@ -207,6 +336,8 @@ class ChatService(IChatService):
                 trace=_trace_to_dict(retrieval.trace),
                 error="",
                 warn="" if used_companies else "The model returned no cited companies.",
+                effective_query=effective_query,
+                history_used=history_used,
             )
 
         # Fallback: show the raw text and keep the full reranked top-K so the
@@ -217,7 +348,137 @@ class ChatService(IChatService):
             trace=_trace_to_dict(retrieval.trace),
             error="",
             warn="Could not parse the model's JSON response — showing all top-K sources as a fallback.",
+            effective_query=effective_query,
+            history_used=history_used,
         )
+
+    def summarize_memory(
+        self,
+        existing_summary: str,
+        messages: list[dict[str, str]],
+    ) -> str:
+        formatted_messages = _format_chat_messages(messages, total_char_limit=7000)
+        existing_summary = _clean_memory_summary(existing_summary)
+        if not formatted_messages:
+            return existing_summary
+
+        prompt = SUMMARY_PROMPT_TEMPLATE.format(
+            existing_summary=existing_summary or "None",
+            new_turns=formatted_messages,
+        )
+        raw = self._generate_answer(
+            prompt,
+            timeout=min(self._llm_timeout_seconds, 60),
+        )
+
+        summary = _clean_summary_response(raw or "")
+        return summary or existing_summary
+
+
+def _coerce_chat_memory(
+    chat_memory: ChatMemory | list[dict[str, str]] | None,
+    chat_history: list[dict[str, str]] | None = None,
+) -> ChatMemory:
+    if isinstance(chat_memory, ChatMemory):
+        return chat_memory
+    if isinstance(chat_memory, list):
+        return ChatMemory(recent_messages=chat_memory)
+    if chat_history:
+        return ChatMemory(recent_messages=chat_history)
+    return ChatMemory()
+
+
+def _clean_memory_summary(value: str | None) -> str:
+    return str(value or "").strip()[:_MAX_SUMMARY_CHARS].rstrip()
+
+
+def _format_chat_memory(memory: ChatMemory) -> str:
+    parts: list[str] = []
+    summary = _clean_memory_summary(memory.summary)
+    recent = _format_chat_messages(memory.recent_messages)
+    if summary:
+        parts.append(f"Conversation summary:\n{summary}")
+    if recent:
+        parts.append(f"Recent conversation:\n{recent}")
+    return "\n\n".join(parts)
+
+
+def _format_chat_messages(
+    messages: list[dict[str, str]] | None,
+    max_chars_per_message: int = 900,
+    total_char_limit: int = 5000,
+) -> str:
+    if not messages:
+        return ""
+
+    lines: list[str] = []
+    total_chars = 0
+    for item in messages:
+        role = str(item.get("role", "")).strip().lower()
+        if role not in {"user", "assistant"}:
+            continue
+        content = str(item.get("content", "") or "").strip()
+        if not content:
+            continue
+        if max_chars_per_message > 0 and len(content) > max_chars_per_message:
+            content = content[:max_chars_per_message].rstrip()
+        label = "User" if role == "user" else "Assistant"
+        line = f"{label}: {content}"
+        total_chars += len(line)
+        if total_chars > total_char_limit:
+            break
+        lines.append(line)
+
+    return "\n".join(lines)
+
+
+def _format_chat_history(chat_history: list[dict[str, str]] | None) -> str:
+    """Backward-compatible formatter for older tests/callers."""
+    return _format_chat_messages(chat_history)
+
+
+def _clean_rewrite_response(raw: str) -> str:
+    text = (raw or "").strip()
+    text = _JSON_FENCE_PREFIX.sub("", text)
+    text = _JSON_FENCE_SUFFIX.sub("", text).strip()
+    for line in text.splitlines():
+        line = line.strip().lstrip("-*").strip().strip('"').strip("'").strip()
+        line = _REWRITE_LABEL_PREFIX.sub("", line).strip()
+        if line:
+            return line
+    return ""
+
+
+def _clean_summary_response(raw: str) -> str:
+    text = (raw or "").strip()
+    text = _JSON_FENCE_PREFIX.sub("", text)
+    text = _JSON_FENCE_SUFFIX.sub("", text).strip()
+    text = _SUMMARY_LABEL_PREFIX.sub("", text).strip()
+    if len(text) > _MAX_SUMMARY_CHARS:
+        text = text[:_MAX_SUMMARY_CHARS].rstrip()
+    return text
+
+
+def _is_bad_rewrite(value: str) -> bool:
+    text = (value or "").strip()
+    lowered = text.lower()
+    if not text:
+        return True
+    if len(text) > 500:
+        return True
+    if "{" in text or "}" in text:
+        return True
+    if "\n\n" in text:
+        return True
+    if lowered.startswith(_BAD_REWRITE_PREFIXES):
+        return True
+    if len(re.split(r"[.!?]\s+", text)) > 3:
+        return True
+    return False
+
+
+def _normalize_query_for_compare(value: str) -> str:
+    return _NON_ALNUM.sub(" ", (value or "").lower()).strip()
 
 
 def _parse_json_response(raw: str) -> Tuple[str, List[str], bool]:

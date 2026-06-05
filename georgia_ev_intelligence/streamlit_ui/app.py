@@ -28,16 +28,12 @@ from georgia_ev_intelligence.streamlit_ui.components import (
     resizable_split,
     sources_panel,
 )
+from georgia_ev_intelligence.streamlit_ui.models.chat import ChatMemory, ChatTurnMetadata
 from georgia_ev_intelligence.streamlit_ui.models.source import SourceViewModel
 from georgia_ev_intelligence.streamlit_ui.services.cache import (
-    dispatch_query_cached,
+    dispatch_query,
     get_xlsx_lookup,
-)
-from georgia_ev_intelligence.streamlit_ui.services.chat_service import (
-    extract_cited_company_names,
-)
-from georgia_ev_intelligence.streamlit_ui.services.map_service import (
-    filter_records_to_companies,
+    summarize_chat_memory,
 )
 from georgia_ev_intelligence.streamlit_ui.state import chat_state, settings_state, ui_state
 from georgia_ev_intelligence.streamlit_ui.theming.styles import inject_styles
@@ -61,19 +57,26 @@ def _enrich_sources() -> List[SourceViewModel]:
     ]
 
 
-def _record_history() -> None:
-    """Add a history entry for the first user turn of a fresh chat."""
-    msgs = chat_state.messages()
-    if not msgs:
+def _compact_conversation_summary() -> None:
+    """Summarize older completed turns while preserving the last 4 turns raw."""
+    batch, next_cursor = chat_state.summary_compaction_batch(recent_turns=4)
+    if not batch or next_cursor <= chat_state.summary_cursor():
         return
-    first_user = next((m for m in msgs if m.role == "user"), None)
-    if first_user and chat_state.current_chat_id() is None:
-        preview = first_user.content[:60]
-        title = preview if len(preview) < 36 else preview[:34] + "..."
-        chat_state.add_history_entry(title=title, preview=preview, message_count=len(msgs))
+
+    try:
+        updated_summary = summarize_chat_memory(chat_state.conversation_summary(), batch)
+    except Exception:
+        return
+
+    chat_state.set_conversation_summary(updated_summary)
+    chat_state.set_summary_cursor(next_cursor)
 
 
-def _run_pending_query(query: str, placeholder) -> None:
+def _run_pending_query(
+    query: str,
+    chat_memory: ChatMemory | None,
+    placeholder,
+) -> None:
     """Run dispatch for an already-shown user message, animating the loading card.
 
     The real on_step events (retrieval → dedup → rerank → generation) drive the
@@ -89,7 +92,7 @@ def _run_pending_query(query: str, placeholder) -> None:
         loading_card.render_step(placeholder, active_index=idx, completed_count=idx)
 
     try:
-        dispatch = dispatch_query_cached(query, _on_step=_on_step)
+        dispatch = dispatch_query(query, chat_memory=chat_memory, _on_step=_on_step)
     except Exception as exc:
         placeholder.empty()
         ui_state.clear_pending_query()
@@ -105,20 +108,33 @@ def _run_pending_query(query: str, placeholder) -> None:
 
     placeholder.empty()
 
+    source_ids: list[str] = []
     if dispatch.chat.error and not dispatch.chat.answer:
+        assistant_content = f"⚠️ {dispatch.chat.error}"
         chat_state.append_message(
-            chat_state.make_assistant_message(f"⚠️ {dispatch.chat.error}", source_ids=[])
+            chat_state.make_assistant_message(assistant_content, source_ids=[])
         )
     else:
+        source_ids = [p.record_id for p in dispatch.chat.parent_contexts]
+        assistant_content = dispatch.chat.answer or "(no answer returned)"
         chat_state.append_message(
             chat_state.make_assistant_message(
-                dispatch.chat.answer or "(no answer returned)",
-                source_ids=[p.record_id for p in dispatch.chat.parent_contexts],
+                assistant_content,
+                source_ids=source_ids,
             )
         )
 
     chat_state.set_last_dispatch(dispatch)
-    _record_history()
+    chat_state.append_turn_metadata(
+        ChatTurnMetadata(
+            original_query=query,
+            effective_query=dispatch.chat.effective_query or query,
+            history_used=dispatch.chat.history_used,
+            source_ids=source_ids,
+            trace=dict(dispatch.chat.trace or {}),
+        )
+    )
+    _compact_conversation_summary()
     ui_state.clear_pending_query()
     st.rerun()
 
@@ -131,23 +147,27 @@ def _render_chat_pane(sources: List[SourceViewModel]) -> None:
         chat_messages.render(messages, sources)
 
 
-def _render_map_pane(is_dark: bool, height: int = 600) -> None:
+def _render_map_pane(sources: List[SourceViewModel], is_dark: bool, height: int = 600) -> None:
     dispatch = chat_state.last_dispatch()
     if dispatch is None:
         # Empty map + "Ask a question…" overlay, matching the React empty state.
         map_view.render([], {}, is_dark=is_dark, height=height)
         return
 
-    # Show only the companies (and therefore counties) the answer actually cited.
-    cited = extract_cited_company_names(dispatch.chat.parent_contexts)
-    records = filter_records_to_companies(dispatch.map.records, cited)
+    # Build markers straight from the cited sources so every located source has a
+    # pin (the spatial map.records are a different, often-filtered set, which left
+    # most located sources pinless). Sources without a usable location yield no
+    # marker — matching the no-location icon in the sources panel.
+    records = sources_panel.map_records(sources)
     map_view.render(records, dispatch.map.context.to_dict(), is_dark=is_dark, height=height)
 
 
 def _handle_submit(query: str) -> None:
     # Show the user bubble immediately; the answer is produced on the next run
     # (see _run_pending_query) so the loading card renders under the message.
+    chat_memory = chat_state.rag_memory(recent_turns=4)
     chat_state.append_message(chat_state.make_user_message(query))
+    ui_state.set_pending_chat_memory(chat_memory)
     ui_state.set_pending_query(query)
     st.rerun()
 
@@ -167,6 +187,7 @@ def main() -> None:
     sources = _enrich_sources()
     show_sources = ui_state.sources_panel_open() and bool(sources)
     pending = ui_state.pending_query()
+    pending_memory = ui_state.pending_chat_memory()
 
     # 50/50 split: chat left, map (+ stacked sources) right — matches React.
     # Heights (full-viewport columns, scrollable messages, full/50-50 map) are
@@ -188,7 +209,7 @@ def main() -> None:
         # Inline (non-docked) search bar — lives inside the left column.
         submitted = st.chat_input("Ask about EV companies in Georgia...", key="chat_input")
     with map_col:
-        _render_map_pane(is_dark=False)  # map wraps itself in st.container(key="gnem_map")
+        _render_map_pane(sources, is_dark=False)  # map wraps itself in st.container(key="gnem_map")
         if show_sources:
             with st.container(key="gnem_sources"):
                 sources_panel.render(sources, s)
@@ -197,7 +218,7 @@ def main() -> None:
     resizable_split.render()
 
     if pending and loading_ph is not None:
-        _run_pending_query(pending, loading_ph)
+        _run_pending_query(pending, pending_memory, loading_ph)
 
     if submitted:
         _handle_submit(submitted)

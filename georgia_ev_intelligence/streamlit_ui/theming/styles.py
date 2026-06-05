@@ -173,20 +173,19 @@ def inject_styles(is_dark: bool = False, compact: bool = False) -> None:
             color: var(--muted-fg);
             margin-top: 1px;
         }}
+        /* Square logo emblem. Sized with clamp() so it scales with the
+           viewport (mobile → desktop) while staying crisp; the source PNG
+           is 256/512px so it never up-scales past its native resolution. */
         .gnem-logo {{
-            min-width: 56px;
-            height: 34px;
-            padding: 0 0.75rem;
+            width: clamp(34px, 4.2vw, 46px);
+            height: clamp(34px, 4.2vw, 46px);
             border-radius: var(--radius-sm);
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            color: #ffffff;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 0.8rem;
-            letter-spacing: 0.04em;
-            box-shadow: 0 4px 6px -1px rgba(148, 163, 184, 0.5);
+            object-fit: contain;
+            display: inline-block;
+            background: transparent;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-user-drag: none;
         }}
         /* Hover tooltip for the GNEM badge — uses a sibling <span> because
            Streamlit's HTML sanitizer strips custom data-* attributes (so

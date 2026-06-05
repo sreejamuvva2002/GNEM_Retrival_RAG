@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import List
+from typing import Any, List
 
 
 @dataclass
@@ -35,6 +35,26 @@ class ChatHistoryEntry:
     preview: str
     timestamp: str
     message_count: int
+
+
+@dataclass
+class ChatMemory:
+    """Conversation memory passed into RAG prompts for follow-up resolution."""
+
+    summary: str = ""
+    recent_messages: List[dict[str, str]] = field(default_factory=list)
+
+
+@dataclass
+class ChatTurnMetadata:
+    """Session-only diagnostics for one completed RAG turn."""
+
+    original_query: str
+    effective_query: str
+    history_used: bool
+    source_ids: List[str] = field(default_factory=list)
+    trace: dict[str, Any] = field(default_factory=dict)
+    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
 SUGGESTED_QUESTIONS: tuple = (
