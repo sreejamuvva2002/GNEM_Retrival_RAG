@@ -33,7 +33,7 @@ class OnlyPretrainedAnswerPipeline:
         self._prompt_builder = prompt_builder or OnlyPretrainedPromptBuilder()
         self._answer_generator = answer_generator
 
-    def answer(self, question: str, timeout: int = 180) -> str:
+    def answer(self, question: str, timeout: int = 1800) -> str:
         prompt = self._prompt_builder.build(question=question)
         return self._answer_generator(prompt, timeout)
 

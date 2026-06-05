@@ -37,6 +37,13 @@ def _env_optional_int(name: str, default: int) -> int:
     return int(os.environ.get(name, default))
 
 
+def _env_optional_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
 # Neon PostgreSQL (parent chunks storage)
 NEON_DATABASE_URL = _env("NEON_DATABASE_URL")
 
@@ -54,6 +61,33 @@ EMBEDDING_QUERY_PREFIX = _env("EMBEDDING_QUERY_PREFIX")
 
 # pgvector child chunk index (Neon PostgreSQL)
 PGVECTOR_BATCH_SIZE = _env_int("PGVECTOR_BATCH_SIZE")
+
+# ---------------------------------------------------------------------------
+# Self-healing RAG loop (closed-loop retrieve → judge → generate → verify →
+# bounded retry). All optional — safe defaults make the loop on-by-default.
+# Set SELF_HEALING_ENABLED=false to fully restore the open-loop fast path.
+# ---------------------------------------------------------------------------
+SELF_HEALING_ENABLED: bool = _env_optional_bool("SELF_HEALING_ENABLED", True)
+# Total attempts = 1 initial + retries. 3 == 2 retries.
+SELF_HEALING_MAX_ATTEMPTS: int = _env_optional_int("SELF_HEALING_MAX_ATTEMPTS", 3)
+# How much to grow reranker_top_k each time retrieval is judged insufficient.
+SELF_HEALING_WIDEN_STEP: int = _env_optional_int("SELF_HEALING_WIDEN_STEP", 20)
+# Decompose multi-part questions into sub-queries before retrieval.
+SELF_HEALING_DECOMPOSE_ENABLED: bool = _env_optional_bool(
+    "SELF_HEALING_DECOMPOSE_ENABLED", True
+)
+SELF_HEALING_MAX_SUBQUERIES: int = _env_optional_int("SELF_HEALING_MAX_SUBQUERIES", 4)
+# Post-generation LLM groundedness verification (Gate B). Deterministic checks
+# always run regardless of this flag.
+SELF_HEALING_VERIFY_ENABLED: bool = _env_optional_bool("SELF_HEALING_VERIFY_ENABLED", True)
+# How many top parent snippets the judge / verifier see.
+SELF_HEALING_JUDGE_SNIPPET_COUNT: int = _env_optional_int(
+    "SELF_HEALING_JUDGE_SNIPPET_COUNT", 10
+)
+# Max chars per snippet shown to the judge / verifier.
+SELF_HEALING_SNIPPET_CHARS: int = _env_optional_int("SELF_HEALING_SNIPPET_CHARS", 500)
+# Regenerations (no re-retrieve) allowed per attempt before escalating to widen.
+SELF_HEALING_REGEN_MAX: int = _env_optional_int("SELF_HEALING_REGEN_MAX", 1)
 
 # ---------------------------------------------------------------------------
 # kb_builder crawler settings (all optional — safe defaults provided)
@@ -107,3 +141,18 @@ LOCAL_MANIFEST_DIR: Path = ROOT / _env_optional_str("LOCAL_MANIFEST_DIR", "data/
 
 EXTRACTION_VERSION: str = _env_optional_str("EXTRACTION_VERSION", "v1")
 MAX_FILE_SIZE_MB: int = _env_optional_int("MAX_FILE_SIZE_MB", 100)
+
+# ---------------------------------------------------------------------------
+# Per-question debug tracing → cumulative XLSX (outputs/debug_traces/).
+# For every question asked through the UI, write a very detailed, one-row-per-
+# step record of what happened at each pipeline step. On by default; set
+# DEBUG_TRACE_ENABLED=false to disable. Only the UI dispatch path opens a
+# session, so tests / batch scripts never write a trace file.
+# ---------------------------------------------------------------------------
+DEBUG_TRACE_ENABLED: bool = _env_optional_bool("DEBUG_TRACE_ENABLED", True)
+DEBUG_TRACE_PATH: str = _env_optional_str(
+    "DEBUG_TRACE_PATH",
+    str(OUTPUTS_DIR / "debug_traces" / "ui_question_debug.xlsx"),
+)
+# Excel caps a cell at 32,767 chars; truncate slightly under that with a marker.
+DEBUG_TRACE_MAX_CELL_CHARS: int = _env_optional_int("DEBUG_TRACE_MAX_CELL_CHARS", 32000)

@@ -14,7 +14,7 @@ class LLMAdapter(Protocol):
 
     model_name: str
 
-    def generate(self, prompt: str, timeout: int = 180) -> str:
+    def generate(self, prompt: str, timeout: int = 1800) -> str:
         """Return the generated text."""
 
 
@@ -35,7 +35,7 @@ class OllamaAdapter:
         self._top_p = top_p if top_p is not None else config.OLLAMA_TOP_P
         self._num_predict = num_predict if num_predict is not None else config.OLLAMA_NUM_PREDICT
 
-    def generate(self, prompt: str, timeout: int = 180) -> str:
+    def generate(self, prompt: str, timeout: int = 1800) -> str:
         resp = requests.post(
             f"{self._base_url}/api/generate",
             json={

@@ -63,7 +63,7 @@ class DirectKBAnswerPipeline:
     def answer(
         self,
         question: str,
-        timeout: int = 180,
+        timeout: int = 1800,
     ) -> str:
         kb_context = self._load_kb_context()
         prompt = DIRECT_KB_PROMPT_TEMPLATE.format(

@@ -40,7 +40,7 @@ class OnlyRagAnswerPipeline:
         self,
         question: str,
         retrieved_context: str,
-        timeout: int = 180,
+        timeout: int = 1800,
     ) -> str:
         prompt = self._prompt_builder.build(
             question=question,

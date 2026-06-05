@@ -28,7 +28,7 @@ class FakeContextualPipeline:
         self,
         question: str,
         retrieved_context: str,
-        timeout: int = 180,
+        timeout: int = 1800,
     ) -> str:
         return f"context answer for {question}: {retrieved_context}"
 

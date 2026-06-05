@@ -12,11 +12,26 @@ import json
 import re
 from typing import Callable, Dict, List, Optional, Tuple
 
+from georgia_ev_intelligence.runtime_pipeline.debug_trace import (
+    record_step,
+    set_effective_query,
+)
 from georgia_ev_intelligence.runtime_pipeline.generation.llm_client import generate_answer
+from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.config import RERANKER_TOP_K
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.run_hybrid_rag import (
     _format_retrieved_context,
 )
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
+from georgia_ev_intelligence.runtime_pipeline.self_healing.loop import (
+    SelfHealingConfig,
+    SelfHealingLoop,
+)
+from georgia_ev_intelligence.runtime_pipeline.self_healing.models import FinalAnswer
+from georgia_ev_intelligence.runtime_pipeline.self_healing.prompts import (
+    REGENERATION_SUFFIX,
+    render,
+)
+from georgia_ev_intelligence.shared.config import settings
 
 from ..models.chat import ChatMemory
 from .interfaces import ChatResult, IChatService
@@ -214,7 +229,7 @@ class ChatService(IChatService):
         self,
         retrieval_pipeline_factory: Callable,
         generate_answer_fn: Callable[..., str] = generate_answer,
-        llm_timeout_seconds: int = 180,
+        llm_timeout_seconds: int = 1800,
     ) -> None:
         self._retrieval_pipeline_factory = retrieval_pipeline_factory
         self._generate_answer = generate_answer_fn
@@ -275,6 +290,12 @@ class ChatService(IChatService):
 
         query = (query or "").strip()
         if not query:
+            record_step(
+                "error",
+                status="error",
+                summary="Empty question — nothing to answer.",
+                error="Empty question.",
+            )
             return ChatResult(
                 answer="",
                 parent_contexts=[],
@@ -285,18 +306,67 @@ class ChatService(IChatService):
             )
 
         memory = _coerce_chat_memory(chat_memory, chat_history=chat_history)
-        formatted_memory = _format_chat_memory(memory)
         effective_query, history_used = self._rewrite_query_for_retrieval(query, memory)
+        set_effective_query(effective_query)
+        record_step(
+            "rewrite",
+            status="ok",
+            summary=(
+                f"history_used={history_used}; "
+                + ("rewritten" if effective_query != query else "unchanged")
+            ),
+            details={
+                "original_query": query,
+                "effective_query": effective_query,
+                "history_used": history_used,
+                "self_healing_enabled": settings.SELF_HEALING_ENABLED,
+                "memory_summary": _clean_memory_summary(memory.summary),
+                "recent_messages": _format_chat_messages(memory.recent_messages),
+            },
+        )
 
+        if settings.SELF_HEALING_ENABLED:
+            return self._answer_self_healing(
+                original_query=query,
+                effective_query=effective_query,
+                memory=memory,
+                history_used=history_used,
+                on_step=on_step,
+            )
+
+        return self._answer_open_loop(
+            original_query=query,
+            effective_query=effective_query,
+            memory=memory,
+            history_used=history_used,
+            step=_step,
+        )
+
+    def _answer_open_loop(
+        self,
+        *,
+        original_query: str,
+        effective_query: str,
+        memory: ChatMemory,
+        history_used: bool,
+        step: Callable[[str], None],
+    ) -> ChatResult:
+        """The original single-pass path (SELF_HEALING_ENABLED=false)."""
         try:
             pipeline = self._pipeline_lazy()
-            _step("retrieval")
+            step("retrieval")
             retrieval = pipeline.retrieve_with_sources(effective_query)
             # Deduplication + reranking run inside retrieve_with_sources; surface
             # them as their own completed steps for the progress UI.
-            _step("dedup")
-            _step("rerank")
+            step("dedup")
+            step("rerank")
         except Exception as exc:
+            record_step(
+                "error",
+                status="error",
+                summary=f"Retrieval failed: {exc}",
+                error=str(exc),
+            )
             return ChatResult(
                 answer="",
                 parent_contexts=[],
@@ -307,15 +377,20 @@ class ChatService(IChatService):
             )
 
         try:
-            _step("generation")
-            prompt = PROMPT_TEMPLATE.format(
-                chat_memory=formatted_memory or "None",
-                retrieved_parent_chunks=_format_retrieved_context(retrieval.parent_contexts),
-                user_question=query,
+            step("generation")
+            final = self._generate_and_filter(
+                original_query=original_query,
                 effective_query=effective_query,
+                parents=retrieval.parent_contexts,
+                chat_memory=memory,
             )
-            raw_response = self._generate_answer(prompt, timeout=self._llm_timeout_seconds)
         except Exception as exc:
+            record_step(
+                "error",
+                status="error",
+                summary=f"LLM generation failed: {exc}",
+                error=str(exc),
+            )
             return ChatResult(
                 answer="",
                 parent_contexts=retrieval.parent_contexts,
@@ -325,31 +400,165 @@ class ChatService(IChatService):
                 history_used=history_used,
             )
 
-        answer_text, used_companies, parse_ok = _parse_json_response(raw_response or "")
-        if parse_ok:
-            filtered = _filter_parent_contexts_by_companies(
-                retrieval.parent_contexts, used_companies
+        if final.parse_ok:
+            warn = "" if final.used_companies else "The model returned no cited companies."
+        else:
+            warn = (
+                "Could not parse the model's JSON response — showing all top-K "
+                "sources as a fallback."
+            )
+        record_step(
+            "final",
+            status="warn" if warn else "ok",
+            summary=f"open_loop done; {len(final.filtered_parents)} parents cited",
+            details={
+                "path": "open_loop",
+                "warn": warn,
+                "parse_ok": final.parse_ok,
+                "used_companies": final.used_companies,
+                "num_parents_cited": len(final.filtered_parents),
+                "answer_chars": len(final.answer or ""),
+            },
+        )
+        return ChatResult(
+            answer=final.answer,
+            parent_contexts=final.filtered_parents,
+            trace=_trace_to_dict(retrieval.trace),
+            error="",
+            warn=warn,
+            effective_query=effective_query,
+            history_used=history_used,
+        )
+
+    def _answer_self_healing(
+        self,
+        *,
+        original_query: str,
+        effective_query: str,
+        memory: ChatMemory,
+        history_used: bool,
+        on_step: Callable[[str], None] | None,
+    ) -> ChatResult:
+        """Closed-loop path: retrieve → judge → generate → verify → bounded retry."""
+        try:
+            pipeline = self._pipeline_lazy()
+        except Exception as exc:
+            record_step(
+                "error",
+                status="error",
+                summary=f"Retrieval failed: {exc}",
+                error=str(exc),
             )
             return ChatResult(
-                answer=answer_text,
-                parent_contexts=filtered,
-                trace=_trace_to_dict(retrieval.trace),
-                error="",
-                warn="" if used_companies else "The model returned no cited companies.",
+                answer="",
+                parent_contexts=[],
+                trace={},
+                error=f"Retrieval failed: {exc}",
                 effective_query=effective_query,
                 history_used=history_used,
             )
 
-        # Fallback: show the raw text and keep the full reranked top-K so the
-        # user still has some grounding info, even though we can't filter.
+        loop = SelfHealingLoop(
+            retrieve_fn=lambda q, reranker_top_k: pipeline.retrieve_with_sources(
+                q, reranker_top_k=reranker_top_k
+            ),
+            rerank_fn=lambda q, parents, top_k: pipeline.reranker.score_parents(
+                q, parents, top_k
+            ),
+            final_answer_fn=self._generate_and_filter,
+            config=SelfHealingConfig.from_settings(base_reranker_top_k=RERANKER_TOP_K),
+            generate_answer_fn=self._generate_answer,
+            on_step=on_step,
+        )
+
+        try:
+            result = loop.run(
+                original_query=original_query,
+                effective_query=effective_query,
+                chat_memory=memory,
+            )
+        except Exception as exc:
+            record_step(
+                "error",
+                status="error",
+                summary=f"Self-healing loop failed: {exc}",
+                error=str(exc),
+            )
+            return ChatResult(
+                answer="",
+                parent_contexts=[],
+                trace={},
+                error=f"Self-healing loop failed: {exc}",
+                effective_query=effective_query,
+                history_used=history_used,
+            )
+
+        healing_dict = result.healing_trace.as_dict()
         return ChatResult(
-            answer=answer_text,
-            parent_contexts=retrieval.parent_contexts,
-            trace=_trace_to_dict(retrieval.trace),
+            answer=result.answer,
+            parent_contexts=result.parent_contexts,
+            trace=healing_dict,
             error="",
-            warn="Could not parse the model's JSON response — showing all top-K sources as a fallback.",
-            effective_query=effective_query,
+            warn=result.warn,
+            effective_query=result.effective_query,
             history_used=history_used,
+            healing_trace=healing_dict.get("attempts", []),
+            confidence=result.confidence,
+        )
+
+    def _generate_and_filter(
+        self,
+        *,
+        original_query: str,
+        effective_query: str,
+        parents: List[ParentContext],
+        chat_memory: ChatMemory | list[dict[str, str]] | None = None,
+        correction_notes: str = "",
+    ) -> FinalAnswer:
+        """Build the answer prompt, generate, parse JSON, filter parents by the
+        cited companies. Shared by both the open-loop and self-healing paths;
+        emits no progress steps (the caller owns step reporting)."""
+        formatted_memory = _format_chat_memory(_coerce_chat_memory(chat_memory))
+        prompt = PROMPT_TEMPLATE.format(
+            chat_memory=formatted_memory or "None",
+            retrieved_parent_chunks=_format_retrieved_context(parents),
+            user_question=original_query,
+            effective_query=effective_query,
+        )
+        if correction_notes:
+            prompt = prompt + render(REGENERATION_SUFFIX, CORRECTION_NOTES=correction_notes)
+
+        raw_response = self._generate_answer(prompt, timeout=self._llm_timeout_seconds)
+        answer_text, used_companies, parse_ok = _parse_json_response(raw_response or "")
+        if parse_ok:
+            filtered = _filter_parent_contexts_by_companies(parents, used_companies)
+        else:
+            # Keep the full reranked top-K so the user still has grounding info.
+            filtered = list(parents)
+        record_step(
+            "generation",
+            status="ok" if parse_ok else "warn",
+            sub_step="regenerate" if correction_notes else "",
+            summary=(
+                f"parse_ok={parse_ok}; {len(used_companies)} companies cited; "
+                f"parents {len(parents)}→{len(filtered)}"
+            ),
+            details={
+                "parse_ok": parse_ok,
+                "used_companies": used_companies,
+                "parents_in": len(parents),
+                "parents_after_company_filter": len(filtered),
+                "correction_notes": correction_notes,
+                "answer_text": answer_text,
+                "prompt": prompt,
+                "raw_response": raw_response,
+            },
+        )
+        return FinalAnswer(
+            answer=answer_text,
+            used_companies=used_companies,
+            parse_ok=parse_ok,
+            filtered_parents=filtered,
         )
 
     def summarize_memory(

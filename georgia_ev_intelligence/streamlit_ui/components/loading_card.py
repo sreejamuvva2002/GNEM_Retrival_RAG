@@ -12,38 +12,55 @@ from __future__ import annotations
 
 import streamlit as st
 
-# Label + description text taken verbatim from the React component, in backend
-# step order. Index 0..3 = Searching KB / Retrieval / Reranking / Final answer.
+# Label + description text in self-healing loop execution order. The open-loop
+# path emits a subset (retrieval/dedup/rerank/generation); the self-healing path
+# adds decompose/judge/verify/retry. With retries the active step can move
+# backwards (re-searching) — that's intentional and reflects real progress.
 STEPS = [
+    ("Planning sub-queries", "Breaking the question into parts..."),
     ("Searching KB", "Scanning knowledge base..."),
-    ("Retrieval", "Fetching relevant documents..."),
     ("Reranking", "Ranking by relevance..."),
-    ("Final answer generation", "Composing response..."),
+    ("Judging evidence", "Checking the retrieval is relevant..."),
+    ("Generating answer", "Composing response..."),
+    ("Verifying answer", "Checking the answer is grounded..."),
+    ("Re-searching", "Healing retrieval and retrying..."),
 ]
 
 # Maps backend on_step event names → card index.
 STEP_INDEX = {
-    "retrieval": 0,
-    "dedup": 1,
+    "decompose": 0,
+    "retrieval": 1,
+    "dedup": 2,
     "rerank": 2,
-    "generation": 3,
+    "judge": 3,
+    "generation": 4,
+    "verify": 5,
+    "retry": 6,
 }
 
-# Inline lucide icons (Search, Database, ListFilter, Sparkles) so the card needs
-# no icon font. White stroke to sit on the blue→indigo gradient tile.
+# Inline lucide icons (one per STEPS entry, same order) so the card needs no icon
+# font. White stroke to sit on the blue→indigo gradient tile.
 _ICONS = [
-    # Search
+    # GitBranch (decompose)
+    "<line x1='6' x2='6' y1='3' y2='15'></line><circle cx='18' cy='6' r='3'></circle>"
+    "<circle cx='6' cy='18' r='3'></circle><path d='M18 9a9 9 0 0 1-9 9'></path>",
+    # Search (retrieval)
     "<circle cx='11' cy='11' r='8'></circle><path d='m21 21-4.3-4.3'></path>",
-    # Database
-    "<ellipse cx='12' cy='5' rx='9' ry='3'></ellipse>"
-    "<path d='M3 5V19A9 3 0 0 0 21 19V5'></path><path d='M3 12A9 3 0 0 0 21 12'></path>",
-    # ListFilter
+    # ListFilter (rerank)
     "<path d='M3 6h18'></path><path d='M7 12h10'></path><path d='M10 18h4'></path>",
-    # Sparkles
+    # CheckCheck (judge)
+    "<path d='M18 6 7 17l-5-5'></path><path d='m22 10-7.5 7.5L13 16'></path>",
+    # Sparkles (generation)
     "<path d='M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 "
     "9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .962 0L14.063 8.5A2 2 0 0 0 "
     "15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 "
     "6.135a.5.5 0 0 1-.962 0z'></path>",
+    # ShieldCheck (verify)
+    "<path d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 "
+    "1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 "
+    "1 0 0 1 1 1z'></path><path d='m9 12 2 2 4-4'></path>",
+    # RotateCw (retry)
+    "<path d='M21 12a9 9 0 1 1-3-6.7L21 8'></path><path d='M21 3v5h-5'></path>",
 ]
 
 

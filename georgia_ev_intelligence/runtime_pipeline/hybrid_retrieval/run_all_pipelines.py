@@ -63,7 +63,7 @@ class ContextualAnswerPipeline(Protocol):
         self,
         question: str,
         retrieved_context: str,
-        timeout: int = 180,
+        timeout: int = 1800,
     ) -> str:
         """Return the generated answer."""
 
@@ -71,7 +71,7 @@ class ContextualAnswerPipeline(Protocol):
 class NonContextualAnswerPipeline(Protocol):
     """Generate an answer from only a question."""
 
-    def answer(self, question: str, timeout: int = 180) -> str:
+    def answer(self, question: str, timeout: int = 1800) -> str:
         """Return the generated answer."""
 
 
@@ -90,7 +90,7 @@ class CurrentAnswerPipeline:
         self,
         question: str,
         retrieved_context: str,
-        timeout: int = 180,
+        timeout: int = 1800,
     ) -> str:
         prompt = self._prompt_builder(question, retrieved_context)
         return self._answer_generator(prompt, timeout)
@@ -213,7 +213,7 @@ class Rewritten50AllModesRunner:
         self,
         retrieval_pipeline_factory,
         pipelines: PipelineSet,
-        llm_timeout: int = 180,
+        llm_timeout: int = 1800,
     ) -> None:
         self._retrieval_pipeline_factory = retrieval_pipeline_factory
         self._retrieval_pipeline = None

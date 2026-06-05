@@ -149,7 +149,7 @@ class BaselineRunner:
         questions: list[QuestionRow],
         models: list[str],
         pipelines: list[str],
-        llm_timeout: int = 180,
+        llm_timeout: int = 1800,
     ) -> None:
         self._output_dir = output_dir
         self._questions = questions

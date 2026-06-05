@@ -31,6 +31,11 @@ class ChatResult:
     warn: str = ""
     effective_query: str = ""
     history_used: bool = False
+    # Self-healing loop observability. `healing_trace` is the per-attempt log
+    # (empty when the open-loop path is used); `confidence` is the top
+    # cross-encoder rerank score of the chosen attempt.
+    healing_trace: List[Dict[str, Any]] = field(default_factory=list)
+    confidence: Optional[float] = None
 
 
 @dataclass

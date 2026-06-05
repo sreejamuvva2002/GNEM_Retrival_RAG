@@ -47,3 +47,7 @@ class HybridRetrievalTrace:
     unique_parent_id_count: int
     parent_context_count_before_rerank: int
     parent_context_count_after_rerank: int
+    # Highest cross-encoder rerank score among the returned parents. None when no
+    # parents were returned or the reranker did not expose scores. Used by the
+    # self-healing loop as a retrieval-confidence signal.
+    top_rerank_score: float | None = None

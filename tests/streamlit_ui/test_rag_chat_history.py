@@ -5,14 +5,23 @@ import pytest
 
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.models import (
     HybridRetrievalResult,
+    HybridRetrievalTrace,
 )
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
+from georgia_ev_intelligence.shared.config import settings
 from georgia_ev_intelligence.streamlit_ui.models.chat import ChatMemory
 from georgia_ev_intelligence.streamlit_ui.models.map import MapResult
 from georgia_ev_intelligence.streamlit_ui.services.chat_service import ChatService
 from georgia_ev_intelligence.streamlit_ui.services.interfaces import ChatResult
 from georgia_ev_intelligence.streamlit_ui.services.query_dispatcher import QueryDispatcher
 from georgia_ev_intelligence.streamlit_ui.state import chat_state
+
+
+@pytest.fixture(autouse=True)
+def _default_open_loop(monkeypatch):
+    """The rewrite/summary tests assert single-pass behaviour, so default these
+    tests to the open-loop path. The self-healing integration test re-enables it."""
+    monkeypatch.setattr(settings, "SELF_HEALING_ENABLED", False)
 
 
 class FakePipeline:
@@ -39,7 +48,7 @@ def test_chat_service_rewrites_follow_up_before_retrieval() -> None:
     pipeline = FakePipeline()
     prompts: list[str] = []
 
-    def fake_generate(prompt: str, timeout: int = 180) -> str:
+    def fake_generate(prompt: str, timeout: int = 1800) -> str:
         prompts.append(prompt)
         if "Standalone retrieval query:" in prompt:
             return "Tier 1 suppliers in Troup County that are battery-related"
@@ -73,7 +82,7 @@ def test_chat_service_rewrites_follow_up_before_retrieval() -> None:
 def test_chat_service_falls_back_when_rewrite_is_bad() -> None:
     pipeline = FakePipeline()
 
-    def fake_generate(prompt: str, timeout: int = 180) -> str:
+    def fake_generate(prompt: str, timeout: int = 1800) -> str:
         if "Standalone retrieval query:" in prompt:
             return ""
         return '{"answer":"Battery Co | Product: battery cells","used_companies":["Battery Co"]}'
@@ -98,7 +107,7 @@ def test_chat_service_falls_back_when_rewrite_is_bad() -> None:
 def test_chat_service_keeps_standalone_question_unchanged() -> None:
     pipeline = FakePipeline()
 
-    def fake_generate(prompt: str, timeout: int = 180) -> str:
+    def fake_generate(prompt: str, timeout: int = 1800) -> str:
         if "Standalone retrieval query:" in prompt:
             return "Which companies are in Fulton County?"
         return '{"answer":"Battery Co | Product: battery cells","used_companies":["Battery Co"]}'
@@ -124,7 +133,7 @@ def test_chat_service_keeps_standalone_question_unchanged() -> None:
 def test_chat_service_summarizes_completed_turns() -> None:
     prompts: list[str] = []
 
-    def fake_generate(prompt: str, timeout: int = 180) -> str:
+    def fake_generate(prompt: str, timeout: int = 1800) -> str:
         prompts.append(prompt)
         return "Updated summary: Troup County Tier 1 supplier filter; battery relevance follow-up."
 
@@ -150,7 +159,7 @@ def test_chat_service_summarizes_completed_turns() -> None:
 def test_summary_failure_is_separate_from_answer_generation() -> None:
     pipeline = FakePipeline()
 
-    def fake_generate(prompt: str, timeout: int = 180) -> str:
+    def fake_generate(prompt: str, timeout: int = 1800) -> str:
         if "Updated summary:" in prompt:
             raise RuntimeError("summary failed")
         if "Standalone retrieval query:" in prompt:
@@ -224,3 +233,71 @@ def test_dispatcher_uses_effective_query_for_map_lookup() -> None:
 
     assert result.query == "Show those near Atlanta"
     assert map_service.queries == ["suppliers near Atlanta"]
+
+
+class LoopFakePipeline:
+    """Pipeline supporting the self-healing call signature (per-call top_k +
+    a reranker exposing score_parents)."""
+
+    def __init__(self) -> None:
+        self.queries: list[str] = []
+        self.reranker = self
+
+    def retrieve_with_sources(self, query: str, *, reranker_top_k=None) -> HybridRetrievalResult:
+        self.queries.append(query)
+        return HybridRetrievalResult(
+            parent_contexts=[
+                ParentContext(
+                    record_id="p1",
+                    source_row_id=1,
+                    parent_chunk_text="Company: Battery Co\nProduct: battery cells",
+                )
+            ],
+            dense_children=[],
+            sparse_children=[],
+            trace=HybridRetrievalTrace(
+                sparse_child_count=1,
+                dense_child_count=0,
+                merged_child_result_count=1,
+                unique_child_chunk_count=1,
+                unique_parent_id_count=1,
+                parent_context_count_before_rerank=1,
+                parent_context_count_after_rerank=1,
+                top_rerank_score=1.0,
+            ),
+        )
+
+    def score_parents(self, query, parents, top_k=None):
+        scored = [(p, 1.0) for p in parents]
+        return scored if top_k is None else scored[:top_k]
+
+
+def test_self_healing_loop_end_to_end_when_enabled(monkeypatch) -> None:
+    monkeypatch.setattr(settings, "SELF_HEALING_ENABLED", True)
+    pipeline = LoopFakePipeline()
+
+    def fake_generate(prompt: str, timeout: int = 1800) -> str:
+        if "atomic retrieval sub-queries" in prompt:           # DECOMPOSE
+            return '{"subqueries": []}'                          # -> atomic, single query
+        if "strict retrieval grader" in prompt:                # Gate A
+            return '{"verdict":"good","relevant":true,"sufficient":true,"reason":"ok","suggested_query":""}'
+        if "verify whether a generated answer" in prompt:      # Gate B
+            return '{"grounded":true,"unsupported_claims":[],"missing_companies":[]}'
+        if "Standalone retrieval query:" in prompt:            # rewrite
+            return "Battery suppliers in Georgia"
+        return '{"answer":"There are 1 supplier in Georgia.\\nBattery Co | Product: battery cells","used_companies":["Battery Co"]}'
+
+    service = ChatService(
+        retrieval_pipeline_factory=lambda: pipeline,
+        generate_answer_fn=fake_generate,
+    )
+
+    result = service.answer("Which battery suppliers are in Georgia?")
+
+    assert "Battery Co" in result.answer
+    assert result.error == ""
+    assert result.healing_trace  # per-attempt log is populated
+    assert result.trace.get("final_outcome") == "success"
+    assert result.confidence == 1.0
+    # the cited parent survives company filtering
+    assert [p.record_id for p in result.parent_contexts] == ["p1"]
