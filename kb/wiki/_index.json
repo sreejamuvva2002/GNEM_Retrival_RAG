@@ -1,205 +1,52 @@
 {
   "pages": {
     "Duckyang": {
-      "entity_type": [
-        "company"
-      ],
-      "last_updated": "2026-06-07T18:57:49.444150",
+      "entity_type": "company",
+      "last_updated": "2026-06-07T19:22:36.591270",
       "sources": [
-        "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd",
-        "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843",
-        "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c",
+        "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a",
         "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a",
-        "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
-        "sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1",
-        "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b",
         "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349",
+        "sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff",
+        "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c",
         "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14",
-        "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95",
+        "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f",
+        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
         "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1",
-        "sha256:f4dcf12e562d83c2005d9ecc3edfe9d45fc05f94b6d0cbeaa07631b6fa15e742",
-        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
-        "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a"
-      ]
-    },
-    "Seho BLDG (Deungchon-dong)": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:37.091819",
-      "sources": [
-        "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
-        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
-        "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14"
-      ]
-    },
-    "Gangseo-gu": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:37.092704",
-      "sources": [
-        "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
-        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
-        "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14",
-        "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1"
-      ]
-    },
-    "Seoul": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:37.093622",
-      "sources": [
         "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
         "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95",
-        "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14"
-      ]
-    },
-    "Georgia Department of Economic Development": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:27.566841",
-      "sources": [
-        "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843"
-      ]
-    },
-    "Hartsfield-Jackson International Airport": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:27.567637",
-      "sources": [
-        "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843"
-      ]
-    },
-    "Georgia Ports Authority": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:27.568612",
-      "sources": [
-        "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843"
-      ]
-    },
-    "Braselton, Georgia": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:33.932767",
-      "sources": [
         "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b"
       ]
     },
-    "Visteon International Holdings, Inc": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:41.334160",
-      "sources": [
-        "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349"
-      ]
-    },
-    "Braselton": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:41.334913",
-      "sources": [
-        "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349"
-      ]
-    },
-    "SK Innovation": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:47.965834",
-      "sources": [
-        "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c"
-      ]
-    },
-    "Amazon": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:47.967260",
-      "sources": [
-        "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c"
-      ]
-    },
-    "Universal Factory": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:52.931539",
-      "sources": [
-        "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a"
-      ]
-    },
-    "INTERFAB": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:52.932243",
-      "sources": [
-        "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a"
-      ]
-    },
-    "Cooperative Factory": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:56:52.933216",
-      "sources": [
-        "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a"
-      ]
-    },
-    "South Korea": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:02.493519",
-      "sources": [
-        "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95"
-      ]
-    },
     "Georgia": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:10.049237",
+      "entity_type": "location",
+      "last_updated": "2026-06-07T19:22:45.013409",
       "sources": [
-        "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd"
+        "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843",
+        "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd",
+        "sha256:1bd2d56c33e0a149ed2c88225a62dca0f2be04713bf6f1b4df491de281384096"
       ]
     },
-    "electric vehicle supply chain": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:10.050564",
+    "Site Selection Magazine": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T19:23:00.576354",
       "sources": [
-        "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd"
+        "sha256:66b52b4f9f8e15d506282388b52921377cbfa686e9f6e5fb58339cbd43f1d13c"
       ]
     },
-    "battery production": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:10.052943",
+    "Volkswagen": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T19:24:35.723300",
       "sources": [
-        "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd"
-      ]
-    },
-    "Seoul, Korea(07591)": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:24.286230",
-      "sources": [
-        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218"
-      ]
-    },
-    "Seho BLDG": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:31.103642",
-      "sources": [
-        "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1"
-      ]
-    },
-    "Deungchon-dong": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:31.104400",
-      "sources": [
-        "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1"
-      ]
-    },
-    "El Corte Ingles": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:42.085648",
-      "sources": [
-        "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a"
-      ]
-    },
-    "Tucci homeware": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:42.087321",
-      "sources": [
-        "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a"
-      ]
-    },
-    "Thaung Gyi North, Ngwe Pin Lae Industrial zone Hlaing Township, Yangon, Myanmar": {
-      "entity_type": "related",
-      "last_updated": "2026-06-07T18:57:49.446092",
-      "sources": [
-        "sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1"
+        "sha256:14304d52df6ec626bf6d21a5773eb7f3ffae8ea75c86b8319ecc5cf015021d0f"
       ]
     }
   },
   "entities": {
-    "Seho BLDG (Deungchon-dong)": [
+    "Seho BLDG": [
+      "Duckyang"
+    ],
+    "Deungchon-dong": [
       "Duckyang"
     ],
     "Gangseo-gu": [
@@ -208,28 +55,22 @@
     "Seoul": [
       "Duckyang"
     ],
-    "Georgia Department of Economic Development": [
+    "Korea(07591)": [
       "Duckyang"
+    ],
+    "Hartsfield-Jackson International": [
+      "Georgia"
     ],
     "Georgia Ports Authority": [
-      "Duckyang"
-    ],
-    "Hartsfield-Jackson International Airport": [
-      "Duckyang"
+      "Georgia"
     ],
     "Braselton, Georgia": [
       "Duckyang"
     ],
-    "Duckyang Ind. Co. Ltd.": [
-      "Duckyang"
-    ],
-    "Braselton": [
-      "Duckyang"
-    ],
-    "GA": [
-      "Duckyang"
-    ],
     "Visteon International Holdings, Inc": [
+      "Duckyang"
+    ],
+    "Hyundai": [
       "Duckyang"
     ],
     "Amazon": [
@@ -238,43 +79,37 @@
     "SK Innovation": [
       "Duckyang"
     ],
-    "Universal Factory": [
+    "Kia": [
       "Duckyang"
     ],
-    "Cooperative Factory": [
+    "MYANMAR - UNIVERSAL": [
       "Duckyang"
     ],
-    "INTERFAB": [
-      "Duckyang"
-    ],
-    "South Korea": [
-      "Duckyang"
-    ],
-    "Inflation Reduction Act": [
-      "Duckyang"
-    ],
-    "Georgia": [
-      "Duckyang"
-    ],
-    "eVTOL aircraft": [
+    "BANGLADESH - INTERFAB": [
       "Duckyang"
     ],
     "battery production": [
-      "Duckyang"
+      "Georgia"
     ],
     "electric vehicle supply chain": [
+      "Georgia"
+    ],
+    "eVTOL aircraft": [
+      "Georgia"
+    ],
+    "Bangladesh": [
       "Duckyang"
     ],
-    "Seoul, Korea(07591)": [
+    "Qingdao Handuck Apparel Inc.": [
       "Duckyang"
     ],
-    "Deungchon-dong": [
+    "Universal Apparel Co., Ltd.": [
       "Duckyang"
     ],
-    "Seho BLDG": [
+    "Vietnam": [
       "Duckyang"
     ],
-    "Korea(07591)": [
+    "Seho BLDG (Deungchon-dong)": [
       "Duckyang"
     ],
     "El Corte Ingles": [
@@ -283,8 +118,17 @@
     "Tucci homeware": [
       "Duckyang"
     ],
-    "Thaung Gyi North, Ngwe Pin Lae Industrial zone Hlaing Township, Yangon, Myanmar": [
-      "Duckyang"
+    "Governor Brian Kemp": [
+      "Georgia"
+    ],
+    "Georgia Department of Economic Development": [
+      "Georgia"
+    ],
+    "Duckyang": [
+      "Site Selection Magazine"
+    ],
+    "Conway Projects Database": [
+      "Site Selection Magazine"
     ]
   },
   "sources_processed": [
@@ -302,7 +146,32 @@
     "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1",
     "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
     "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a",
-    "sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1"
+    "sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1",
+    "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f",
+    "sha256:c3b4a1e557444978a388700341b800ae646ab14475cd2aa7c17544c3e73a0a5f",
+    "sha256:1bd2d56c33e0a149ed2c88225a62dca0f2be04713bf6f1b4df491de281384096",
+    "sha256:2cf73d592fdfa911f1aa61069060e2b3e180d15ffb9b34f25c806a6872fff8bc",
+    "sha256:667d37eb8cfa1926f6a73f7b6a0f62d10f7a7a46fc6d2f0c1a4e1e8eaa2eb8db",
+    "sha256:a02c9f3dbf33bfd0493e8c866c67d6aa232fb590cc6391d13a29a80b82827070",
+    "sha256:66b52b4f9f8e15d506282388b52921377cbfa686e9f6e5fb58339cbd43f1d13c",
+    "sha256:de268c41179ff62aa88f820c6982c61f57e86b6e37042b57ca4a04697f479415",
+    "sha256:b98245a62cc609cfba94ca867914f7bdd6ec25b313e99c36767ef489e9df0aed",
+    "sha256:52635ccdc9a7623842f4f96bdd4b9f86341f7cfc43913023f331ceca69bee935",
+    "sha256:f0f74cb9ea6672d3d69a5211c72dd9883f5a59f7ff37a59c0ab1607aeac971d7",
+    "sha256:428012e5ad10630c33e96ec0632a5e0599b00816f47e655434b4a17601597572",
+    "sha256:5191167b0df9ca061ccb88390779b0b3521fa554cec4f649c88abd067bbabb12",
+    "sha256:d5f84a99c3c10a81a9e83aec900615cfaa74cf33541a295b8d8b49ed746457ff",
+    "sha256:03f2fb526f8d52da7971e565b0c1928ba1dc598ad454b6ebad250038faa2566c",
+    "sha256:753f38b726cdd0cf5dd6541d0e267ee018ec2e9ef559b9d9f00f5fec26e14c3b",
+    "sha256:b3881e0ef4c4733548f3e10d0da423fed0eab9c13c1ad06dc8e2fcaf0f0b6f7e",
+    "sha256:c3b7833408c8f9738d7c378f5a60efe6e197500731405c4799cbc9a14614d197",
+    "sha256:7b3570667287afd16c587d82df450b39e2ba8c77ed6cd6e3de81aa78cc33a04e",
+    "sha256:cb4f12fbe5e3de21f1f27d9e49823fbba6dbe990aea4013c9436bb84680aeb68",
+    "sha256:4cfad6a0782a45ff9878b0e5ee0af8434c054aca571a68e33cb23ac2f5466938",
+    "sha256:4c849044622ddd67582de099d8cf4441aeb9dd54ec5fb13db820166b238a28f0",
+    "sha256:f6039f3ebfa7c2316df04f458125e567eae4aee9cbe34d148526da0b4f580e46",
+    "sha256:14304d52df6ec626bf6d21a5773eb7f3ffae8ea75c86b8319ecc5cf015021d0f",
+    "sha256:abf99af9d72c1c882233961f4855f29294c360660620939036e3a74ef80e73a8"
   ],
-  "last_updated": "2026-06-07T18:57:49.446626"
+  "last_updated": "2026-06-07T19:24:40.604481"
 }

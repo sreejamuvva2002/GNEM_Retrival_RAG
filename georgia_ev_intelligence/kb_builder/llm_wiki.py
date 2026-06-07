@@ -245,22 +245,27 @@ class LLMWiki:
         linked_company = doc_content.get("linked_company_id", "")
 
         # Use Ollama to analyze and extract entities
-        prompt = f"""Analyze this document and extract key information. Respond ONLY with valid JSON, no other text.
+        prompt = f"""Analyze this document and extract structured facts about the PRIMARY subject company or entity. Respond ONLY with valid JSON, no other text.
 
 Document Title: {title}
-Company: {linked_company}
+URL: {url}
+Hint (company this was crawled for, may or may not be the focus): {linked_company}
 
 Content:
 {body_text[:1500]}
 
 Rules:
-- "main_entity" must be the SHORT canonical company name only (e.g. "Duckyang", not "Duckyang Co.,Ltd." or "DUCKYANG CO.,LTD.").
+- "main_entity" = the company or organization this document is PRIMARILY about (based on the content, not the hint).
+  - If the document is about a magazine, publisher, or directory (not a company), set main_entity to "Unknown".
+  - Use the SHORT canonical name (e.g. "Duckyang", not "Duckyang Co.,Ltd.").
+- "facts" = concrete, specific facts about main_entity extracted from the content (investments, locations, products, headcount, etc.)
+  - Do NOT include generic website features, navigation links, or subscription offers as facts.
+  - Include at least 2 specific facts or set main_entity to "Unknown".
 - Do NOT use email addresses, URLs, or job titles as entity names.
-- "related_entities" must only include real company or place names, not emails or URLs.
-- "facts" should be distinct, non-duplicate bullet points.
+- "related_entities" = other real company or place names mentioned (not emails, URLs, or website sections).
 
 Extract and respond as valid JSON with these exact keys:
-{{"main_entity": "short canonical company name", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2"], "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
+{{"main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2"], "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
 
         try:
             response_text = self._call_ollama(prompt)
@@ -268,50 +273,40 @@ Extract and respond as valid JSON with these exact keys:
             extraction = self._extract_json_from_response(response_text)
         except Exception as e:
             print(f"[wiki] Error extracting from response: {e}")
-            # Fallback: create a simple page
-            extraction = {
-                "main_entity": linked_company or "Unknown",
-                "entity_type": "document",
-                "facts": [body_text[:200]],
-                "related_entities": [],
-                "category": "news",
-            }
+            # Fallback: skip this document (don't pollute pages with junk)
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
 
         updated_pages = []
 
-        # Create/update main entity page — resolve to canonical name first
+        # Guard: skip if LLM couldn't identify a real entity or had no substance
         main_entity = extraction.get("main_entity", "Unknown")
-        if main_entity and main_entity != "Unknown":
-            canonical = self._find_canonical_entity(main_entity) or main_entity
-            existing_page = self._load_page(canonical)
-            updated_pages.append(
-                self._update_or_create_page(
-                    canonical,
-                    extraction,
-                    doc_id,
-                    existing_page,
-                )
-            )
-            main_entity = canonical  # use canonical name for related links
+        facts = extraction.get("facts", [])
+        meaningful_facts = [f for f in facts if len(f.strip()) > 15]
+        if not main_entity or main_entity in ("Unknown", "") or len(meaningful_facts) < 2:
+            print(f"[wiki] Skipping low-value extraction for: {title[:60]}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
 
-        # Create/update pages for related entities (skip junk like emails/URLs)
-        for related in extraction.get("related_entities", [])[:3]:
-            if not related:
-                continue
-            # Skip emails and URLs
-            if "@" in related or related.startswith("http"):
-                continue
-            canonical_related = self._find_canonical_entity(related) or related
-            existing = self._load_page(canonical_related)
-            updated_pages.append(
-                self._update_or_create_page(
-                    canonical_related,
-                    {"facts": [f"Related to {main_entity}"]},
-                    doc_id,
-                    existing,
-                    entity_type="related",
-                )
+        # Create/update main entity page — resolve to canonical name first
+        canonical = self._find_canonical_entity(main_entity) or main_entity
+        existing_page = self._load_page(canonical)
+        updated_pages.append(
+            self._update_or_create_page(
+                canonical,
+                extraction,
+                doc_id,
+                existing_page,
             )
+        )
+        main_entity = canonical  # use canonical name for related links
+
+        # NOTE: We do NOT create stub pages for related entities.
+        # Related entities are stored only as metadata on the main entity's page.
+        # A page for a related entity is only created when a document directly
+        # focuses on it and the LLM extracts real, substantive facts about it.
 
         self.index["sources_processed"].append(doc_id)
         self._save_index()
@@ -329,10 +324,11 @@ Extract and respond as valid JSON with these exact keys:
         entity_type = entity_type or extraction.get("entity_type", "concept")
 
         if existing_page:
-            # Merge new facts with existing content
+            # Merge new facts with existing content, then deduplicate
             content = self._merge_page_content(
                 existing_page.content, extraction.get("facts", [])
             )
+            content = self._deduplicate_facts(content)
             related = list(set(existing_page.related_entities + extraction.get("related_entities", [])))
             sources = list(set(existing_page.sources + [doc_id]))
         else:
