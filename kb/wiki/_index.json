@@ -29,9 +29,10 @@
     },
     "Site Selection Magazine": {
       "entity_type": "company",
-      "last_updated": "2026-06-07T19:23:00.576354",
+      "last_updated": "2026-06-07T20:40:55.059578",
       "sources": [
-        "sha256:66b52b4f9f8e15d506282388b52921377cbfa686e9f6e5fb58339cbd43f1d13c"
+        "sha256:66b52b4f9f8e15d506282388b52921377cbfa686e9f6e5fb58339cbd43f1d13c",
+        "sha256:7712f1fc93c8984b09c476702e809c88c89ed4bdb90acad93bb3483a234a3225"
       ]
     },
     "Volkswagen": {
@@ -39,6 +40,13 @@
       "last_updated": "2026-06-07T19:24:35.723300",
       "sources": [
         "sha256:14304d52df6ec626bf6d21a5773eb7f3ffae8ea75c86b8319ecc5cf015021d0f"
+      ]
+    },
+    "AstraZeneca": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:40:43.300834",
+      "sources": [
+        "sha256:d2fea1d14ed83f4ebacbf5418ac8005121efc39cda85361d76ccad81918bc0c9"
       ]
     }
   },
@@ -129,6 +137,18 @@
     ],
     "Conway Projects Database": [
       "Site Selection Magazine"
+    ],
+    "Maine": [
+      "AstraZeneca"
+    ],
+    "DFW suburb of Irving": [
+      "AstraZeneca"
+    ],
+    "Investors": [
+      "Site Selection Magazine"
+    ],
+    "State regulatory environment": [
+      "Site Selection Magazine"
     ]
   },
   "sources_processed": [
@@ -171,7 +191,11 @@
     "sha256:4c849044622ddd67582de099d8cf4441aeb9dd54ec5fb13db820166b238a28f0",
     "sha256:f6039f3ebfa7c2316df04f458125e567eae4aee9cbe34d148526da0b4f580e46",
     "sha256:14304d52df6ec626bf6d21a5773eb7f3ffae8ea75c86b8319ecc5cf015021d0f",
-    "sha256:abf99af9d72c1c882233961f4855f29294c360660620939036e3a74ef80e73a8"
+    "sha256:abf99af9d72c1c882233961f4855f29294c360660620939036e3a74ef80e73a8",
+    "sha256:d2fea1d14ed83f4ebacbf5418ac8005121efc39cda85361d76ccad81918bc0c9",
+    "sha256:b2b077c77cfaadbdb82649158e65ba88edf22c1f99c74bdda1e782e373fe2f4b",
+    "sha256:b0e728c70701799f42929485408d81d856427549906aff0c9f9d0df69f546fd1",
+    "sha256:7712f1fc93c8984b09c476702e809c88c89ed4bdb90acad93bb3483a234a3225"
   ],
-  "last_updated": "2026-06-07T19:24:40.604481"
+  "last_updated": "2026-06-07T20:40:55.060055"
 }

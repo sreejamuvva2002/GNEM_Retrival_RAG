@@ -28,6 +28,7 @@ class WikiPage:
     last_updated: str
     sources: list[str]  # source document IDs
     related_entities: list[str]  # cross-references
+    fact_sources: dict  # fact_text -> [doc_ids] for provenance tracing
 
 
 class LLMWiki:
@@ -161,7 +162,7 @@ class LLMWiki:
         if not page_file.exists():
             return None
 
-        with open(page_file) as f:
+        with open(page_file, encoding="utf-8", errors="replace") as f:
             content = f.read()
 
         # Parse frontmatter
@@ -177,6 +178,7 @@ class LLMWiki:
                     last_updated=frontmatter["last_updated"],
                     sources=frontmatter.get("sources", []),
                     related_entities=frontmatter.get("related_entities", []),
+                    fact_sources=frontmatter.get("fact_sources", {}),
                 )
         return None
 
@@ -188,10 +190,11 @@ class LLMWiki:
             "last_updated": page.last_updated,
             "sources": page.sources,
             "related_entities": page.related_entities,
+            "fact_sources": page.fact_sources,
         }
 
         page_file = self.wiki_dir / f"{self._safe_filename(page.title)}.md"
-        with open(page_file, "w") as f:
+        with open(page_file, "w", encoding="utf-8") as f:
             f.write("---\n")
             f.write(json.dumps(frontmatter) + "\n")
             f.write("---\n\n")
@@ -322,19 +325,20 @@ Extract and respond as valid JSON with these exact keys:
     ) -> str:
         """Update existing page or create new one."""
         entity_type = entity_type or extraction.get("entity_type", "concept")
+        new_facts = extraction.get("facts", [])
 
         if existing_page:
             # Merge new facts with existing content, then deduplicate
-            content = self._merge_page_content(
-                existing_page.content, extraction.get("facts", [])
+            content, fact_sources = self._merge_page_content(
+                existing_page.content, new_facts, doc_id, existing_page.fact_sources
             )
-            content = self._deduplicate_facts(content)
+            content = self._deduplicate_facts(content, fact_sources)
             related = list(set(existing_page.related_entities + extraction.get("related_entities", [])))
             sources = list(set(existing_page.sources + [doc_id]))
         else:
             # Create new page
-            content = self._format_page_content(
-                entity_name, extraction.get("facts", [])
+            content, fact_sources = self._format_page_content(
+                entity_name, new_facts, doc_id
             )
             related = extraction.get("related_entities", [])
             sources = [doc_id]
@@ -346,22 +350,30 @@ Extract and respond as valid JSON with these exact keys:
             last_updated=datetime.now().isoformat(),
             sources=sources,
             related_entities=related,
+            fact_sources=fact_sources,
         )
 
         self._save_page(page)
         return entity_name
 
-    def _format_page_content(self, entity_name: str, facts: list[str]) -> str:
-        """Format facts into markdown page content."""
+    def _format_page_content(self, entity_name: str, facts: list[str], doc_id: str) -> tuple[str, dict]:
+        """Format facts into markdown page content. Returns (content, fact_sources)."""
         content = f"# {entity_name}\n\n## Overview\n\n"
         content += "## Key Facts\n\n"
+        fact_sources: dict[str, list[str]] = {}
         for fact in facts[:10]:
             content += f"- {fact}\n"
-        return content
+            fact_sources[fact] = [doc_id]
+        return content, fact_sources
 
-    def _merge_page_content(self, existing_content: str, new_facts: list[str]) -> str:
-        """Merge new facts into existing page content."""
-        # Extract existing facts
+    def _merge_page_content(
+        self,
+        existing_content: str,
+        new_facts: list[str],
+        doc_id: str,
+        existing_fact_sources: dict,
+    ) -> tuple[str, dict]:
+        """Merge new facts into existing page content. Returns (content, fact_sources)."""
         lines = existing_content.split("\n")
         fact_section_idx = -1
 
@@ -370,28 +382,65 @@ Extract and respond as valid JSON with these exact keys:
                 fact_section_idx = i
                 break
 
-        if fact_section_idx >= 0:
-            # Insert new facts
-            facts_content = "\n".join(
-                [f"- {fact}" for fact in new_facts[:5]]
-            )
+        fact_sources = dict(existing_fact_sources)  # copy
+        if fact_section_idx >= 0 and new_facts:
+            facts_content = "\n".join([f"- {fact}" for fact in new_facts[:5]])
             lines.insert(fact_section_idx + 2, facts_content)
+            for fact in new_facts[:5]:
+                if fact in fact_sources:
+                    if doc_id not in fact_sources[fact]:
+                        fact_sources[fact].append(doc_id)
+                else:
+                    fact_sources[fact] = [doc_id]
 
-        return "\n".join(lines)
+        return "\n".join(lines), fact_sources
 
-    def _deduplicate_facts(self, content: str) -> str:
-        """Remove duplicate bullet point facts from page content."""
+    def _deduplicate_facts(self, content: str, fact_sources: dict) -> str:
+        """Remove duplicate bullet point facts from page content.
+        Merges provenance of dropped duplicates into the kept fact.
+        """
         lines = content.split("\n")
-        seen = set()
+        seen: dict[str, str] = {}  # normalized_fact -> original fact text
         result = []
         for line in lines:
             stripped = line.strip().lstrip("- ").lower()
+            original_fact = line.strip().lstrip("- ")
             if line.startswith("- ") and stripped in seen:
-                continue  # skip duplicate fact
+                # Merge provenance: keep all sources from the duplicate
+                kept_fact = seen[stripped]
+                if original_fact in fact_sources and kept_fact in fact_sources:
+                    for src in fact_sources[original_fact]:
+                        if src not in fact_sources[kept_fact]:
+                            fact_sources[kept_fact].append(src)
+                continue  # skip the duplicate line
             if line.startswith("- "):
-                seen.add(stripped)
+                seen[stripped] = original_fact
             result.append(line)
         return "\n".join(result)
+
+    def get_provenance(self, title: str) -> str:
+        """Return a human-readable provenance report for a wiki page.
+        Shows each fact and the short doc ID(s) that contributed it.
+        """
+        page = self._load_page(title)
+        if not page:
+            return f"Page '{title}' not found."
+
+        lines = [f"## Provenance: {title}\n"]
+        facts = [l.lstrip("- ").strip() for l in page.content.split("\n") if l.startswith("- ")]
+
+        if not facts:
+            return f"No facts found on page '{title}'."
+
+        for fact in facts:
+            sources = page.fact_sources.get(fact, [])
+            if sources:
+                short_ids = [s[:16] + "..." for s in sources]
+                lines.append(f"- {fact}\n  Sources: {', '.join(short_ids)}")
+            else:
+                lines.append(f"- {fact}\n  Sources: (unknown — predates provenance tracking)")
+
+        return "\n".join(lines)
 
     def merge_duplicates(self, dry_run: bool = False) -> list[tuple[str, str]]:
         """
@@ -462,7 +511,14 @@ Extract and respond as valid JSON with these exact keys:
                         for line in dup_page.content.split("\n")
                         if line.startswith("- ")
                     ]
-                    merged_content = self._merge_page_content(canon_page.content, dup_facts)
+                    # Use a synthetic doc_id key for merge provenance
+                    merge_doc_id = f"merge:{dup}"
+                    merged_content, merged_fact_sources = self._merge_page_content(
+                        canon_page.content, dup_facts,
+                        merge_doc_id,
+                        {**canon_page.fact_sources, **dup_page.fact_sources},
+                    )
+                    merged_content = self._deduplicate_facts(merged_content, merged_fact_sources)
 
                     combined_sources = list(set(canon_page.sources + dup_page.sources))
                     combined_related = list(set(
@@ -477,11 +533,12 @@ Extract and respond as valid JSON with these exact keys:
 
                     updated = WikiPage(
                         title=canonical,
-                        content=self._deduplicate_facts(merged_content),
+                        content=merged_content,
                         entity_type=canon_page.entity_type,
                         last_updated=datetime.now().isoformat(),
                         sources=combined_sources,
                         related_entities=combined_related,
+                        fact_sources=merged_fact_sources,
                     )
                     self._save_page(updated)
 
