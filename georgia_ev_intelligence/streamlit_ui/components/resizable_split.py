@@ -114,6 +114,21 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                 // Chat: messages scroll, input pinned at the bottom of the column.
                 const scroll = doc.querySelector('.st-key-chat_scroll');
                 if (scroll) {{
+                    // Constrain intermediate wrappers (e.g. stLayoutWrapper)
+                    // between the scroll container and the column-content block,
+                    // so flex:1 actually bounds the scroll height instead of a
+                    // wrapper growing to fit content (which spills to a page scroll).
+                    const chatCol = stt.cols[0];
+                    const colVB = chatCol.querySelector('[data-testid="stVerticalBlock"]');
+                    let n = scroll.parentElement;
+                    while (n && n !== colVB && chatCol.contains(n)) {{
+                        n.style.setProperty('flex', '1 1 0', 'important');
+                        n.style.setProperty('min-height', '0', 'important');
+                        n.style.setProperty('overflow', 'hidden', 'important');
+                        n.style.setProperty('display', 'flex', 'important');
+                        n.style.setProperty('flex-direction', 'column', 'important');
+                        n = n.parentElement;
+                    }}
                     scroll.style.setProperty('flex', '1 1 auto', 'important');
                     scroll.style.setProperty('min-height', '0', 'important');
                     scroll.style.setProperty('overflow-y', 'auto', 'important');
@@ -133,6 +148,12 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                         while (n) {{
                             setPx(n, mapH);
                             n.style.setProperty('width', '100%', 'important');
+                            // Pin via flex:0 0 auto — these are flex items, and
+                            // flex-grow would otherwise stretch them past the px
+                            // height (height only sets flex-basis), re-inflating
+                            // the map to fill the column and shoving the sources
+                            // panel off-screen when the split is 50/50.
+                            n.style.setProperty('flex', '0 0 auto', 'important');
                             if (n === mapWrap) break;
                             n = n.parentElement;
                         }}
@@ -143,9 +164,24 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                     const sTop = srcWrap.getBoundingClientRect().top;
                     const sAvail = Math.max(160, win.innerHeight - sTop - GAP);
                     setPx(srcWrap, sAvail);
-                    const inner = srcWrap.querySelector(
-                        '[data-testid="stVerticalBlockBorderWrapper"][style*="height"]');
-                    if (inner) setPx(inner, Math.max(120, sAvail - 70));
+                    srcWrap.style.setProperty('flex', '0 0 auto', 'important');
+                    // Grow the sources list component (an iframe) to fill from its
+                    // own top down to the panel bottom, so it extends into the
+                    // empty space and scrolls internally (with its own bottom fade).
+                    const srcFrame = srcWrap.querySelector('iframe');
+                    if (srcFrame) {{
+                        const fTop = srcFrame.getBoundingClientRect().top;
+                        const fH = Math.max(120, srcWrap.getBoundingClientRect().bottom - fTop);
+                        // Size the iframe + its own wrappers, but NOT srcWrap
+                        // itself (it also holds the header + Close button above).
+                        let n = srcFrame;
+                        while (n && n !== srcWrap) {{
+                            setPx(n, fH);
+                            n.style.setProperty('width', '100%', 'important');
+                            n.style.setProperty('flex', '0 0 auto', 'important');
+                            n = n.parentElement;
+                        }}
+                    }}
                 }}
             }}
 
@@ -205,6 +241,21 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                 doc.addEventListener('mousemove', onMove);
                 doc.addEventListener('mouseup', onUp);
                 win.addEventListener('resize', relayout);
+
+                // Re-layout when Streamlit adds/removes nodes inside the columns
+                // row — e.g. the sources panel opening/closing (map must switch
+                // between full-height and the 50/50 split) or the map iframe
+                // rendering late. The one-shot interval below otherwise races the
+                // incremental rerun and can leave the map full-height, pushing the
+                // sources panel off-screen. We watch childList only, so our own
+                // style writes (attribute mutations) can't retrigger it.
+                if (doc.__gnemObserver) doc.__gnemObserver.disconnect();
+                let moTimer = null;
+                doc.__gnemObserver = new MutationObserver(function() {{
+                    if (moTimer) return;
+                    moTimer = win.setTimeout(function() {{ moTimer = null; relayout(); }}, 80);
+                }});
+                doc.__gnemObserver.observe(block, {{ childList: true, subtree: true }});
 
                 relayout();
                 return true;

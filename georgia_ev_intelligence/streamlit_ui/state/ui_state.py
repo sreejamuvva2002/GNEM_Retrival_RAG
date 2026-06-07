@@ -17,6 +17,7 @@ def initialize() -> None:
     session.ensure("view_mode", VIEW_MODE_CHAT)
     session.ensure("selected_source_id", None)
     session.ensure("pending_query", None)
+    session.ensure("pending_chat_memory", None)
 
 
 def pending_query() -> str | None:
@@ -28,8 +29,28 @@ def set_pending_query(value: str) -> None:
     session.set("pending_query", value)
 
 
+def pending_chat_memory():
+    return session.get("pending_chat_memory")
+
+
+def set_pending_chat_memory(value) -> None:
+    session.set("pending_chat_memory", value)
+
+
+def pending_chat_history() -> list[dict[str, str]] | None:
+    memory = pending_chat_memory()
+    return getattr(memory, "recent_messages", None)
+
+
+def set_pending_chat_history(value: list[dict[str, str]] | None) -> None:
+    from ..models.chat import ChatMemory
+
+    set_pending_chat_memory(ChatMemory(recent_messages=list(value or [])))
+
+
 def clear_pending_query() -> None:
     session.set("pending_query", None)
+    session.set("pending_chat_memory", None)
 
 
 def sources_panel_open() -> bool:

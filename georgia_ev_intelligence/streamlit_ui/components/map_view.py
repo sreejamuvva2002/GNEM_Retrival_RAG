@@ -78,7 +78,40 @@ def _build_map(records: List[Dict[str, Any]]) -> folium.Map:
         # Centered overlay inside the same iframe (matches the React empty state).
         fmap.get_root().html.add_child(folium.Element(_EMPTY_OVERLAY))
 
+    # Expose window.__gnemFocus(lat, lon) so a click on a source row (in the
+    # parent doc) can recenter/zoom this map and open the matching marker popup,
+    # all client-side (no Streamlit rerun → no iframe reload / flicker).
+    map_name = fmap.get_name()
+    fmap.get_root().html.add_child(folium.Element(_focus_script(map_name)))
+
     return fmap
+
+
+def _focus_script(map_name: str) -> str:
+    return (
+        "<script>(function(){"
+        "function findMarker(lat, lon){"
+        "  for (var k in window){"
+        "    try {"
+        "      var o = window[k];"
+        "      if (o && typeof o.getLatLng === 'function' && typeof o.openPopup === 'function'){"
+        "        var ll = o.getLatLng();"
+        "        if (Math.abs(ll.lat - lat) < 1e-4 && Math.abs(ll.lng - lon) < 1e-4) return o;"
+        "      }"
+        "    } catch (e) {}"
+        "  }"
+        "  return null;"
+        "}"
+        "window.__gnemFocus = function(lat, lon){"
+        f"  var m = window['{map_name}'];"
+        "  if (!m || lat == null || lon == null) return;"
+        "  var z = Math.max(m.getZoom(), 11);"
+        "  m.flyTo([lat, lon], z, {animate: true, duration: 0.7});"
+        "  var mk = findMarker(lat, lon);"
+        "  if (mk) setTimeout(function(){ mk.openPopup(); }, 720);"
+        "};"
+        "})();</script>"
+    )
 
 
 def render(

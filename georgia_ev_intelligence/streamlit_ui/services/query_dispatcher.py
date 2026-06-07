@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Callable, Optional
 
+from ..models.chat import ChatMemory
 from .interfaces import DispatchResult, IChatService, IMapDataService
 
 
@@ -16,9 +17,12 @@ class QueryDispatcher:
         self._map_service = map_service
 
     def dispatch(
-        self, query: str, on_step: Optional[Callable[[str], None]] = None
+        self,
+        query: str,
+        chat_memory: Optional[ChatMemory] = None,
+        on_step: Optional[Callable[[str], None]] = None,
     ) -> DispatchResult:
         query = (query or "").strip()
-        chat = self._chat_service.answer(query, on_step=on_step)
-        map_result = self._map_service.locate(query)
+        chat = self._chat_service.answer(query, chat_memory=chat_memory, on_step=on_step)
+        map_result = self._map_service.locate(chat.effective_query or query)
         return DispatchResult(query=query, chat=chat, map=map_result)

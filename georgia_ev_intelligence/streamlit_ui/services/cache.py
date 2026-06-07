@@ -1,4 +1,4 @@
-"""Cached factories + cached dispatcher entry point.
+"""Cached factories + uncached dispatcher entry point.
 
 We centralize @st.cache_resource and @st.cache_data here so individual
 services and components do not need to know about Streamlit's caching API.
@@ -23,6 +23,7 @@ from ..bootstrap.build_companies_db import (
     DEFAULT_GEOJSON_PATH,
     ensure_companies_db,
 )
+from ..models.chat import ChatMemory
 from ..spatial.query_planner import QueryPlanner
 from ..spatial.spatial_engine import SpatialEngine
 from .chat_service import ChatService
@@ -131,19 +132,31 @@ def get_county_geojson() -> dict:
         return json.load(fh)
 
 
-def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
+def dispatch_query(
+    query: str,
+    chat_memory: ChatMemory | None = None,
+    _on_step=None,
+) -> DispatchResult:
     """Run dispatch for one query, emitting live step events via `_on_step`.
 
     NOT cached: `_on_step` writes to a Streamlit layout block (the loading-card
     placeholder) created by the caller, which is illegal inside an
     `@st.cache_resource`/`cache_data` function ("a streamlit element is called
-    on some layout block created outside the function"). Caching would also skip
-    the step animation on a hit. The heavy state (models, pipeline, spatial
-    engine) is still cached in `get_query_dispatcher`, and the pending-query flow
-    calls this exactly once per question, so nothing is recomputed on rerun.
+    on some layout block created outside the function"). Chat turns are also
+    history-dependent, so raw-query caching would return wrong follow-up answers.
+    The heavy state (models, pipeline, spatial engine) is still cached in
+    `get_query_dispatcher`, and the pending-query flow calls this exactly once
+    per question, so nothing is recomputed on rerun.
     """
     dispatcher = get_query_dispatcher()
-    return dispatcher.dispatch(query, on_step=_on_step)
+    return dispatcher.dispatch(query, chat_memory=chat_memory, on_step=_on_step)
+
+
+def summarize_chat_memory(
+    existing_summary: str,
+    messages: list[dict[str, str]],
+) -> str:
+    return get_chat_service().summarize_memory(existing_summary, messages)
 
 
 #: Markers shown on the baseline (no-query) map. Kept small so the first map

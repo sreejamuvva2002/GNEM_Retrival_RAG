@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, List, Optional, Protocol
 
 from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
+from ..models.chat import ChatMemory
 from ..models.map import MapResult
 
 
@@ -28,6 +29,8 @@ class ChatResult:
     trace: Dict[str, Any] = field(default_factory=dict)
     error: str = ""
     warn: str = ""
+    effective_query: str = ""
+    history_used: bool = False
 
 
 @dataclass
@@ -41,7 +44,10 @@ class DispatchResult:
 
 class IChatService(Protocol):
     def answer(
-        self, query: str, on_step: Optional[Callable[[str], None]] = None
+        self,
+        query: str,
+        chat_memory: Optional[ChatMemory] = None,
+        on_step: Optional[Callable[[str], None]] = None,
     ) -> ChatResult: ...
 
 

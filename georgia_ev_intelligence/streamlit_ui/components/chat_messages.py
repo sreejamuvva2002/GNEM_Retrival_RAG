@@ -129,12 +129,20 @@ def render(messages: List[Message], sources: List[SourceViewModel]) -> None:
 
     # Streamlit strips inline <script> from st.markdown, so the auto-scroll runs
     # inside an iframe; window.parent.document reaches the main Streamlit DOM.
+    # Scroll the chat-scroll container directly — scrollIntoView would scroll
+    # every scrollable ancestor (incl. the page), pushing the input off-screen.
     st.markdown("<div id='chat-bottom-anchor'></div>", unsafe_allow_html=True)
     components.html(
         """
         <script>
-            const target = window.parent.document.getElementById('chat-bottom-anchor');
-            if (target) target.scrollIntoView({behavior: 'smooth', block: 'end'});
+            const doc = window.parent.document;
+            const scroller = doc.querySelector('.st-key-chat_scroll');
+            if (scroller) {
+                scroller.scrollTop = scroller.scrollHeight;   // pin to latest message
+            } else {
+                const t = doc.getElementById('chat-bottom-anchor');
+                if (t) t.scrollIntoView({block: 'end'});       // fallback only
+            }
         </script>
         """,
         height=0,
