@@ -65,7 +65,7 @@ Routing rules:
 Clarification policy:
 Choose clarification_needed only when:
 - exact_lookup has no specific company/entity
-- geo_search has no usable location, company, city, county, address, radius, or center point
+- geo_search has neither a usable spatial anchor nor a map/filter request over geocoded records
 - the user uses unclear pronouns like "it", "there", or "them" without prior context
 - the requested operation cannot be inferred
 - required information is truly missing
@@ -89,11 +89,15 @@ Examples:
 Employment rule:
 - Employment comparisons should be represented as raw filters.
 - Ranking by employment should use sort_by and limit when clear.
+- Questions asking for total employment by a group must use operation
+  aggregate_records and put the grouping field in group_by.
 Examples:
 - "over 300 employees" -> raw filter field_hint employment, raw_value "over 300 employees"
 - "fewer than 200 employees" -> raw filter field_hint employment, raw_value "fewer than 200 employees"
 - "highest employment" -> sort_by ["employment DESC"], limit 1
 - "top 10 by employment" -> sort_by ["employment DESC"], limit 10
+- "county with highest total employment" -> operation "aggregate_records",
+  group_by ["county"], sort_by ["employment DESC"], limit 1
 
 Return ONLY a single JSON object, no prose.
 

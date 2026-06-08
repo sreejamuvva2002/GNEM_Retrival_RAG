@@ -71,6 +71,11 @@ def execute_route(final_route: dict[str, Any], *, use_llm: bool = False) -> Exec
 
     if use_llm and result.status == STATUS_SUCCESS and route in _LLM_GROUNDABLE:
         question = final_route.get("question") or final_route.get("query_focus") or ""
-        result.answer = fmt.llm_answer(question, result.evidence, result.answer)
+        result.answer = fmt.llm_answer(
+            question,
+            result.evidence,
+            result.answer,
+            final_route=final_route,
+        )
 
     return result

@@ -18,13 +18,11 @@ from georgia_ev_intelligence.route_generation.route_service import (
 )
 
 from ..bootstrap.build_companies_db import (
-    DEFAULT_DB_PATH,
     DEFAULT_EXCEL_PATH,
     DEFAULT_GEOJSON_PATH,
-    ensure_companies_db,
 )
+from ..spatial.postgis_spatial_engine import PostGISSpatialEngine
 from ..spatial.query_planner import QueryPlanner
-from ..spatial.spatial_engine import SpatialEngine
 from .interfaces import DispatchResult, IChatService
 from .map_service import MapService
 from .query_dispatcher import QueryDispatcher
@@ -39,8 +37,7 @@ def get_chat_service() -> IChatService:
 
 @st.cache_resource(show_spinner="Loading spatial engine...")
 def get_map_service() -> MapService:
-    db_path = ensure_companies_db()
-    engine = SpatialEngine(db_path=db_path, geojson_path=DEFAULT_GEOJSON_PATH)
+    engine = PostGISSpatialEngine()
     planner = QueryPlanner(
         company_names=engine.list_company_names(),
         county_names=engine.county_names,

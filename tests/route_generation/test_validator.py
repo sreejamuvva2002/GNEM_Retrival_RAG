@@ -32,8 +32,8 @@ class TestHappyPaths:
         final = _validate(fixture_metadata, raw, "list Tier 2/3 suppliers")
         assert final.validation_status == "valid"
         assert final.route == RouteName.structured_sql
-        # KB-free: value preserved verbatim behind CONTAINS (no canonicalization).
-        assert final.resolved_filters["category"] == {"operator": "CONTAINS", "value": "Tier 2/3"}
+        # Tier/category values are preserved verbatim and matched exactly.
+        assert final.resolved_filters["category"] == {"operator": "EQUALS", "value": "Tier 2/3"}
         assert final.needs_kb_access is True
         assert final.needs_document_retrieval is False
 
@@ -96,7 +96,7 @@ class TestRouteCorrection:
         # Value moved off ev_supply_chain_role and onto category, preserved verbatim.
         assert "ev_supply_chain_role" not in final.resolved_filters
         assert final.resolved_filters["category"] == {
-            "operator": "CONTAINS",
+            "operator": "EQUALS",
             "value": "Tier 1/2",
         }
         assert final.resolved_filters["updated_location"]["operator"] == "CONTAINS"
@@ -107,11 +107,10 @@ class TestRouteCorrection:
         assert any("to category" in a for a in final.validation_actions)
 
 
-class TestGeoDowngrade:
-    """A geo_search with no proximity/centre wording is a structured location filter."""
+class TestGeoRouting:
+    """Geo intent stays on the PostGIS execution route."""
 
-    def test_map_in_location_downgrades_to_structured_sql(self, fixture_metadata):
-        # "Map all X in Georgia" has no centre/radius -> geo executor would fail.
+    def test_map_in_location_stays_geo_search(self, fixture_metadata):
         raw = RawRoute(
             route=RouteName.geo_search, confidence=0.9,
             raw_filters=[
@@ -124,14 +123,41 @@ class TestGeoDowngrade:
             fixture_metadata, raw,
             "Map all Thermal Management suppliers in Georgia and show which Primary OEMs.",
         )
-        assert final.route == RouteName.structured_sql
-        assert final.route_source == "validator_corrected"
+        assert final.route == RouteName.geo_search
         assert final.validation_status == "valid"
-        assert any("structured location filter" in a for a in final.validation_actions)
+
+    def test_map_wording_upgrades_vector_to_geo_search(self, fixture_metadata):
+        raw = RawRoute(
+            route=RouteName.vector_search,
+            confidence=0.9,
+            raw_filters=[RawFilter(field_hint="location", raw_value="Georgia")],
+            reason="wrong route",
+        )
+        final = _validate(fixture_metadata, raw, "Map companies in Georgia.")
+        assert final.route == RouteName.geo_search
+        assert final.route_source == "validator_corrected"
+        assert any("geospatial wording" in action for action in final.validation_actions)
+
+    def test_county_list_upgrades_vector_to_geo_search(self, fixture_metadata):
+        raw = RawRoute(
+            route=RouteName.vector_search,
+            confidence=0.9,
+            raw_filters=[RawFilter(field_hint="location", raw_value="Troup County")],
+            reason="wrong route",
+        )
+        final = _validate(fixture_metadata, raw, "List companies in Troup County.")
+        assert final.route == RouteName.geo_search
+
+    def test_county_aggregate_remains_structured_sql(self, fixture_metadata):
+        raw = RawRoute(route=RouteName.geo_search, confidence=0.9, reason="wrong route")
+        final = _validate(
+            fixture_metadata,
+            raw,
+            "Which county has the highest total employment?",
+        )
+        assert final.route == RouteName.structured_sql
 
     def test_genuine_proximity_stays_geo_search(self, fixture_metadata):
-        # "near West Point" is a real proximity search -> stays geo (still needs a
-        # location anchor, which it has) and is NOT downgraded.
         raw = RawRoute(
             route=RouteName.geo_search, confidence=0.9,
             raw_filters=[RawFilter(field_hint="location", raw_value="West Point")],
@@ -179,7 +205,7 @@ class TestClarification:
         final = _validate(fixture_metadata, raw, "list Tier 1 or Tier 2 records")
         assert final.validation_status == "valid"
         assert final.resolved_filters["category"] == {
-            "operator": "OR_CONTAINS",
+            "operator": "OR_EQUALS",
             "value": ["Tier 1", "Tier 2"],
         }
 
@@ -234,8 +260,8 @@ class TestOrFilters:
             "value": ["Battery Cell", "Battery Pack"],
         }
 
-    def test_repeated_values_become_or_contains(self, fixture_metadata):
-        # KB-free: repeated values OR-merge and are preserved verbatim (OR_CONTAINS).
+    def test_repeated_category_values_become_or_equals(self, fixture_metadata):
+        # KB-free: repeated category values OR-merge as exact alternatives.
         raw = RawRoute(
             route=RouteName.structured_sql, confidence=0.9,
             raw_filters=[
@@ -246,7 +272,7 @@ class TestOrFilters:
         )
         final = _validate(fixture_metadata, raw, "list Tier 1 and Tier 2/3 records")
         assert final.resolved_filters["category"] == {
-            "operator": "OR_CONTAINS",
+            "operator": "OR_EQUALS",
             "value": ["Tier 1", "Tier 2/3"],
         }
 
@@ -278,7 +304,7 @@ class TestValuePreservation:
         assert final.validation_status == "valid"
         # No clarification, no candidates — the slash value is kept verbatim.
         assert final.resolved_filters["category"] == {
-            "operator": "CONTAINS",
+            "operator": "EQUALS",
             "value": "Tier 1/2",
         }
 
@@ -334,6 +360,40 @@ class TestEmploymentNumeric:
         final = _validate(fixture_metadata, raw, "Top 10 Georgia companies by employment size")
         assert final.sort_by == ["employment DESC"]
         assert final.limit == 10
+
+    def test_highest_total_employment_by_county_becomes_grouped_aggregate(
+        self, fixture_metadata
+    ):
+        raw = RawRoute(
+            route=RouteName.structured_sql,
+            confidence=1.0,
+            operation="list_records",
+            raw_filters=[
+                RawFilter(field_hint="category", raw_value="Tier 1"),
+                RawFilter(field_hint="ev_supply_chain_role", raw_value="supplier"),
+            ],
+            requested_columns=["updated_location"],
+            group_by=["county"],
+            sort_by=["employment DESC"],
+            limit=1,
+            reason="highest county employment",
+        )
+
+        final = _validate(
+            fixture_metadata,
+            raw,
+            "Which county have the highest total Employment among Tier 1 suppliers only?",
+        )
+
+        assert final.operation == "aggregate_records"
+        assert final.group_by == ["county"]
+        assert final.sort_by == ["employment DESC"]
+        assert final.limit == 1
+        assert final.resolved_filters == {
+            "category": {"operator": "EQUALS", "value": "Tier 1"},
+        }
+        assert any("dropped generic" in action for action in final.validation_actions)
+        assert any("aggregate_records" in action for action in final.validation_actions)
 
 
 class TestExactLookupCorrection:

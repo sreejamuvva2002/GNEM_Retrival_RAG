@@ -1,26 +1,23 @@
 """Structured SQL executor over the ``parent_chunks`` table.
 
-Builds a safe parameterized SELECT/COUNT/GROUP BY from the validated route's
-``resolved_filters``, ``requested_columns``, ``group_by``, ``sort_by`` and
-``limit``. The LLM never writes SQL: every identifier is allowlist-checked and
-every value is a bound parameter. Query construction is split from execution so
-it can be unit-tested without a database.
+Builds a safe parameterized SELECT/COUNT/GROUP BY/aggregate query from the
+validated route's ``resolved_filters``, ``requested_columns``, ``group_by``,
+``sort_by`` and ``limit``. The LLM never writes SQL: every identifier is
+allowlist-checked and every value is a bound parameter. Query construction is
+split from execution so it can be unit-tested without a database.
 """
 from __future__ import annotations
 
-import logging
 import re
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
 from .. import answer_formatter as fmt
-from ..column_allowlist import DEFAULT_COLUMNS, ensure_allowed
+from ..column_allowlist import DEFAULT_COLUMNS, NUMERIC_COLUMNS, ensure_allowed
 from ..db import get_connection
 from ..filters import build_where
 from ..schemas import STATUS_SUCCESS, ExecutionResult
-
-logger = logging.getLogger(__name__)
 
 TABLE = "parent_chunks"
 DEFAULT_LIMIT = 100
@@ -29,6 +26,9 @@ MAX_LIMIT = 1000
 # Operations that count rather than list.
 _COUNT_OPS = {"count_records"}
 _GROUP_OPS = {"group_records", "aggregate_records"}
+_COUNTY_EXPR = (
+    "NULLIF(btrim((regexp_match(updated_location, '([^,]+ County)', 'i'))[1]), '')"
+)
 
 _NAMED_PLACEHOLDER = re.compile(r"%\(([^)]+)\)s")
 
@@ -109,6 +109,67 @@ def _order_terms(sort_by: list[str]) -> list[str]:
     return terms
 
 
+def _group_terms(group_by: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """Return safe select terms, GROUP BY expressions, and output names."""
+    select_terms: list[str] = []
+    group_terms: list[str] = []
+    output_names: list[str] = []
+    for raw in group_by:
+        if raw == "county":
+            select_terms.append(f"{_COUNTY_EXPR} AS county")
+            group_terms.append(_COUNTY_EXPR)
+            output_names.append("county")
+            continue
+        column = ensure_allowed(raw)
+        select_terms.append(column)
+        group_terms.append(column)
+        output_names.append(column)
+    return select_terms, group_terms, output_names
+
+
+def _with_virtual_group_filters(where_sql: str, group_by: list[str]) -> str:
+    clauses = [where_sql] if where_sql else []
+    if "county" in group_by:
+        clauses.append(f"{_COUNTY_EXPR} IS NOT NULL")
+    return " AND ".join(clauses)
+
+
+def _aggregate_spec(final_route: dict[str, Any]) -> tuple[str, str] | None:
+    """Return a safe ``(SQL expression, output alias)`` for numeric aggregation."""
+    question = str(final_route.get("question") or "").lower()
+    candidates: list[str] = []
+    for raw in final_route.get("sort_by") or []:
+        parts = str(raw).split()
+        if parts:
+            candidates.append(parts[0])
+    candidates.extend(final_route.get("requested_columns") or [])
+    if "employment" in question:
+        candidates.append("employment")
+
+    metric = next((field for field in candidates if field in NUMERIC_COLUMNS), None)
+    if metric is None:
+        return None
+
+    if any(token in question for token in ("average", "avg", "mean")):
+        function, prefix = "AVG", "average"
+    elif any(token in question for token in ("minimum", "lowest", "smallest")):
+        function, prefix = "MIN", "minimum"
+    elif any(token in question for token in ("maximum", "highest", "largest")) and "total" not in question:
+        function, prefix = "MAX", "maximum"
+    else:
+        function, prefix = "SUM", "total"
+    return f"{function}({metric})", f"{prefix}_{metric}"
+
+
+def _aggregate_order(final_route: dict[str, Any], alias: str) -> str:
+    sort_by = final_route.get("sort_by") or []
+    if not sort_by:
+        return f" ORDER BY {alias} DESC"
+    parts = str(sort_by[0]).split()
+    direction = "ASC" if len(parts) > 1 and parts[1].upper() == "ASC" else "DESC"
+    return f" ORDER BY {alias} {direction}"
+
+
 def _resolve_limit(limit: Any) -> int:
     if limit is None:
         return DEFAULT_LIMIT
@@ -137,17 +198,34 @@ def build_query(final_route: dict[str, Any]) -> tuple[str, list[Any], list[str],
         return sql, params, ["count"], "count"
 
     if operation in _GROUP_OPS:
-        group_by = _validated_columns(final_route.get("group_by") or [])
+        group_by = list(final_route.get("group_by") or [])
         if not group_by:
             # Fall back to a plain count if the router asked to group by nothing.
             sql = f"SELECT COUNT(*) AS count FROM {TABLE}{where_clause};"
             return sql, params, ["count"], "count"
-        group_cols = ", ".join(group_by)
+        select_terms, group_terms, group_names = _group_terms(group_by)
+        grouped_where = _with_virtual_group_filters(where_sql, group_by)
+        grouped_where_clause = f" WHERE {grouped_where}" if grouped_where else ""
+        select_cols = ", ".join(select_terms)
+        group_cols = ", ".join(group_terms)
+
+        if operation == "aggregate_records":
+            aggregate = _aggregate_spec(final_route)
+            if aggregate is not None:
+                expression, alias = aggregate
+                limit = _resolve_limit(final_route.get("limit"))
+                sql = (
+                    f"SELECT {select_cols}, {expression} AS {alias} FROM {TABLE}"
+                    f"{grouped_where_clause} GROUP BY {group_cols}"
+                    f"{_aggregate_order(final_route, alias)} LIMIT {limit};"
+                )
+                return sql, params, [*group_names, alias], "aggregate"
+
         sql = (
-            f"SELECT {group_cols}, COUNT(*) AS count FROM {TABLE}{where_clause} "
+            f"SELECT {select_cols}, COUNT(*) AS count FROM {TABLE}{grouped_where_clause} "
             f"GROUP BY {group_cols} ORDER BY count DESC;"
         )
-        return sql, params, [*group_by, "count"], "group"
+        return sql, params, [*group_names, "count"], "group"
 
     # Default: list_records.
     requested = _validated_columns(final_route.get("requested_columns") or [])
@@ -187,7 +265,12 @@ def execute_structured_sql(final_route: dict[str, Any]) -> ExecutionResult:
 
     if mode == "group":
         if not records:
-            return _hybrid_fallback(final_route, sql, params)
+            return ExecutionResult(
+                route="structured_sql",
+                status=STATUS_SUCCESS,
+                answer="No groups matched.",
+                evidence={"type": "group_counts", "groups": [], **_sql_evidence(sql, params)},
+            )
         group_by = [c for c in columns if c != "count"]
         return ExecutionResult(
             route="structured_sql",
@@ -196,11 +279,37 @@ def execute_structured_sql(final_route: dict[str, Any]) -> ExecutionResult:
             evidence={"type": "group_counts", "groups": records, **_sql_evidence(sql, params)},
         )
 
+    if mode == "aggregate":
+        aggregate_column = columns[-1]
+        group_by = columns[:-1]
+        return ExecutionResult(
+            route="structured_sql",
+            status=STATUS_SUCCESS,
+            answer=fmt.format_group_aggregates(records, group_by, aggregate_column),
+            evidence={
+                "type": "group_aggregates",
+                "groups": records,
+                "group_by": group_by,
+                "aggregate_column": aggregate_column,
+                **_sql_evidence(sql, params),
+            },
+        )
+
     if not records:
-        # Structured filtering matched nothing — often the router put the value on
-        # the wrong column or added noise words. Fall back to hybrid retrieval
-        # (BM25 + dense) on the question so the answer still has real evidence.
-        return _hybrid_fallback(final_route, sql, params)
+        # A structured query's filters are authoritative. Returning unrelated
+        # semantic-search contexts here can turn a zero-result query into a false
+        # answer, so preserve the honest empty structured result.
+        return ExecutionResult(
+            route="structured_sql",
+            status=STATUS_SUCCESS,
+            answer="Found 0 matching records.",
+            evidence={
+                "type": "structured_rows",
+                "rows": [],
+                "columns": columns,
+                **_sql_evidence(sql, params),
+            },
+        )
 
     return ExecutionResult(
         route="structured_sql",
@@ -213,40 +322,3 @@ def execute_structured_sql(final_route: dict[str, Any]) -> ExecutionResult:
             **_sql_evidence(sql, params),
         },
     )
-
-
-def _hybrid_fallback(
-    final_route: dict[str, Any],
-    structured_sql: str,
-    structured_params: list[Any],
-) -> ExecutionResult:
-    """Run BM25 + dense retrieval when structured filtering returned no rows.
-
-    The result is tagged as a fallback (and keeps the originating ``structured_sql``)
-    so the route label stays stable for downstream LLM grounding while the evidence
-    reflects the document retrieval that actually produced it.
-    """
-    from .hybrid_search import execute_hybrid_search
-
-    try:
-        result = execute_hybrid_search(final_route)
-    except Exception as exc:  # retrieval/DB unavailable -> honest empty result
-        logger.warning("hybrid fallback failed: %s", exc)
-        return ExecutionResult(
-            route="structured_sql",
-            status=STATUS_SUCCESS,
-            answer="Found 0 matching records.",
-            evidence={"type": "structured_rows", "rows": [], "columns": ["company"],
-                      **_sql_evidence(structured_sql, structured_params)},
-        )
-
-    result.route = "structured_sql"
-    if isinstance(result.evidence, dict):
-        result.evidence["fallback"] = "hybrid_search"
-        result.evidence["structured_sql"] = structured_sql
-        result.evidence["structured_sql_params"] = structured_params
-        result.evidence["structured_sql_display"] = format_sql_for_display(
-            structured_sql,
-            structured_params,
-        )
-    return result

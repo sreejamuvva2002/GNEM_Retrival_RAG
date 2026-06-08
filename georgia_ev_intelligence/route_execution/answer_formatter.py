@@ -8,6 +8,7 @@ sees the database directly — only the already-retrieved evidence.
 """
 from __future__ import annotations
 
+import json
 import logging
 from typing import Any
 
@@ -15,6 +16,32 @@ logger = logging.getLogger(__name__)
 
 _MAX_LISTED_ROWS = 25
 _CHUNK_PREVIEW_CHARS = 300
+
+_ROUTE_CONTEXT_FIELDS = (
+    "route",
+    "operation",
+    "entities",
+    "raw_filters",
+    "resolved_filters",
+    "search_filters",
+    "requested_columns",
+    "group_by",
+    "sort_by",
+    "limit",
+    "query_focus",
+    "retrieval_sources",
+)
+
+_EVIDENCE_FIELDS_BY_TYPE = {
+    "structured_rows": ("columns", "rows"),
+    "count": ("count",),
+    "group_counts": ("groups",),
+    "group_aggregates": ("groups", "group_by", "aggregate_column"),
+    "document_chunks": ("chunks", "parents", "fallback"),
+    "geo_results": ("center", "radius_miles", "rows"),
+    "ranked_alternatives": ("disrupted_company", "alternatives"),
+    "clarification": ("reason", "query", "clarification"),
+}
 
 
 def format_structured_rows(rows: list[dict[str, Any]], columns: list[str]) -> str:
@@ -55,6 +82,23 @@ def format_group_counts(rows: list[dict[str, Any]], group_by: list[str]) -> str:
     return "\n".join(lines)
 
 
+def format_group_aggregates(
+    rows: list[dict[str, Any]],
+    group_by: list[str],
+    aggregate_column: str,
+) -> str:
+    """Render grouped numeric aggregate results."""
+    if not rows:
+        return "No groups matched."
+    label = ", ".join(_humanize(g) for g in group_by) or "group"
+    metric = _humanize(aggregate_column)
+    lines = [f"{metric} by {label}:"]
+    for row in rows:
+        key = " / ".join(str(row.get(g, "")) for g in group_by)
+        lines.append(f"- {key or '(blank)'}: {row.get(aggregate_column, '')}")
+    return "\n".join(lines)
+
+
 def format_document_chunks(previews: list[dict[str, Any]]) -> str:
     """Render document evidence (parent chunk previews)."""
     if not previews:
@@ -76,7 +120,13 @@ def _humanize(column: str) -> str:
 # Optional LLM-grounded answer
 # ---------------------------------------------------------------------------
 
-def llm_answer(question: str, evidence: dict[str, Any], deterministic: str) -> str:
+def llm_answer(
+    question: str,
+    evidence: dict[str, Any],
+    deterministic: str,
+    *,
+    final_route: dict[str, Any] | None = None,
+) -> str:
     """Generate a grounded answer from evidence using the local Ollama model.
 
     Falls back to the deterministic answer if the model is unavailable so a
@@ -89,7 +139,12 @@ def llm_answer(question: str, evidence: dict[str, Any], deterministic: str) -> s
         from georgia_ev_intelligence.shared import config
 
         adapter = OllamaAdapter(config.OLLAMA_LLM_MODEL)
-        prompt = _build_prompt(question, deterministic)
+        prompt = _build_prompt(
+            question,
+            route_context=_route_context(final_route or {}),
+            grounded_evidence=_grounded_evidence(evidence),
+            deterministic_answer=deterministic,
+        )
         answer = adapter.generate(prompt)
         return answer or deterministic
     except Exception as exc:  # never let LLM issues break the run
@@ -97,13 +152,53 @@ def llm_answer(question: str, evidence: dict[str, Any], deterministic: str) -> s
         return deterministic
 
 
-def _build_prompt(question: str, evidence_text: str) -> str:
+def _route_context(final_route: dict[str, Any]) -> dict[str, Any]:
+    """Return the validated routing/filter fields useful for answer grounding."""
+    return {
+        field: final_route[field]
+        for field in _ROUTE_CONTEXT_FIELDS
+        if field in final_route and final_route[field] not in (None, [], {}, "")
+    }
+
+
+def _grounded_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
+    """Whitelist factual evidence for the answer LLM, excluding SQL/debug data."""
+    if not isinstance(evidence, dict):
+        return {}
+
+    evidence_type = str(evidence.get("type") or "")
+    grounded: dict[str, Any] = {"type": evidence_type}
+    for field in _EVIDENCE_FIELDS_BY_TYPE.get(evidence_type, ()):
+        if field in evidence:
+            grounded[field] = evidence[field]
+    return grounded
+
+
+def _json_text(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=True, indent=2, sort_keys=True, default=str)
+
+
+def _build_prompt(
+    question: str,
+    *,
+    route_context: dict[str, Any],
+    grounded_evidence: dict[str, Any],
+    deterministic_answer: str,
+) -> str:
     return (
         "You are a careful analyst for a Georgia EV supply-chain knowledge base.\n"
-        "Answer the user's question using ONLY the evidence below. Do not invent "
-        "companies, numbers, or facts that are not present. If the evidence is "
-        "insufficient, say so plainly.\n\n"
+        "Answer the user's question using ONLY the retrieved evidence JSON below. "
+        "The validated route JSON defines the requested scope, filters, grouping, "
+        "and output columns; it is not itself factual evidence. Do not invent "
+        "companies, counts, roles, products, locations, or other facts.\n"
+        "For structured rows, use all returned rows and preserve their values. "
+        "For document retrieval, ground the answer in the full parent-context text. "
+        "Do not mention internal route names, SQL, JSON, or retrieval mechanics. "
+        "If the evidence is insufficient, say so plainly.\n\n"
         f"Question:\n{question}\n\n"
-        f"Evidence:\n{evidence_text}\n\n"
+        f"Validated route and filters JSON:\n{_json_text(route_context)}\n\n"
+        f"Retrieved evidence JSON:\n{_json_text(grounded_evidence)}\n\n"
+        "Deterministic fallback answer:\n"
+        f"{deterministic_answer}\n\n"
         "Answer:"
     )

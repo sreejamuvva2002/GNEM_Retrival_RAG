@@ -347,7 +347,7 @@ def _all_structured_rows(executions: list[ExecutedRoute]) -> list[dict[str, Any]
 
         if evidence_type == "structured_rows":
             retrieved = evidence.get("rows") or []
-        elif evidence_type == "group_counts":
+        elif evidence_type in {"group_counts", "group_aggregates"}:
             retrieved = evidence.get("groups") or []
         elif evidence_type == "count":
             retrieved = [{"count": evidence.get("count")}]
@@ -422,7 +422,7 @@ def _retrieved_count(evidence: dict[str, Any]) -> int:
     evidence_type = evidence.get("type")
     if evidence_type == "count":
         return int(evidence.get("count") or 0)
-    if evidence_type == "group_counts":
+    if evidence_type in {"group_counts", "group_aggregates"}:
         return len(evidence.get("groups") or [])
     if evidence_type in {"structured_rows", "geo_results"}:
         return len(evidence.get("rows") or [])
