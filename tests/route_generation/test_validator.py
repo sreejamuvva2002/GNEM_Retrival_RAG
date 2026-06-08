@@ -166,6 +166,51 @@ class TestGeoRouting:
         final = _validate(fixture_metadata, raw, "companies near West Point")
         assert final.route == RouteName.geo_search
 
+    def test_distance_to_company_is_valid_geo_search(self, fixture_metadata):
+        raw = RawRoute(
+            route=RouteName.geo_search,
+            confidence=1.0,
+            entities=["Kia georgia"],
+            operation="distance",
+            reason="distance",
+        )
+        final = _validate(
+            fixture_metadata,
+            raw,
+            "Distance of these companies to Kia georgia",
+        )
+        assert final.route == RouteName.geo_search
+        assert final.operation == "distance_search"
+        assert final.validation_status == "valid"
+
+    def test_closest_company_center_is_not_reused_as_oem_filter(self, fixture_metadata):
+        raw = RawRoute(
+            route=RouteName.geo_search,
+            confidence=1.0,
+            entities=["Hyundai"],
+            raw_filters=[RawFilter(field_hint="primary_oems", raw_value="Hyundai")],
+            reason="closest",
+        )
+        final = _validate(fixture_metadata, raw, "Closest companies to Hyundai")
+        assert final.route == RouteName.geo_search
+        assert "primary_oems" not in final.resolved_filters
+        assert any("identifies the geo center" in action for action in final.validation_actions)
+
+    def test_explicit_oem_relationship_filter_is_preserved(self, fixture_metadata):
+        raw = RawRoute(
+            route=RouteName.geo_search,
+            confidence=1.0,
+            entities=["Hyundai"],
+            raw_filters=[RawFilter(field_hint="primary_oems", raw_value="Hyundai")],
+            reason="closest linked",
+        )
+        final = _validate(
+            fixture_metadata,
+            raw,
+            "Closest companies linked to Hyundai",
+        )
+        assert "primary_oems" in final.resolved_filters
+
 
 class TestFieldRejection:
     def test_non_filterable_field_dropped(self, fixture_metadata):
@@ -441,6 +486,33 @@ class TestCrossFieldRescue:
             "operator": "CONTAINS",
             "value": "Thermal Management",
         }
+
+    def test_generic_supplier_suffix_removed_from_role_value(self, fixture_metadata):
+        raw = RawRoute(
+            route=RouteName.geo_search,
+            confidence=1.0,
+            raw_filters=[
+                RawFilter(
+                    field_hint="ev_supply_chain_role",
+                    raw_value="Thermal Management suppliers",
+                ),
+                RawFilter(field_hint="state", raw_value="Georgia"),
+            ],
+            requested_columns=["primary_oems"],
+            reason="map",
+        )
+
+        final = _validate(
+            fixture_metadata,
+            raw,
+            "Map all Thermal Management suppliers in Georgia and show which Primary OEMs.",
+        )
+
+        assert final.resolved_filters["ev_supply_chain_role"] == {
+            "operator": "CONTAINS",
+            "value": "Thermal Management",
+        }
+        assert any("removed generic entity wording" in action for action in final.validation_actions)
 
 
 class TestSchemaListCoercion:

@@ -28,7 +28,7 @@ from georgia_ev_intelligence.streamlit_ui.components import (
     resizable_split,
     sources_panel,
 )
-from georgia_ev_intelligence.streamlit_ui.models.source import SourceViewModel
+from georgia_ev_intelligence.streamlit_ui.models.source import Provenance, SourceViewModel
 from georgia_ev_intelligence.streamlit_ui.services.cache import (
     dispatch_query_cached,
     get_xlsx_lookup,
@@ -49,16 +49,43 @@ def _bootstrap_state() -> None:
     settings_state.initialize()
 
 
-def _enrich_sources() -> List[SourceViewModel]:
+def _build_provenance() -> Provenance:
+    """Assemble the answer's sources: evidence records + the executed query.
+
+    SQL-backed routes carry their grounding rows in ``chat.evidence_rows`` (one
+    KB record each) — these become source cards. Aggregate routes carry group
+    rows instead, shown alongside the SQL. Document routes still enrich the
+    parent contexts via the xlsx lookup. The SQL itself is method, not a source,
+    so it rides along in ``sql_queries`` for a separate panel section.
+    """
     dispatch = chat_state.last_dispatch()
     if dispatch is None:
-        return []
+        return Provenance()
+    chat = dispatch.chat
+
+    if chat.evidence_kind == "records" and chat.evidence_rows:
+        total = len(chat.evidence_rows)
+        sources = [
+            SourceViewModel.from_evidence_row(row, rank=i + 1, total=total)
+            for i, row in enumerate(chat.evidence_rows)
+        ]
+        return Provenance(sources=sources, sql_queries=chat.sql_queries, kind="records")
+
+    if chat.evidence_kind in ("groups", "count"):
+        return Provenance(
+            group_rows=chat.evidence_rows,
+            sql_queries=chat.sql_queries,
+            kind=chat.evidence_kind,
+        )
+
+    # Document / hybrid route: enrich parent contexts from the workbook.
     lookup = get_xlsx_lookup()
-    total = len(dispatch.chat.parent_contexts)
-    return [
+    total = len(chat.parent_contexts)
+    sources = [
         SourceViewModel.from_parent_context(parent, rank=i + 1, total=total, xlsx_lookup=lookup)
-        for i, parent in enumerate(dispatch.chat.parent_contexts)
+        for i, parent in enumerate(chat.parent_contexts)
     ]
+    return Provenance(sources=sources, sql_queries=chat.sql_queries, kind="documents")
 
 
 def _record_history() -> None:
@@ -124,12 +151,12 @@ def _run_pending_query(query: str, placeholder) -> None:
     st.rerun()
 
 
-def _render_chat_pane(sources: List[SourceViewModel]) -> None:
+def _render_chat_pane(provenance: Provenance) -> None:
     messages = chat_state.messages()
     if not messages:
         empty_state.render(on_pick=_handle_submit)
     else:
-        chat_messages.render(messages, sources)
+        chat_messages.render(messages, provenance)
 
 
 def _render_map_pane(is_dark: bool, height: int = 600) -> None:
@@ -139,9 +166,15 @@ def _render_map_pane(is_dark: bool, height: int = 600) -> None:
         map_view.render([], {}, is_dark=is_dark, height=height)
         return
 
-    # Show only the companies (and therefore counties) the answer actually cited.
-    cited = extract_cited_company_names(dispatch.chat.parent_contexts)
-    records = filter_records_to_companies(dispatch.map.records, cited)
+    # Prefer the geocoded companies the answer was actually built from (route
+    # executor evidence). These are the exact companies in the answer, so the
+    # map and the text never diverge. Fall back to the separate map pipeline +
+    # cited-company filter only when the answer carries no map records.
+    if dispatch.chat.map_records:
+        records = dispatch.chat.map_records
+    else:
+        cited = extract_cited_company_names(dispatch.chat.parent_contexts)
+        records = filter_records_to_companies(dispatch.map.records, cited)
     map_view.render(records, dispatch.map.context.to_dict(), is_dark=is_dark, height=height)
 
 
@@ -165,8 +198,8 @@ def main() -> None:
     s = settings_state.settings()
     inject_styles(is_dark=False, compact=False)
 
-    sources = _enrich_sources()
-    show_sources = ui_state.sources_panel_open() and bool(sources)
+    provenance = _build_provenance()
+    show_sources = ui_state.sources_panel_open() and provenance.has_content()
     pending = ui_state.pending_query()
 
     # 50/50 split: chat left, map (+ stacked sources) right — matches React.
@@ -181,7 +214,7 @@ def main() -> None:
         # Scrollable messages region; the inline chat input below it is pinned to
         # the bottom of the column (the JS makes this container flex:1).
         with st.container(key="chat_scroll"):
-            _render_chat_pane(sources)
+            _render_chat_pane(provenance)
             if pending:
                 # Loading card renders here (under the user bubble); filled after
                 # the map renders so the right pane shows during the dispatch.
@@ -192,7 +225,7 @@ def main() -> None:
         _render_map_pane(is_dark=False)  # map wraps itself in st.container(key="gnem_map")
         if show_sources:
             with st.container(key="gnem_sources"):
-                sources_panel.render(sources, s)
+                sources_panel.render(provenance, s)
 
     # Draggable divider + full-height flex layout — all client-side (no rerun).
     resizable_split.render()

@@ -21,6 +21,7 @@ _ROUTE_CONTEXT_FIELDS = (
     "route",
     "operation",
     "entities",
+    "context_entities",
     "raw_filters",
     "resolved_filters",
     "search_filters",
@@ -161,6 +162,24 @@ def _route_context(final_route: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# Row keys fetched only so the UI can place a company on the map; never useful
+# to the answer LLM and a frequent source of spurious "(lat, lon)" output.
+_NON_GROUNDING_ROW_KEYS = ("latitude", "longitude")
+
+
+def _strip_map_keys(rows: Any) -> Any:
+    """Drop map-only coordinate keys from evidence rows before grounding."""
+    if not isinstance(rows, (list, tuple)):
+        return rows
+    cleaned = []
+    for row in rows:
+        if isinstance(row, dict):
+            cleaned.append({k: v for k, v in row.items() if k not in _NON_GROUNDING_ROW_KEYS})
+        else:
+            cleaned.append(row)
+    return cleaned
+
+
 def _grounded_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
     """Whitelist factual evidence for the answer LLM, excluding SQL/debug data."""
     if not isinstance(evidence, dict):
@@ -170,7 +189,7 @@ def _grounded_evidence(evidence: dict[str, Any]) -> dict[str, Any]:
     grounded: dict[str, Any] = {"type": evidence_type}
     for field in _EVIDENCE_FIELDS_BY_TYPE.get(evidence_type, ()):
         if field in evidence:
-            grounded[field] = evidence[field]
+            grounded[field] = _strip_map_keys(evidence[field]) if field == "rows" else evidence[field]
     return grounded
 
 
@@ -191,7 +210,9 @@ def _build_prompt(
         "The validated route JSON defines the requested scope, filters, grouping, "
         "and output columns; it is not itself factual evidence. Do not invent "
         "companies, counts, roles, products, locations, or other facts.\n"
-        "For structured rows, use all returned rows and preserve their values. "
+        "For structured and geo rows, every returned row already satisfies the "
+        "validated filters. Include all returned rows, preserve their values, and "
+        "never exclude or re-filter a row based on your own interpretation. "
         "For document retrieval, ground the answer in the full parent-context text. "
         "Do not mention internal route names, SQL, JSON, or retrieval mechanics. "
         "If the evidence is insufficient, say so plainly.\n\n"
