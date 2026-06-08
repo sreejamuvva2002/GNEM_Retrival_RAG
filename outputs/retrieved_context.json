@@ -1,0 +1,1664 @@
+{
+  "q001": {
+    "question": "Show all \"Tier 1/2\" suppliers in Georgia, list their EV Supply Chain Role and Product / Service.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "ev_supply_chain_role",
+        "product_service",
+        "category"
+      ],
+      "sql": "SELECT company, ev_supply_chain_role, product_service, category FROM parent_chunks WHERE ev_supply_chain_role ILIKE %s AND updated_location ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q002": {
+    "question": "Which Georgia companies are classified under Battery Cell or Battery Pack roles, and what tier is each assigned?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "f&p georgia manufacturing",
+          "category": "Tier 1/2"
+        },
+        {
+          "company": "hitachi astemo americas inc.",
+          "category": "Tier 1/2"
+        },
+        {
+          "company": "hollingsworth & vose co.",
+          "category": "Tier 1/2"
+        },
+        {
+          "company": "honda development & manufacturing",
+          "category": "Tier 1/2"
+        },
+        {
+          "company": "hyundai motor group",
+          "category": "Tier 1/2"
+        },
+        {
+          "company": "immi",
+          "category": "Tier 1/2"
+        }
+      ],
+      "columns": [
+        "company",
+        "category"
+      ],
+      "sql": "SELECT company, category FROM parent_chunks WHERE (ev_supply_chain_role ILIKE %s OR ev_supply_chain_role ILIKE %s) ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q003": {
+    "question": "Map all Thermal Management suppliers in Georgia and show which Primary OEMs they are linked to.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "primary_oems"
+      ],
+      "sql": "SELECT company, primary_oems FROM parent_chunks WHERE ev_supply_chain_role ILIKE %s AND updated_location ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q004": {
+    "question": "List every Georgia company classified under Power Electronics or Charging Infrastructure, along with their Employment size.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "gsc steel stamping llc",
+          "employment": 350
+        },
+        {
+          "company": "morgan corp.",
+          "employment": 320
+        },
+        {
+          "company": "yazaki north america",
+          "employment": 230000
+        },
+        {
+          "company": "zf gainesville llc",
+          "employment": 17500
+        }
+      ],
+      "columns": [
+        "company",
+        "employment"
+      ],
+      "sql": "SELECT company, employment FROM parent_chunks WHERE (ev_supply_chain_role ILIKE %s OR ev_supply_chain_role ILIKE %s) ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q005": {
+    "question": "Which companies are classified as Direct Manufacturer, and what EV Supply Chain Roles do they cover?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "ev_supply_chain_role"
+      ],
+      "sql": "SELECT company, ev_supply_chain_role FROM parent_chunks WHERE product_service ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q006": {
+    "question": "What locations does Novelis Inc. operate in, and what primary facility types are associated with each location?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "novelis inc.",
+          "updated_location": "Atlanta, Fulton County",
+          "primary_facility_type": "Manufacturing Plant"
+        },
+        {
+          "company": "novelis inc.",
+          "updated_location": "Atlanta, Fulton County",
+          "primary_facility_type": "Manufacturing Plant"
+        },
+        {
+          "company": "novelis inc.",
+          "updated_location": "Atlanta, Fulton County",
+          "primary_facility_type": "Manufacturing Plant"
+        }
+      ],
+      "columns": [
+        "company",
+        "updated_location",
+        "primary_facility_type"
+      ],
+      "query": "Novelis Inc."
+    },
+    "error": null
+  },
+  "q007": {
+    "question": "In Gwinnett County, which company has the highest Employment and what is its EV Supply Chain Role?",
+    "route": "structured_sql",
+    "status": "failed",
+    "evidence": null,
+    "error": "FilterError: Cannot apply substring match (CONTAINS) to numeric column 'employment' (value='highest'); this route's filter is not executable."
+  },
+  "q008": {
+    "question": "Which county have the highest total Employment among Tier 1 suppliers only?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "valeo",
+          "updated_location": "Unknown"
+        }
+      ],
+      "columns": [
+        "company",
+        "updated_location"
+      ],
+      "sql": "SELECT company, updated_location FROM parent_chunks WHERE ev_supply_chain_role ILIKE %s ORDER BY employment DESC LIMIT 1;"
+    },
+    "error": null
+  },
+  "q009": {
+    "question": "Which county has the highest total employment across all companies, and what is the combined employment in that county?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "zf gainesville llc",
+          "updated_location": "Gainesville, Hall County",
+          "employment": null
+        }
+      ],
+      "columns": [
+        "company",
+        "updated_location",
+        "employment"
+      ],
+      "sql": "SELECT company, updated_location, employment FROM parent_chunks ORDER BY employment DESC LIMIT 1;"
+    },
+    "error": null
+  },
+  "q010": {
+    "question": "Identify all Vehicle Assembly facilities in Georgia and list the corresponding Primary OEM associated with each facility.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "primary_oems"
+      ],
+      "sql": "SELECT company, primary_oems FROM parent_chunks WHERE primary_facility_type ILIKE %s AND updated_location ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q011": {
+    "question": "Identify the primary products and services associated with Sewon America Inc. across its different operational sites in Georgia.",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "sewon america inc.",
+          "product_service": "Motor vehicle engines and parts"
+        },
+        {
+          "company": "sewon america inc.",
+          "product_service": "Fire truck bodies"
+        },
+        {
+          "company": "sewon america inc.",
+          "product_service": "Automotive aftermarket parts"
+        }
+      ],
+      "columns": [
+        "company",
+        "product_service"
+      ],
+      "query": "Sewon America Inc."
+    },
+    "error": null
+  },
+  "q012": {
+    "question": "List all Tier 2/3 companies in Georgia with primary involvement in the electric vehicle or battery supply chain and specify their respective roles.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "ev_supply_chain_role",
+        "category"
+      ],
+      "sql": "SELECT company, ev_supply_chain_role, category FROM parent_chunks WHERE category ILIKE %s AND (industry_group ILIKE %s OR industry_group ILIKE %s) AND updated_location ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q013": {
+    "question": "Show the full supplier network linked to Rivian Automotive in Georgia, broken down by tier and EV Supply Chain Role.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "category",
+        "ev_supply_chain_role"
+      ],
+      "sql": "SELECT company, category, ev_supply_chain_role FROM parent_chunks WHERE updated_location ILIKE %s AND primary_oems ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q014": {
+    "question": "Which Georgia companies produce battery materials such as anodes, cathodes, electrolytes, or copper foil, and what tier are they classified as?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "category"
+      ],
+      "sql": "SELECT company, category FROM parent_chunks WHERE (product_service ILIKE %s OR product_service ILIKE %s OR product_service ILIKE %s OR product_service ILIKE %s) AND ev_supply_chain_role ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q015": {
+    "question": "Identify all Georgia companies with an EV Supply Chain Role related to wiring harnesses and show their Primary OEMs.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "primary_oems"
+      ],
+      "sql": "SELECT company, primary_oems FROM parent_chunks WHERE ev_supply_chain_role ILIKE %s AND updated_location ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q016": {
+    "question": "Find Georgia-based Tier 1 or Tier 1/2 suppliers capable of producing battery electrolytes or lithium-ion battery materials with existing OEM contracts.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE updated_location ILIKE %s AND ev_supply_chain_role ILIKE %s AND (product_service ILIKE %s OR product_service ILIKE %s) AND primary_oems ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q017": {
+    "question": "Which Georgia companies manufacture high-voltage wiring harnesses or EV electrical distribution components suitable for BEV platforms?",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0196_a54c741168c1_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0196_a54c741168c1",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0197_8e04c110ab7a_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0197_8e04c110ab7a",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0198_95f76f62d8be_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0198_95f76f62d8be",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0195_093cbeb2825d_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0195_093cbeb2825d",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0048_3a115293fa7e_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0048_3a115293fa7e",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0191_afbcb949ba3c_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0191_afbcb949ba3c",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0199_2ee4c9fc6fdf_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0199_2ee4c9fc6fdf",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0190_c206f9c99dda_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0190_c206f9c99dda",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0081_ad9464e1812e_IDENTITY",
+          "parent_record_id": "KB_ROW_0081_ad9464e1812e",
+          "chunk_type": "identity"
+        },
+        {
+          "chunk_id": "KB_ROW_0086_e2388e6d634f_IDENTITY",
+          "parent_record_id": "KB_ROW_0086_e2388e6d634f",
+          "chunk_type": "identity"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0196_a54c741168c1",
+          "source_row_id": 196,
+          "text": "Record ID: KB_ROW_0196_a54c741168c1\nSource Row ID: 196\n\nCompany: woodbridge foam corp.\nCategory: OEM Supply Chain\nIndustry Group: Automotive electrical systems\nUpdated Location: Lithonia, DeKalb County\nAddress: 2399 S Stone Mountain Lithonia Rd, Lithonia, GA 30058\nLatitude: 33.737555\nLongitude: -84.1198547\nPrimary Facility Type: Manufacturing\nEV Supply Chain Role: EV wiring harnesses and power distribution\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 1657.0\nProduct / Service: Automotive wiring harnesses & electrical distribution systems\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 196"
+        },
+        {
+          "parent_record_id": "KB_ROW_0197_8e04c110ab7a",
+          "source_row_id": 197,
+          "text": "Record ID: KB_ROW_0197_8e04c110ab7a\nSource Row ID: 197\n\nCompany: woory industrial co.\nCategory: OEM Supply Chain\nIndustry Group: Electrical connectors and sensors\nUpdated Location: Dublin, Laurens County\nAddress: 404 Kellam Rd, Dublin, GA 31021\nLatitude: 32.5286348559853\nLongitude: -82.9311657105471\nPrimary Facility Type: Manufacturing/ Engineering\nEV Supply Chain Role: High‑voltage EV connectors and electronics\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 87000.0\nProduct / Service: Automotive connectors, terminals, sensors, and power / data components\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 197"
+        },
+        {
+          "parent_record_id": "KB_ROW_0198_95f76f62d8be",
+          "source_row_id": 198,
+          "text": "Record ID: KB_ROW_0198_95f76f62d8be\nSource Row ID: 198\n\nCompany: yachiyo manufacturing of america llc\nCategory: OEM Supply Chain\nIndustry Group: Automotive seating and E‑systems\nUpdated Location: Carrollton, Carroll County\nAddress: 565 Beulah Church Rd, Carrollton, GA 30117\nLatitude: 33.601430192463\nLongitude: -85.1053708775212\nPrimary Facility Type: Manufacturing\nEV Supply Chain Role: EV electrical distribution and interior systems\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 173700.0\nProduct / Service: Automotive seating and E-Systems (electrical distribution)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 198"
+        },
+        {
+          "parent_record_id": "KB_ROW_0195_093cbeb2825d",
+          "source_row_id": 195,
+          "text": "Record ID: KB_ROW_0195_093cbeb2825d\nSource Row ID: 195\n\nCompany: wika usa\nCategory: OEM Supply Chain\nIndustry Group: Automotive wiring systems\nUpdated Location: Lawrenceville, Gwinnett County\nAddress: 1000 Wiegand Blvd, Lawrenceville, GA 30043\nLatitude: 33.960968631134\nLongitude: -84.052709062173\nPrimary Facility Type: Manufacturing/ Engineering\nEV Supply Chain Role: HV and LV wiring harnesses for EVs and ICE vehicles\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 250000.0\nProduct / Service: Vehicle power & data solutions ; wiring harnesses and connectors\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 195"
+        },
+        {
+          "parent_record_id": "KB_ROW_0048_3a115293fa7e",
+          "source_row_id": 48,
+          "text": "Record ID: KB_ROW_0048_3a115293fa7e\nSource Row ID: 48\n\nCompany: enchem america inc.\nCategory: Tier 2/3\nIndustry Group: Primary Metal Industries\nUpdated Location: Commerce, Jackson County\nAddress: 648 Highway 334, Commerce, GA 30530\nLatitude: 34.1720636\nLongitude: -83.4364623\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Hyundai Kia Rivian\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 155.0\nProduct / Service: Electric wiring components\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 48"
+        },
+        {
+          "parent_record_id": "KB_ROW_0191_afbcb949ba3c",
+          "source_row_id": 191,
+          "text": "Record ID: KB_ROW_0191_afbcb949ba3c\nSource Row ID: 191\n\nCompany: volvo cars usa\nCategory: OEM Supply Chain\nIndustry Group: Automotive plastics\nUpdated Location: Rabun County\nAddress: 1800 Volvo Place, Mahwah, NJ 07430\nLatitude: 41.0740427635951\nLongitude: -74.1712478395491\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Plastic components for EV and ICE vehicles\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 456.0\nProduct / Service: Automotive plastic parts manufacturing (interior / exterior components)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 191"
+        },
+        {
+          "parent_record_id": "KB_ROW_0199_2ee4c9fc6fdf",
+          "source_row_id": 199,
+          "text": "Record ID: KB_ROW_0199_2ee4c9fc6fdf\nSource Row ID: 199\n\nCompany: yamaha motor manufacturing corp.\nCategory: OEM Supply Chain\nIndustry Group: Automotive electronics\nUpdated Location: Newnan, Coweta County\nAddress: 1000 Georgia Highway 34E, Newnan, GA\nLatitude: 33.4024771\nLongitude: -84.7323054\nPrimary Facility Type: Engineering/ Manufacturing\nEV Supply Chain Role: Advanced electrical architecture for EVs\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 190000.0\nProduct / Service: Automotive electrical architecture, connectivity, and advanced safety components\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 199"
+        },
+        {
+          "parent_record_id": "KB_ROW_0190_c206f9c99dda",
+          "source_row_id": 190,
+          "text": "Record ID: KB_ROW_0190_c206f9c99dda\nSource Row ID: 190\n\nCompany: voestalpine automotive body parts inc.\nCategory: OEM Supply Chain\nIndustry Group: Automotive components\nUpdated Location: Cartersville, Bartow County\nAddress: 4334 Highway 20 SE, Cartersville, GA 30121\nLatitude: 34.181471\nLongitude: -84.738305\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: EV and ICE powertrain and HVAC components\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 1300.0\nProduct / Service: Automotive components manufacturing group (compressors / automotive parts)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 190"
+        },
+        {
+          "parent_record_id": "KB_ROW_0081_ad9464e1812e",
+          "source_row_id": 81,
+          "text": "Record ID: KB_ROW_0081_ad9464e1812e\nSource Row ID: 81\n\nCompany: hyundai mobis (georgia)\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: West Point, Troup County\nAddress: 300 Hyundai MOBIS Dr, West Point, GA 31833\nLatitude: 32.8772531\nLongitude: -85.183728\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 170.0\nProduct / Service: Capacitors, electronic automotive components\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 81"
+        },
+        {
+          "parent_record_id": "KB_ROW_0086_e2388e6d634f",
+          "source_row_id": 86,
+          "text": "Record ID: KB_ROW_0086_e2388e6d634f\nSource Row ID: 86\n\nCompany: ims gear georgia inc.\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Suwanee, Gwinnett County\nAddress: 300 Satellite Blvd NE, Suwanee, GA 30024\nLatitude: 34.035115\nLongitude: -84.064265\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 100.0\nProduct / Service: Car audio systems\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 86"
+        }
+      ]
+    },
+    "error": null
+  },
+  "q018": {
+    "question": "Identify Georgia Tier 2/3 companies in the Electronic and Electrical Equipment industry group that could be upgraded to supply EV power electronics.",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "clarification",
+      "reason": "company not resolved",
+      "query": "Georgia Tier 2/3 companies"
+    },
+    "error": null
+  },
+  "q019": {
+    "question": "Find Georgia-based companies that manufacture copper foil or electrodeposited materials suitable for EV battery current collectors.",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0043_34bffdb8d0b5_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0043_34bffdb8d0b5",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0051_59729ac6a1ff_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0051_59729ac6a1ff",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0022_f5ff4992c373_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0022_f5ff4992c373",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0149_26e186c3a626_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0149_26e186c3a626",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0017_41b44e8bb02b_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0017_41b44e8bb02b",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0191_afbcb949ba3c_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0191_afbcb949ba3c",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0029_50616c531f09_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0029_50616c531f09",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0016_5bad83ba9ff7_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0016_5bad83ba9ff7",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0169_3a89873af3b5_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0169_3a89873af3b5",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0030_0a1023c0bf47_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0030_0a1023c0bf47",
+          "chunk_type": "product_role"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0043_34bffdb8d0b5",
+          "source_row_id": 43,
+          "text": "Record ID: KB_ROW_0043_34bffdb8d0b5\nSource Row ID: 43\n\nCompany: duckyang\nCategory: Tier 2/3\nIndustry Group: Primary Metal Industries\nUpdated Location: Braselton, Jackson County\nAddress: 984 Broadway Avenue, Braselton, GA 30517\nLatitude: 34.106234\nLongitude: -83.778946\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Hyundai Kia Rivian\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 250.0\nProduct / Service: High-quality electrodeposited (ED) copper foil for electric vehicles\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 43"
+        },
+        {
+          "parent_record_id": "KB_ROW_0051_59729ac6a1ff",
+          "source_row_id": 51,
+          "text": "Record ID: KB_ROW_0051_59729ac6a1ff\nSource Row ID: 51\n\nCompany: evco plastics\nCategory: Tier 2/3\nIndustry Group: Primary Metal Industries\nUpdated Location: Calhoun, Gordon County\nAddress: 100 EVCO Drive, Calhoun, GA 30701\nLatitude: 34.4455959\nLongitude: -84.9210517\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 125.0\nProduct / Service: Recycler of copper, precious metals, and non-ferrous materials\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 51"
+        },
+        {
+          "parent_record_id": "KB_ROW_0022_f5ff4992c373",
+          "source_row_id": 22,
+          "text": "Record ID: KB_ROW_0022_f5ff4992c373\nSource Row ID: 22\n\nCompany: bridgestone bandag\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Griffin, Spalding County\nAddress: 801 Greenbelt Pkwy, Griffin, GA 30223\nLatitude: 33.2369594\nLongitude: -84.2346421\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 242.0\nProduct / Service: Composite materials and specialty polymers for automotive components\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 22"
+        },
+        {
+          "parent_record_id": "KB_ROW_0149_26e186c3a626",
+          "source_row_id": 149,
+          "text": "Record ID: KB_ROW_0149_26e186c3a626\nSource Row ID: 149\n\nCompany: racemark international llc\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Gray, Jones County\nAddress: 152 Racemark Dr, Gray, GA 31032\nLatitude: 32.991607\nLongitude: -83.567362\nPrimary Facility Type: R&D\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Hyundai Kia Rivian\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 120.0\nProduct / Service: Manufacturing and R&D engine parts for EV\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 149"
+        },
+        {
+          "parent_record_id": "KB_ROW_0017_41b44e8bb02b",
+          "source_row_id": 17,
+          "text": "Record ID: KB_ROW_0017_41b44e8bb02b\nSource Row ID: 17\n\nCompany: blue ridge manufacturing\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Blue Ridge, Union County\nAddress: 87 Tom Boyd Rd, Blue Ridge, GA 30513\nLatitude: 34.8963485\nLongitude: -84.094162\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 270.0\nProduct / Service: Plastic and metal fasteners and precision strings for automotive industry\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 17"
+        },
+        {
+          "parent_record_id": "KB_ROW_0191_afbcb949ba3c",
+          "source_row_id": 191,
+          "text": "Record ID: KB_ROW_0191_afbcb949ba3c\nSource Row ID: 191\n\nCompany: volvo cars usa\nCategory: OEM Supply Chain\nIndustry Group: Automotive plastics\nUpdated Location: Rabun County\nAddress: 1800 Volvo Place, Mahwah, NJ 07430\nLatitude: 41.0740427635951\nLongitude: -74.1712478395491\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Plastic components for EV and ICE vehicles\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 456.0\nProduct / Service: Automotive plastic parts manufacturing (interior / exterior components)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 191"
+        },
+        {
+          "parent_record_id": "KB_ROW_0029_50616c531f09",
+          "source_row_id": 29,
+          "text": "Record ID: KB_ROW_0029_50616c531f09\nSource Row ID: 29\n\nCompany: daehan solution georgia llc\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Covington, Henry County\nAddress: 123 Industrial Blvd, Covington, GA 30014\nLatitude: 33.4141149\nLongitude: -84.1586262\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 130.0\nProduct / Service: Chemically treated industrial yarns Rubber compounds for tires, mining conveyor belts, automotive floor mats, and windshield wiper blades\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 29"
+        },
+        {
+          "parent_record_id": "KB_ROW_0016_5bad83ba9ff7",
+          "source_row_id": 16,
+          "text": "Record ID: KB_ROW_0016_5bad83ba9ff7\nSource Row ID: 16\n\nCompany: blue bird corp.\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Fort Valley, Peach County\nAddress: 402 Blue Bird Blvd, Fort Valley, GA 31030\nLatitude: 32.561892\nLongitude: -83.87919\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 275.0\nProduct / Service: Plastic interior assemblies for the auto industry\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 16"
+        },
+        {
+          "parent_record_id": "KB_ROW_0169_3a89873af3b5",
+          "source_row_id": 169,
+          "text": "Record ID: KB_ROW_0169_3a89873af3b5\nSource Row ID: 169\n\nCompany: sungeel recycling park georgia\nCategory: Tier 2/3\nIndustry Group: Miscellaneous Manufacturing Industries\nUpdated Location: Duluth, Gwinnett County\nAddress: 3237 Satellite Blvd, Suite 175, Duluth, GA 30096\nLatitude: 33.962713\nLongitude: -84.11336\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 650.0\nProduct / Service: Various fasteners for automotive seating and interior Fasteners, zippers, hook & loop, pull straps, ISO-marker buttons, seat belt buttons, plastic hardware\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 169"
+        },
+        {
+          "parent_record_id": "KB_ROW_0030_0a1023c0bf47",
+          "source_row_id": 30,
+          "text": "Record ID: KB_ROW_0030_0a1023c0bf47\nSource Row ID: 30\n\nCompany: daesol ausys\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Smyrna, Cobb County\nAddress: 2100 Lake Park Dr SE, Smyrna, GA 30080\nLatitude: 33.8962818\nLongitude: -84.4884631\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 97.0\nProduct / Service: High-precision engineered plastic products for the automotive industry\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 30"
+        }
+      ]
+    },
+    "error": null
+  },
+  "q020": {
+    "question": "Which Georgia Tier 1/2 companies produce engineered plastics, polymers, or composite materials applicable to EV structural or thermal components?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "clarification",
+      "reason": "company not resolved",
+      "query": "Georgia Tier 1/2 companies"
+    },
+    "error": null
+  },
+  "q021": {
+    "question": "Find Georgia suppliers with existing Hyundai Kia contracts that could be expanded to support Hyundai Metaplant's EV battery production ramp-up.",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "acm georgia llc"
+        },
+        {
+          "company": "advics manufacturing georgia llc"
+        },
+        {
+          "company": "ajin georgia"
+        },
+        {
+          "company": "bosal industries georgia"
+        },
+        {
+          "company": "daehan solution georgia llc"
+        },
+        {
+          "company": "daesol material georgia, llc"
+        },
+        {
+          "company": "denso manufacturing georgia"
+        },
+        {
+          "company": "dongwon autopart technology georgia llc"
+        },
+        {
+          "company": "f&p georgia manufacturing"
+        },
+        {
+          "company": "gedia georgia llc"
+        },
+        {
+          "company": "glovis georgia llc"
+        },
+        {
+          "company": "hyundai mobis (georgia)"
+        },
+        {
+          "company": "hyundai transys georgia powertrain"
+        },
+        {
+          "company": "hyundai transys georgia seating systems"
+        },
+        {
+          "company": "ims gear georgia inc."
+        },
+        {
+          "company": "joon georgia, inc."
+        },
+        {
+          "company": "kia georgia inc."
+        },
+        {
+          "company": "sejong georgia llc"
+        },
+        {
+          "company": "sungeel recycling park georgia"
+        }
+      ],
+      "columns": [
+        "company"
+      ],
+      "query": "Georgia"
+    },
+    "error": null
+  },
+  "q022": {
+    "question": "Identify Georgia companies producing DC-to-DC converters, capacitors, or power electronics components relevant to EV drivetrains and what tier is each assigned?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "clarification",
+      "reason": "company not resolved",
+      "query": "Georgia companies"
+    },
+    "error": null
+  },
+  "q023": {
+    "question": "Which Georgia companies provide powder coating-related products or services, and what tier are they classified under?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "category",
+        "product_service"
+      ],
+      "sql": "SELECT company, category, product_service FROM parent_chunks WHERE product_service ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q024": {
+    "question": "Which Georgia companies manufacture battery parts or enclosure systems and are classified as Tier 1/2, making them ready for direct OEM engagement and show which Primary OEMs they are linked to.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "primary_oems"
+      ],
+      "sql": "SELECT company, primary_oems FROM parent_chunks WHERE ev_supply_chain_role ILIKE %s AND (product_service ILIKE %s OR product_service ILIKE %s) ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q025": {
+    "question": "Find Tier 2/3 Georgia-based suppliers with employment over 300 that are classified as General Automotive but produce components transferable to EV platforms.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE updated_location ILIKE %s AND employment::numeric > %s AND category ILIKE %s AND industry_group ILIKE %s AND product_service ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q026": {
+    "question": "Identify Georgia Tier 2/3 companies in the Chemicals and Allied Products industry group and list their products.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "product_service"
+      ],
+      "sql": "SELECT company, product_service FROM parent_chunks WHERE industry_group ILIKE %s AND company ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q027": {
+    "question": "Which EV Supply Chain Roles in Georgia are served by only a single company, creating a single-point-of-failure risk for the state's EV ecosystem?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "acm georgia llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "advics manufacturing georgia llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "ajin georgia",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "bosal industries georgia",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "daehan solution georgia llc",
+          "ev_supply_chain_role": "Materials"
+        },
+        {
+          "company": "daesol material georgia, llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "denso manufacturing georgia",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "dongwon autopart technology georgia llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "f&p georgia manufacturing",
+          "ev_supply_chain_role": "Battery Pack"
+        },
+        {
+          "company": "gedia georgia llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "glovis georgia llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "hyundai mobis (georgia)",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "hyundai transys georgia powertrain",
+          "ev_supply_chain_role": "Thermal Management"
+        },
+        {
+          "company": "hyundai transys georgia seating systems",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "ims gear georgia inc.",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "joon georgia, inc.",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "kia georgia inc.",
+          "ev_supply_chain_role": "Vehicle Assembly"
+        },
+        {
+          "company": "sejong georgia llc",
+          "ev_supply_chain_role": "General Automotive"
+        },
+        {
+          "company": "sungeel recycling park georgia",
+          "ev_supply_chain_role": "Materials"
+        }
+      ],
+      "columns": [
+        "company",
+        "ev_supply_chain_role"
+      ],
+      "query": "Georgia"
+    },
+    "error": null
+  },
+  "q028": {
+    "question": "Which Georgia Battery Cell or Battery Pack suppliers are sole-sourced by a specific OEM, indicating high dependency risk?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "clarification",
+      "reason": "company not resolved",
+      "query": "Georgia Battery Cell"
+    },
+    "error": null
+  },
+  "q029": {
+    "question": "For Hyundai Metaplant, how many of its Georgia-based EV component suppliers have fewer than 200 employees, flagging potential capacity fragility?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "count",
+      "count": 0,
+      "sql": "SELECT COUNT(*) AS count FROM parent_chunks WHERE updated_location ILIKE %s AND employment::numeric < %s;"
+    },
+    "error": null
+  },
+  "q030": {
+    "question": "Identify Georgia Tier 2/3 suppliers that are EV Relevant, classified as General Automotive, and provide materials to Battery Cell or Battery Pack companies, suggesting supply chain misalignment risk.",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "clarification",
+      "reason": "company not resolved",
+      "query": "Georgia Tier 2/3 suppliers"
+    },
+    "error": null
+  },
+  "q031": {
+    "question": "Identify all Georgia-based Tier 1/2 automotive suppliers that maintain a diversified customer base (serving 'Multiple OEMs').",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE updated_location ILIKE %s AND category ILIKE %s AND primary_oems ILIKE %s AND industry_group ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q032": {
+    "question": "Identify Georgia companies in the Thermal Management or Power Electronics role with fewer than 200 employees - their small scale may limit surge production capacity.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "freudenberg-nok"
+        },
+        {
+          "company": "hyundai transys georgia powertrain"
+        },
+        {
+          "company": "peerless-winsmith inc."
+        }
+      ],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE (ev_supply_chain_role ILIKE %s OR ev_supply_chain_role ILIKE %s) AND employment::numeric < %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q033": {
+    "question": "Identify any EV-relevant Georgia companies classified as OEM Footprint or OEM Supply Chain?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "clarification",
+      "reason": "company not resolved",
+      "query": "Georgia companies"
+    },
+    "error": null
+  },
+  "q034": {
+    "question": "Top 10 Georgia companies based on employment size that supply both General Automotive and EV-specific components, indicating transition readiness?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE (product_service ILIKE %s OR product_service ILIKE %s) ORDER BY employment DESC LIMIT 10;"
+    },
+    "error": null
+  },
+  "q035": {
+    "question": "How many Georgia companies are now producing lithium-ion battery materials, cells, or electrolytes?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "count",
+      "count": 0,
+      "sql": "SELECT COUNT(*) AS count FROM parent_chunks WHERE updated_location ILIKE %s AND (product_service ILIKE %s OR product_service ILIKE %s);"
+    },
+    "error": null
+  },
+  "q036": {
+    "question": "Which Georgia Tier 2/3 suppliers currently produce lightweight aluminum or composite materials and are growing their EV-specific customer base?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE (product_service ILIKE %s OR product_service ILIKE %s) AND ev_supply_chain_role ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q037": {
+    "question": "Identify Georgia companies whose product descriptions include 'high-voltage', 'DC-to-DC', 'inverter', or 'motor controller' — these signal EV powertrain electronics growth.",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0200_5de7be62f3e3_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0200_5de7be62f3e3",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0203_b78dea7ffaa1_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0203_b78dea7ffaa1",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0202_06b6128fab20_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0202_06b6128fab20",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0189_a87d83aacdcb_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0189_a87d83aacdcb",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0197_8e04c110ab7a_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0197_8e04c110ab7a",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0185_c460eb2cd154_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0185_c460eb2cd154",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0190_c206f9c99dda_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0190_c206f9c99dda",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0084_93b34277a833_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0084_93b34277a833",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0083_2d267f6d5adb_LOCATION_EMPLOYMENT",
+          "parent_record_id": "KB_ROW_0083_2d267f6d5adb",
+          "chunk_type": "location_employment"
+        },
+        {
+          "chunk_id": "KB_ROW_0150_5b4c1dbacbda_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0150_5b4c1dbacbda",
+          "chunk_type": "product_role"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0200_5de7be62f3e3",
+          "source_row_id": 200,
+          "text": "Record ID: KB_ROW_0200_5de7be62f3e3\nSource Row ID: 200\n\nCompany: yazaki north america\nCategory: OEM Footprint\nIndustry Group: Automotive electronics and systems\nUpdated Location: Spalding County\nAddress: 375 Airport Rd, Griffin, Georgia\nLatitude: 33.2266019\nLongitude: -84.2867725\nPrimary Facility Type: Engineering/ Operations\nEV Supply Chain Role: Power electronics, sensors, and EV systems\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 230000.0\nProduct / Service: Automotive supplier division (mobility solutions: ADAS, powertrain, electronics)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 200"
+        },
+        {
+          "parent_record_id": "KB_ROW_0203_b78dea7ffaa1",
+          "source_row_id": 203,
+          "text": "Record ID: KB_ROW_0203_b78dea7ffaa1\nSource Row ID: 203\n\nCompany: zf gainesville llc\nCategory: OEM Supply Chain\nIndustry Group: Automotive thermal and electronics systems\nUpdated Location: Gainesville, Hall County\nAddress: 1261 Palmour Dr SW, Gainesville, GA 30501\nLatitude: 34.2647050791808\nLongitude: -83.8326067899608\nPrimary Facility Type: Manufacturing\nEV Supply Chain Role: EV thermal management and power electronics\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 17500.0\nProduct / Service: Automotive supplier footprint (electrification, thermal, powertrain, ADAS components)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 203"
+        },
+        {
+          "parent_record_id": "KB_ROW_0202_06b6128fab20",
+          "source_row_id": 202,
+          "text": "Record ID: KB_ROW_0202_06b6128fab20\nSource Row ID: 202\n\nCompany: zf gainesville llc\nCategory: OEM Supply Chain\nIndustry Group: Automotive systems and components\nUpdated Location: Gainesville, Hall County\nAddress: 1261 Palmour Dr SW, Gainesville, GA 30501\nLatitude: 34.2647050791808\nLongitude: -83.8326067899608\nPrimary Facility Type: Manufacturing\nEV Supply Chain Role: EV body, powertrain, and thermal components\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 170000.0\nProduct / Service: Contract manufacturing & automotive systems (body, chassis, powertrain, e-drive)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 202"
+        },
+        {
+          "parent_record_id": "KB_ROW_0189_a87d83aacdcb",
+          "source_row_id": 189,
+          "text": "Record ID: KB_ROW_0189_a87d83aacdcb\nSource Row ID: 189\n\nCompany: vista metals corp.\nCategory: OEM Supply Chain\nIndustry Group: Automotive modules and components\nUpdated Location: Adairsville, Bartow County\nAddress: 800 Martin Luther King Jr Dr, Adairsville, GA 30103\nLatitude: 34.3676324336592\nLongitude: -84.9069879887994\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: EV and ICE component manufacturing\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 1500.0\nProduct / Service: Automotive modules / powertrain components ; parts supply\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 189"
+        },
+        {
+          "parent_record_id": "KB_ROW_0197_8e04c110ab7a",
+          "source_row_id": 197,
+          "text": "Record ID: KB_ROW_0197_8e04c110ab7a\nSource Row ID: 197\n\nCompany: woory industrial co.\nCategory: OEM Supply Chain\nIndustry Group: Electrical connectors and sensors\nUpdated Location: Dublin, Laurens County\nAddress: 404 Kellam Rd, Dublin, GA 31021\nLatitude: 32.5286348559853\nLongitude: -82.9311657105471\nPrimary Facility Type: Manufacturing/ Engineering\nEV Supply Chain Role: High‑voltage EV connectors and electronics\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 87000.0\nProduct / Service: Automotive connectors, terminals, sensors, and power / data components\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 197"
+        },
+        {
+          "parent_record_id": "KB_ROW_0185_c460eb2cd154",
+          "source_row_id": 185,
+          "text": "Record ID: KB_ROW_0185_c460eb2cd154\nSource Row ID: 185\n\nCompany: trenton pressing inc.\nCategory: OEM Supply Chain\nIndustry Group: Automotive precision components\nUpdated Location: Trenton, Dade County\nAddress: 505 N Industrial Blvd, Trenton, GA 30752\nLatitude: 34.8787288016289\nLongitude: -85.497643922621\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Machined components supporting EV and ICE vehicles\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 298.0\nProduct / Service: Precision-machined powertrain components (engine / transmission / drivetrain parts)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 185"
+        },
+        {
+          "parent_record_id": "KB_ROW_0190_c206f9c99dda",
+          "source_row_id": 190,
+          "text": "Record ID: KB_ROW_0190_c206f9c99dda\nSource Row ID: 190\n\nCompany: voestalpine automotive body parts inc.\nCategory: OEM Supply Chain\nIndustry Group: Automotive components\nUpdated Location: Cartersville, Bartow County\nAddress: 4334 Highway 20 SE, Cartersville, GA 30121\nLatitude: 34.181471\nLongitude: -84.738305\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: EV and ICE powertrain and HVAC components\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 1300.0\nProduct / Service: Automotive components manufacturing group (compressors / automotive parts)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 190"
+        },
+        {
+          "parent_record_id": "KB_ROW_0084_93b34277a833",
+          "source_row_id": 84,
+          "text": "Record ID: KB_ROW_0084_93b34277a833\nSource Row ID: 84\n\nCompany: hyundai transys georgia seating systems\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: West Point, Troup County\nAddress: 801 Transys Pkwy, West Point, GA 31833\nLatitude: 32.8772531\nLongitude: -85.183728\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 110.0\nProduct / Service: Automotive electronics, resonators, capacitors, resistors, electronics and electronic parts\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 84"
+        },
+        {
+          "parent_record_id": "KB_ROW_0083_2d267f6d5adb",
+          "source_row_id": 83,
+          "text": "Record ID: KB_ROW_0083_2d267f6d5adb\nSource Row ID: 83\n\nCompany: hyundai transys georgia powertrain\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: West Point, Troup County\nAddress: 100 Powertrain Way, West Point, GA 31833\nLatitude: 32.903183\nLongitude: -85.159941\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Thermal Management\nPrimary OEMs: Hyundai Kia Rivian\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 130.0\nProduct / Service: Electrical heaters, control units, and actuators\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 83"
+        },
+        {
+          "parent_record_id": "KB_ROW_0150_5b4c1dbacbda",
+          "source_row_id": 150,
+          "text": "Record ID: KB_ROW_0150_5b4c1dbacbda\nSource Row ID: 150\n\nCompany: realtruck\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Peachtree City, Chattooga County\nAddress: 1656 Airport Rd N, Peachtree City, GA 30269\nLatitude: 34.588242\nLongitude: -85.2883229\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 110.0\nProduct / Service: Automotive lighting and electronics\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 150"
+        }
+      ]
+    },
+    "error": null
+  },
+  "q038": {
+    "question": "Which Georgia automotive companies employ over 1,000 workers but are currently categorized as only \"Indirectly Relevant\" to the EV sector, indicating a massive workforce pool ready for a strategic pivot?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE employment::numeric > %s AND ev_supply_chain_role ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q039": {
+    "question": "Which three Georgia companies have the largest employment in EV thermal management, and how many employees does each have?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "employment"
+      ],
+      "sql": "SELECT company, employment FROM parent_chunks WHERE updated_location ILIKE %s AND ev_supply_chain_role ILIKE %s ORDER BY employment DESC LIMIT 3;"
+    },
+    "error": null
+  },
+  "q040": {
+    "question": "Which companies are involved in thermal-related products or services, and what roles and facility types are they associated with?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "primary_facility_type",
+        "ev_supply_chain_role"
+      ],
+      "sql": "SELECT company, primary_facility_type, ev_supply_chain_role FROM parent_chunks WHERE product_service ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q041": {
+    "question": "Which Tier 1/2 Georgia companies listed under General Automotive suggest a gradual evolution toward EV-related products or markets?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE company ILIKE %s AND product_service ILIKE %s AND (ev_supply_chain_role ILIKE %s OR ev_supply_chain_role ILIKE %s) ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q042": {
+    "question": "How is demand for thermal management solutions reflected in the number and employment size of Georgia Thermal Management suppliers?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "category",
+        "ev_supply_chain_role",
+        "product_service",
+        "updated_location"
+      ],
+      "sql": "SELECT company, category, ev_supply_chain_role, product_service, updated_location FROM parent_chunks WHERE ev_supply_chain_role ILIKE %s AND updated_location ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q043": {
+    "question": "Which Georgia companies are involved in battery recycling or second-life battery processing, reflecting the emerging circular economy trend?",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0162_abb104259149_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0085_c46b9255bfde_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0085_c46b9255bfde",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0077_b853a834945a_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0077_b853a834945a",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0076_f5f881d2d9ba_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0076_f5f881d2d9ba",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0082_03c590458ceb_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0082_03c590458ceb",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0075_eaa6e1be60da_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0075_eaa6e1be60da",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0052_140973bc03b6_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0052_140973bc03b6",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0060_bf5e951a6ff4_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0060_bf5e951a6ff4",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0177_86e3a6a070db_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0177_86e3a6a070db",
+          "chunk_type": "oem_relationship"
+        },
+        {
+          "chunk_id": "KB_ROW_0162_abb104259149_IDENTITY",
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "chunk_type": "identity"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "source_row_id": 162,
+          "text": "Record ID: KB_ROW_0162_abb104259149\nSource Row ID: 162\n\nCompany: sk battery america\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Ellabell, Bryan County\nAddress: 700 Hyundai Blvd, Ellabell, GA 31308\nLatitude: 32.159233\nLongitude: -81.502963\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 75.0\nProduct / Service: Engineered steel systems mounted in motor vehicles\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 162"
+        },
+        {
+          "parent_record_id": "KB_ROW_0085_c46b9255bfde",
+          "source_row_id": 85,
+          "text": "Record ID: KB_ROW_0085_c46b9255bfde\nSource Row ID: 85\n\nCompany: immi\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Dublin, Laurens County\nAddress: 2002 Industrial Park Dr, Dublin, GA 31021\nLatitude: 32.511763\nLongitude: -82.923552\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Pack\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 100.0\nProduct / Service: Battery electrolyte\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 85"
+        },
+        {
+          "parent_record_id": "KB_ROW_0077_b853a834945a",
+          "source_row_id": 77,
+          "text": "Record ID: KB_ROW_0077_b853a834945a\nSource Row ID: 77\n\nCompany: honda development & manufacturing\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Tallapoosa, Cherokee County\nAddress: 1000 Honda Dr, Tallapoosa, GA 30176\nLatitude: 34.2575874\nLongitude: -84.5070413\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Cell\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 400.0\nProduct / Service: Battery cells for electric mobility\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 77"
+        },
+        {
+          "parent_record_id": "KB_ROW_0076_f5f881d2d9ba",
+          "source_row_id": 76,
+          "text": "Record ID: KB_ROW_0076_f5f881d2d9ba\nSource Row ID: 76\n\nCompany: hollingsworth & vose co.\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Hawkinsville, Pulaski County\nAddress: 111 Hollingsworth & Vose Rd, Hawkinsville, GA 31036\nLatitude: 32.2835422\nLongitude: -83.4667907\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Pack\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 400.0\nProduct / Service: Lithium-ion battery materials\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 76"
+        },
+        {
+          "parent_record_id": "KB_ROW_0082_03c590458ceb",
+          "source_row_id": 82,
+          "text": "Record ID: KB_ROW_0082_03c590458ceb\nSource Row ID: 82\n\nCompany: hyundai motor group\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Ellabell, Bryan County\nAddress: 700 Hyundai Blvd, Ellabell, GA 31308\nLatitude: 32.159233\nLongitude: -81.502963\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Pack\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 164.0\nProduct / Service: Battery parts for electric vehicles\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 82"
+        },
+        {
+          "parent_record_id": "KB_ROW_0075_eaa6e1be60da",
+          "source_row_id": 75,
+          "text": "Record ID: KB_ROW_0075_eaa6e1be60da\nSource Row ID: 75\n\nCompany: hitachi astemo americas inc.\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Shorter, Harris County\nAddress: 400 Hanon Dr, Shorter, GA 36075\nLatitude: 32.4705166\nLongitude: -85.8969782\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Cell\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 723.0\nProduct / Service: Battery cells for electric mobility\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 75"
+        },
+        {
+          "parent_record_id": "KB_ROW_0052_140973bc03b6",
+          "source_row_id": 52,
+          "text": "Record ID: KB_ROW_0052_140973bc03b6\nSource Row ID: 52\n\nCompany: f&p georgia manufacturing\nCategory: Tier 1/2\nIndustry Group: Primary Metal Industries\nUpdated Location: Rome, Floyd County\nAddress: 88 Enterprise Drive SE, Rome, GA 30161\nLatitude: 34.1708696\nLongitude: -85.1938687\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Pack\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 104.0\nProduct / Service: Lithium-ion battery recycler and raw materials provider\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 52"
+        },
+        {
+          "parent_record_id": "KB_ROW_0060_bf5e951a6ff4",
+          "source_row_id": 60,
+          "text": "Record ID: KB_ROW_0060_bf5e951a6ff4\nSource Row ID: 60\n\nCompany: freyr battery\nCategory: Tier 2/3\nIndustry Group: Fabricated Metal Products\nUpdated Location: Atlanta, Fulton County\nAddress: 601 10th St NW, Suite 400, Atlanta, GA 30318\nLatitude: 33.7817149\nLongitude: -84.4078083\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 110.0\nProduct / Service: Decorative and functional coating systems\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 60"
+        },
+        {
+          "parent_record_id": "KB_ROW_0177_86e3a6a070db",
+          "source_row_id": 177,
+          "text": "Record ID: KB_ROW_0177_86e3a6a070db\nSource Row ID: 177\n\nCompany: thermal ceramics inc.\nCategory: OEM\nIndustry Group: Transportation Equipment\nUpdated Location: Augusta, Richmond County\nAddress: 2190 N Leg Rd, Augusta, GA 30909\nLatitude: 33.4565319\nLongitude: -82.0665715\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Vehicle Assembly\nPrimary OEMs: SK Battery America\nSupplier or Affiliation Type: Original Equipment Manufacturer\nEmployment: 3000.0\nProduct / Service: Electric vehicle batteries\nEV / Battery Relevant: Yes\nClassification Method: Direct Manufacturer\nOriginal Row ID: 177"
+        }
+      ]
+    },
+    "error": null
+  },
+  "q044": {
+    "question": "Which Georgia suppliers appear to play innovation-stage roles through research, development, or prototyping activity?",
+    "route": "exact_lookup",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [
+        {
+          "company": "acm georgia llc"
+        },
+        {
+          "company": "advics manufacturing georgia llc"
+        },
+        {
+          "company": "ajin georgia"
+        },
+        {
+          "company": "bosal industries georgia"
+        },
+        {
+          "company": "daehan solution georgia llc"
+        },
+        {
+          "company": "daesol material georgia, llc"
+        },
+        {
+          "company": "denso manufacturing georgia"
+        },
+        {
+          "company": "dongwon autopart technology georgia llc"
+        },
+        {
+          "company": "f&p georgia manufacturing"
+        },
+        {
+          "company": "gedia georgia llc"
+        },
+        {
+          "company": "glovis georgia llc"
+        },
+        {
+          "company": "hyundai mobis (georgia)"
+        },
+        {
+          "company": "hyundai transys georgia powertrain"
+        },
+        {
+          "company": "hyundai transys georgia seating systems"
+        },
+        {
+          "company": "ims gear georgia inc."
+        },
+        {
+          "company": "joon georgia, inc."
+        },
+        {
+          "company": "kia georgia inc."
+        },
+        {
+          "company": "sejong georgia llc"
+        },
+        {
+          "company": "sungeel recycling park georgia"
+        }
+      ],
+      "columns": [
+        "company"
+      ],
+      "query": "Georgia"
+    },
+    "error": null
+  },
+  "q045": {
+    "question": "Which Georgia suppliers currently serving traditional OEMs are also linked to EV-native OEMs, showing dual-platform supply capability?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company"
+      ],
+      "sql": "SELECT company FROM parent_chunks WHERE updated_location ILIKE %s AND primary_oems ILIKE %s AND ev_supply_chain_role ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q046": {
+    "question": "Identify Georgia areas that currently lack Battery Cell or Battery Pack suppliers but have existing Tier 1 general automotive infrastructure.",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "category",
+        "ev_supply_chain_role",
+        "product_service",
+        "updated_location"
+      ],
+      "sql": "SELECT company, category, ev_supply_chain_role, product_service, updated_location FROM parent_chunks WHERE (ev_supply_chain_role ILIKE %s OR ev_supply_chain_role ILIKE %s) AND industry_group ILIKE %s ORDER BY company LIMIT 100;"
+    },
+    "error": null
+  },
+  "q047": {
+    "question": "For a new Tier 1 battery thermal management company looking to locate in Georgia, which areas have the highest concentration of Materials-category suppliers that could support thermal management production?",
+    "route": "structured_sql",
+    "status": "success",
+    "evidence": {
+      "type": "structured_rows",
+      "rows": [],
+      "columns": [
+        "company",
+        "category",
+        "ev_supply_chain_role",
+        "product_service",
+        "updated_location"
+      ],
+      "sql": "SELECT company, category, ev_supply_chain_role, product_service, updated_location FROM parent_chunks WHERE (updated_location ILIKE %s OR updated_location ILIKE %s) AND industry_group ILIKE %s ORDER BY company LIMIT 1;"
+    },
+    "error": null
+  },
+  "q048": {
+    "question": "Which Georgia areas have concentrated Manufacturing Plant facilities that already supply the EV chain indirectly but have no dedicated EV production yet,  marking them as prime conversion candidates?",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0099_a6e6d7b24e3a_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0099_a6e6d7b24e3a",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0027_30ab6d69c97a_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0027_30ab6d69c97a",
+          "chunk_type": "oem_relationship"
+        },
+        {
+          "chunk_id": "KB_ROW_0063_34052dbd7ec4_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0063_34052dbd7ec4",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0162_abb104259149_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0189_a87d83aacdcb_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0189_a87d83aacdcb",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0037_1e1c4bb22100_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0037_1e1c4bb22100",
+          "chunk_type": "oem_relationship"
+        },
+        {
+          "chunk_id": "KB_ROW_0052_140973bc03b6_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0052_140973bc03b6",
+          "chunk_type": "oem_relationship"
+        },
+        {
+          "chunk_id": "KB_ROW_0002_9f0f6aa64876_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0002_9f0f6aa64876",
+          "chunk_type": "oem_relationship"
+        },
+        {
+          "chunk_id": "KB_ROW_0027_30ab6d69c97a_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0027_30ab6d69c97a",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0091_4d766dd9f747_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0091_4d766dd9f747",
+          "chunk_type": "oem_relationship"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0099_a6e6d7b24e3a",
+          "source_row_id": 99,
+          "text": "Record ID: KB_ROW_0099_a6e6d7b24e3a\nSource Row ID: 99\n\nCompany: lear corporation\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Hammond Industrial Park, Troup County\nAddress: 100 Lear Dr, Hammond Industrial Park, GA 30240\nLatitude: 33.051868\nLongitude: -85.035353\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 590.0\nProduct / Service: Pressed parts in the body-in-white segment and structural components\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 99"
+        },
+        {
+          "parent_record_id": "KB_ROW_0027_30ab6d69c97a",
+          "source_row_id": 27,
+          "text": "Record ID: KB_ROW_0027_30ab6d69c97a\nSource Row ID: 27\n\nCompany: continental tire the americas llc\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Barnesville, Lamar County\nAddress: 160 Aldora St, Barnesville, GA 30204\nLatitude: 33.0526972\nLongitude: -84.175058\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 150.0\nProduct / Service: Automotive gaskets and parts, protective film applications\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 27"
+        },
+        {
+          "parent_record_id": "KB_ROW_0063_34052dbd7ec4",
+          "source_row_id": 63,
+          "text": "Record ID: KB_ROW_0063_34052dbd7ec4\nSource Row ID: 63\n\nCompany: glovis georgia llc\nCategory: Tier 2/3\nIndustry Group: Fabricated Metal Products\nUpdated Location: Savannah, Chatham County\nAddress: 127 N Park Ct, Savannah, GA 31407\nLatitude: 32.231682\nLongitude: -81.1991214\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 90.0\nProduct / Service: Metal parts and subassemblies for the automotive industry\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 63"
+        },
+        {
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "source_row_id": 162,
+          "text": "Record ID: KB_ROW_0162_abb104259149\nSource Row ID: 162\n\nCompany: sk battery america\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Ellabell, Bryan County\nAddress: 700 Hyundai Blvd, Ellabell, GA 31308\nLatitude: 32.159233\nLongitude: -81.502963\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 75.0\nProduct / Service: Engineered steel systems mounted in motor vehicles\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 162"
+        },
+        {
+          "parent_record_id": "KB_ROW_0189_a87d83aacdcb",
+          "source_row_id": 189,
+          "text": "Record ID: KB_ROW_0189_a87d83aacdcb\nSource Row ID: 189\n\nCompany: vista metals corp.\nCategory: OEM Supply Chain\nIndustry Group: Automotive modules and components\nUpdated Location: Adairsville, Bartow County\nAddress: 800 Martin Luther King Jr Dr, Adairsville, GA 30103\nLatitude: 34.3676324336592\nLongitude: -84.9069879887994\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: EV and ICE component manufacturing\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 1500.0\nProduct / Service: Automotive modules / powertrain components ; parts supply\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 189"
+        },
+        {
+          "parent_record_id": "KB_ROW_0037_1e1c4bb22100",
+          "source_row_id": 37,
+          "text": "Record ID: KB_ROW_0037_1e1c4bb22100\nSource Row ID: 37\n\nCompany: denso manufacturing georgia\nCategory: Tier 2/3\nIndustry Group: Stone, Clay, Glass and Concrete Products\nUpdated Location: Pendergrass, Jackson County\nAddress: 1000 Valentine Industrial Pkwy, Pendergrass, GA 30567\nLatitude: 34.1800115\nLongitude: -83.642691\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 105.0\nProduct / Service: Custom-designed shot peening and surface preparation surfaces\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 37"
+        },
+        {
+          "parent_record_id": "KB_ROW_0052_140973bc03b6",
+          "source_row_id": 52,
+          "text": "Record ID: KB_ROW_0052_140973bc03b6\nSource Row ID: 52\n\nCompany: f&p georgia manufacturing\nCategory: Tier 1/2\nIndustry Group: Primary Metal Industries\nUpdated Location: Rome, Floyd County\nAddress: 88 Enterprise Drive SE, Rome, GA 30161\nLatitude: 34.1708696\nLongitude: -85.1938687\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Pack\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 104.0\nProduct / Service: Lithium-ion battery recycler and raw materials provider\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 52"
+        },
+        {
+          "parent_record_id": "KB_ROW_0002_9f0f6aa64876",
+          "source_row_id": 2,
+          "text": "Record ID: KB_ROW_0002_9f0f6aa64876\nSource Row ID: 2\n\nCompany: advics manufacturing georgia llc\nCategory: Tier 2/3\nIndustry Group: Textile Products\nUpdated Location: LaGrange, Troup County\nAddress: 1621 Lukken Industrial Dr W, LaGrange, GA 30240\nLatitude: 33.0113943\nLongitude: -85.0615448\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 150.0\nProduct / Service: Air bags, tire cording, performance related products\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 2"
+        },
+        {
+          "parent_record_id": "KB_ROW_0091_4d766dd9f747",
+          "source_row_id": 91,
+          "text": "Record ID: KB_ROW_0091_4d766dd9f747\nSource Row ID: 91\n\nCompany: joon georgia, inc.\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: West Point, Chattahoochee County\nAddress: 100 Industrial Park Rd, West Point, GA 31833\nLatitude: 32.314089\nLongitude: -84.78927\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 900.0\nProduct / Service: Seats and seat foam pads\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 91"
+        }
+      ]
+    },
+    "error": null
+  },
+  "q049": {
+    "question": "For an international battery materials company seeking a Georgia location, which areas have existing chemical manufacturing infrastructure?",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0118_3d9f4b981222_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0118_3d9f4b981222",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0168_f72afc4ca381_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0168_f72afc4ca381",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0124_aef2eb691e57_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0124_aef2eb691e57",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0098_6a3156d82ece_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0098_6a3156d82ece",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0017_41b44e8bb02b_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0017_41b44e8bb02b",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0077_b853a834945a_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0077_b853a834945a",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0037_1e1c4bb22100_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0037_1e1c4bb22100",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0125_dc491619a8e5_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0125_dc491619a8e5",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0171_81f83c8a7d6f_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0171_81f83c8a7d6f",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0014_e7ce1a24a9a6_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0014_e7ce1a24a9a6",
+          "chunk_type": "classification"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0118_3d9f4b981222",
+          "source_row_id": 118,
+          "text": "Record ID: KB_ROW_0118_3d9f4b981222\nSource Row ID: 118\n\nCompany: morgan corp.\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Rabun County\nAddress: 15 Morgan Center Dr, Morganton, NC 28655\nLatitude: 35.754058\nLongitude: -81.667538\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Charging Infrastructure\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 320.0\nProduct / Service: Engine components, turbochargers, exhaust parts and other automotive parts\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 118"
+        },
+        {
+          "parent_record_id": "KB_ROW_0168_f72afc4ca381",
+          "source_row_id": 168,
+          "text": "Record ID: KB_ROW_0168_f72afc4ca381\nSource Row ID: 168\n\nCompany: suhner manufacturing corp.\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Rome, Floyd County\nAddress: 43 Anderson Rd SW, Rome, GA 30161\nLatitude: 34.2085971300834\nLongitude: -85.1899282777942\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 50.0\nProduct / Service: Truck trailers\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 168"
+        },
+        {
+          "parent_record_id": "KB_ROW_0124_aef2eb691e57",
+          "source_row_id": 124,
+          "text": "Record ID: KB_ROW_0124_aef2eb691e57\nSource Row ID: 124\n\nCompany: nisshinbo automotive manufacturing inc.\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Covington, Newton County\nAddress: 14187 Nisshinbo Drive, Covington, GA 30014\nLatitude: 33.627596641273\nLongitude: -83.8396850708471\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 300.0\nProduct / Service: Braking and suspension products\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 124"
+        },
+        {
+          "parent_record_id": "KB_ROW_0098_6a3156d82ece",
+          "source_row_id": 98,
+          "text": "Record ID: KB_ROW_0098_6a3156d82ece\nSource Row ID: 98\n\nCompany: lark united manufacturing inc.\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Dublin, Laurens County\nAddress: 200 Industrial Blvd, Dublin, GA 31021\nLatitude: 32.5320682\nLongitude: -82.950167\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 700.0\nProduct / Service: Motor vehicle transmissions\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 98"
+        },
+        {
+          "parent_record_id": "KB_ROW_0017_41b44e8bb02b",
+          "source_row_id": 17,
+          "text": "Record ID: KB_ROW_0017_41b44e8bb02b\nSource Row ID: 17\n\nCompany: blue ridge manufacturing\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Blue Ridge, Union County\nAddress: 87 Tom Boyd Rd, Blue Ridge, GA 30513\nLatitude: 34.8963485\nLongitude: -84.094162\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 270.0\nProduct / Service: Plastic and metal fasteners and precision strings for automotive industry\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 17"
+        },
+        {
+          "parent_record_id": "KB_ROW_0077_b853a834945a",
+          "source_row_id": 77,
+          "text": "Record ID: KB_ROW_0077_b853a834945a\nSource Row ID: 77\n\nCompany: honda development & manufacturing\nCategory: Tier 1/2\nIndustry Group: Electronic and Other Electrical Equipment and Components\nUpdated Location: Tallapoosa, Cherokee County\nAddress: 1000 Honda Dr, Tallapoosa, GA 30176\nLatitude: 34.2575874\nLongitude: -84.5070413\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Battery Cell\nPrimary OEMs: Hyundai Kia\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 400.0\nProduct / Service: Battery cells for electric mobility\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 77"
+        },
+        {
+          "parent_record_id": "KB_ROW_0037_1e1c4bb22100",
+          "source_row_id": 37,
+          "text": "Record ID: KB_ROW_0037_1e1c4bb22100\nSource Row ID: 37\n\nCompany: denso manufacturing georgia\nCategory: Tier 2/3\nIndustry Group: Stone, Clay, Glass and Concrete Products\nUpdated Location: Pendergrass, Jackson County\nAddress: 1000 Valentine Industrial Pkwy, Pendergrass, GA 30567\nLatitude: 34.1800115\nLongitude: -83.642691\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 105.0\nProduct / Service: Custom-designed shot peening and surface preparation surfaces\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 37"
+        },
+        {
+          "parent_record_id": "KB_ROW_0125_dc491619a8e5",
+          "source_row_id": 125,
+          "text": "Record ID: KB_ROW_0125_dc491619a8e5\nSource Row ID: 125\n\nCompany: nivel parts & manufacturing co. llc\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Cairo, Grady County\nAddress: 2051 2nd Ave NE, Cairo, GA 39828\nLatitude: 30.8796091793369\nLongitude: -84.184908370919\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 275.0\nProduct / Service: Industrial trailers and truck bodies\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 125"
+        },
+        {
+          "parent_record_id": "KB_ROW_0171_81f83c8a7d6f",
+          "source_row_id": 171,
+          "text": "Record ID: KB_ROW_0171_81f83c8a7d6f\nSource Row ID: 171\n\nCompany: suzuki manufacturing of america corp.\nCategory: OEM\nIndustry Group: Transportation Equipment\nUpdated Location: Rome, Douglas County\nAddress: 1000 McIntosh Trail SW, Rome, GA 30165\nLatitude: 33.771861\nLongitude: -84.730029\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Vehicle Assembly\nPrimary OEMs: Rivian Automotive\nSupplier or Affiliation Type: Original Equipment Manufacturer\nEmployment: 7500.0\nProduct / Service: Electric vehicle assembly plant\nEV / Battery Relevant: Yes\nClassification Method: Direct Manufacturer\nOriginal Row ID: 171"
+        },
+        {
+          "parent_record_id": "KB_ROW_0014_e7ce1a24a9a6",
+          "source_row_id": 14,
+          "text": "Record ID: KB_ROW_0014_e7ce1a24a9a6\nSource Row ID: 14\n\nCompany: beaver manufacturing co. inc.\nCategory: Tier 2/3\nIndustry Group: Rubber and Miscellaneous Plastic Products\nUpdated Location: Mansfield, Newton County\nAddress: 12 Ed Needham Dr, Mansfield, GA 30055\nLatitude: 33.518502\nLongitude: -83.736037\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 300.0\nProduct / Service: Plastic valves\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 14"
+        }
+      ]
+    },
+    "error": null
+  },
+  "q050": {
+    "question": "Which Georgia areas have R&D facility types in the automotive sector, suggesting innovation infrastructure suitable for EV technology development centers?",
+    "route": "keyword_search",
+    "status": "success",
+    "evidence": {
+      "type": "document_chunks",
+      "chunks": [
+        {
+          "chunk_id": "KB_ROW_0149_26e186c3a626_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0149_26e186c3a626",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0149_26e186c3a626_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0149_26e186c3a626",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0099_a6e6d7b24e3a_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0099_a6e6d7b24e3a",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0191_afbcb949ba3c_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0191_afbcb949ba3c",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0187_c30711760533_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0187_c30711760533",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0162_abb104259149_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0038_7c9dd250f85e_PRODUCT_ROLE",
+          "parent_record_id": "KB_ROW_0038_7c9dd250f85e",
+          "chunk_type": "product_role"
+        },
+        {
+          "chunk_id": "KB_ROW_0038_7c9dd250f85e_OEM_RELATIONSHIP",
+          "parent_record_id": "KB_ROW_0038_7c9dd250f85e",
+          "chunk_type": "oem_relationship"
+        },
+        {
+          "chunk_id": "KB_ROW_0038_7c9dd250f85e_CLASSIFICATION",
+          "parent_record_id": "KB_ROW_0038_7c9dd250f85e",
+          "chunk_type": "classification"
+        },
+        {
+          "chunk_id": "KB_ROW_0178_d7b29ef83570_LOCATION_EMPLOYMENT",
+          "parent_record_id": "KB_ROW_0178_d7b29ef83570",
+          "chunk_type": "location_employment"
+        }
+      ],
+      "parents": [
+        {
+          "parent_record_id": "KB_ROW_0149_26e186c3a626",
+          "source_row_id": 149,
+          "text": "Record ID: KB_ROW_0149_26e186c3a626\nSource Row ID: 149\n\nCompany: racemark international llc\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Gray, Jones County\nAddress: 152 Racemark Dr, Gray, GA 31032\nLatitude: 32.991607\nLongitude: -83.567362\nPrimary Facility Type: R&D\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Hyundai Kia Rivian\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 120.0\nProduct / Service: Manufacturing and R&D engine parts for EV\nEV / Battery Relevant: Yes\nClassification Method: Supplier\nOriginal Row ID: 149"
+        },
+        {
+          "parent_record_id": "KB_ROW_0099_a6e6d7b24e3a",
+          "source_row_id": 99,
+          "text": "Record ID: KB_ROW_0099_a6e6d7b24e3a\nSource Row ID: 99\n\nCompany: lear corporation\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Hammond Industrial Park, Troup County\nAddress: 100 Lear Dr, Hammond Industrial Park, GA 30240\nLatitude: 33.051868\nLongitude: -85.035353\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 590.0\nProduct / Service: Pressed parts in the body-in-white segment and structural components\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 99"
+        },
+        {
+          "parent_record_id": "KB_ROW_0191_afbcb949ba3c",
+          "source_row_id": 191,
+          "text": "Record ID: KB_ROW_0191_afbcb949ba3c\nSource Row ID: 191\n\nCompany: volvo cars usa\nCategory: OEM Supply Chain\nIndustry Group: Automotive plastics\nUpdated Location: Rabun County\nAddress: 1800 Volvo Place, Mahwah, NJ 07430\nLatitude: 41.0740427635951\nLongitude: -74.1712478395491\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Plastic components for EV and ICE vehicles\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 456.0\nProduct / Service: Automotive plastic parts manufacturing (interior / exterior components)\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 191"
+        },
+        {
+          "parent_record_id": "KB_ROW_0187_c30711760533",
+          "source_row_id": 187,
+          "text": "Record ID: KB_ROW_0187_c30711760533\nSource Row ID: 187\n\nCompany: vanguard national trailer corp.\nCategory: OEM Supply Chain\nIndustry Group: Automotive structural components\nUpdated Location: Trenton, Dade County\nAddress: 8 Vanguard Dr, Trenton, GA 30752\nLatitude: 34.886297855747\nLongitude: -85.496884427495\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Body and chassis components for EV and ICE OEMs\nPrimary OEMs: Unknown\nSupplier or Affiliation Type: Unknown\nEmployment: 630.0\nProduct / Service: Stamped metal components and automotive body assemblies\nEV / Battery Relevant: Yes\nClassification Method: Public OEM footprint / supplier listing\nOriginal Row ID: 187"
+        },
+        {
+          "parent_record_id": "KB_ROW_0162_abb104259149",
+          "source_row_id": 162,
+          "text": "Record ID: KB_ROW_0162_abb104259149\nSource Row ID: 162\n\nCompany: sk battery america\nCategory: Tier 1\nIndustry Group: Transportation Equipment\nUpdated Location: Ellabell, Bryan County\nAddress: 700 Hyundai Blvd, Ellabell, GA 31308\nLatitude: 32.159233\nLongitude: -81.502963\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Materials\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 75.0\nProduct / Service: Engineered steel systems mounted in motor vehicles\nEV / Battery Relevant: Indirect\nClassification Method: Supplier\nOriginal Row ID: 162"
+        },
+        {
+          "parent_record_id": "KB_ROW_0038_7c9dd250f85e",
+          "source_row_id": 38,
+          "text": "Record ID: KB_ROW_0038_7c9dd250f85e\nSource Row ID: 38\n\nCompany: die-tech industries inc.\nCategory: Tier 2/3\nIndustry Group: Stone, Clay, Glass and Concrete Products\nUpdated Location: Carrollton, Carroll County\nAddress: 102 Automation Dr, Carrollton, GA 30117\nLatitude: 33.6166214\nLongitude: -85.1044625\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: General Automotive\nPrimary OEMs: Multiple OEMs\nSupplier or Affiliation Type: Automotive supply chain participant\nEmployment: 60.0\nProduct / Service: Glass, ceramics and glass ceramic composites\nEV / Battery Relevant: No\nClassification Method: Supplier\nOriginal Row ID: 38"
+        },
+        {
+          "parent_record_id": "KB_ROW_0178_d7b29ef83570",
+          "source_row_id": 178,
+          "text": "Record ID: KB_ROW_0178_d7b29ef83570\nSource Row ID: 178\n\nCompany: thomson plastics inc.\nCategory: OEM\nIndustry Group: Transportation Equipment\nUpdated Location: Monroe, Walton County\nAddress: 1440 H D Atha Rd, Monroe, GA 30656\nLatitude: 33.774282\nLongitude: -83.7755851\nPrimary Facility Type: Manufacturing Plant\nEV Supply Chain Role: Vehicle Assembly\nPrimary OEMs: Archer Aviation Inc.\nSupplier or Affiliation Type: Original Equipment Manufacturer\nEmployment: 1000.0\nProduct / Service: Electric vertical takeoff and landing (eVTOL) aircraft manufacturing\nEV / Battery Relevant: Yes\nClassification Method: Direct Manufacturer\nOriginal Row ID: 178"
+        }
+      ]
+    },
+    "error": null
+  }
+}

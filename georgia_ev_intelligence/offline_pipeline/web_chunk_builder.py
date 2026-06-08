@@ -32,6 +32,7 @@ def build_parent_record_from_raw_doc(doc: dict) -> ParentRecord:
         source_type=source_type,
         company=doc.get("linked_company_id") or "",
         category="",
+        state="",
         industry_group="",
         updated_location="",
         address="",

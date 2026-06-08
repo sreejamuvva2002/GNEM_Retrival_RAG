@@ -40,6 +40,7 @@ def _norm_column(name: str) -> str:
 class KBColumns:
     COMPANY = _norm_column("Company")
     CATEGORY = _norm_column("Category")
+    STATE = _norm_column("State")
     INDUSTRY_GROUP = _norm_column("Industry Group")
     LOCATION = _norm_column("Location")
     UPDATED_LOCATION = _norm_column("Updated Location")

@@ -1,0 +1,21 @@
+{
+  "question": "hello json smoke",
+  "route": "no_retrieval",
+  "confidence": 1.0,
+  "operation": "direct_response",
+  "entities": [],
+  "raw_filters": [],
+  "resolved_filters": {},
+  "requested_columns": [],
+  "group_by": [],
+  "sort_by": [],
+  "limit": null,
+  "query_focus": null,
+  "needs_kb_access": false,
+  "needs_document_retrieval": false,
+  "missing_fields": [],
+  "validation_status": "valid",
+  "route_source": "llm_router_validated",
+  "clarification": null,
+  "reason": "The input is not a valid query."
+}

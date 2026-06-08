@@ -18,6 +18,7 @@ class ParentRecord:
     # Structured filtering columns
     company: str
     category: str
+    state: str
     industry_group: str
     updated_location: str
     address: str
@@ -44,6 +45,7 @@ class ParentRecord:
             "source_type": self.source_type,
             "company": self.company,
             "category": self.category,
+            "state": self.state,
             "industry_group": self.industry_group,
             "updated_location": self.updated_location,
             "address": self.address,
@@ -89,6 +91,7 @@ def build_parent_record(row: pd.Series) -> ParentRecord:
         source_type="excel",
         company=str(row.get(KBColumns.COMPANY, "Unknown")),
         category=str(row.get(KBColumns.CATEGORY, "Unknown")),
+        state=str(row.get(KBColumns.STATE, "Unknown")),
         industry_group=str(row.get(KBColumns.INDUSTRY_GROUP, "Unknown")),
         updated_location=str(row.get(KBColumns.UPDATED_LOCATION, "Unknown")),
         address=str(row.get(KBColumns.ADDRESS, "Unknown")),
@@ -120,6 +123,7 @@ def build_parent_chunk_text(record_id: str, source_row_id: int, row: pd.Series) 
         "",
         f"Company: {val(KBColumns.COMPANY)}",
         f"Category: {val(KBColumns.CATEGORY)}",
+        f"State: {val(KBColumns.STATE)}",
         f"Industry Group: {val(KBColumns.INDUSTRY_GROUP)}",
         f"Updated Location: {val(KBColumns.UPDATED_LOCATION)}",
         f"Address: {val(KBColumns.ADDRESS)}",
