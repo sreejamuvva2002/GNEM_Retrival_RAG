@@ -1,7 +1,10 @@
 """Unit tests for structured_sql query construction (build-only, no database)."""
 from __future__ import annotations
 
-from georgia_ev_intelligence.route_execution.executors.structured_sql import build_query
+from georgia_ev_intelligence.route_execution.executors.structured_sql import (
+    build_query,
+    format_sql_for_display,
+)
 
 
 def test_list_records_default_limit_and_company_column():
@@ -124,3 +127,18 @@ def test_sort_by_rejects_unknown_column():
 
     with pytest.raises(UnknownColumnError):
         build_query({"operation": "list_records", "sort_by": ["ssn DESC"]})
+
+
+def test_format_sql_for_display_renders_bound_values():
+    sql = "SELECT * FROM parent_chunks WHERE state = %s AND category = ANY(%s);"
+    rendered = format_sql_for_display(sql, ["Georgia", ["Tier 1", "Tier 2"]])
+
+    assert rendered == (
+        "SELECT * FROM parent_chunks WHERE state = 'Georgia' "
+        "AND category = ANY(ARRAY['Tier 1', 'Tier 2']);"
+    )
+
+
+def test_format_sql_for_display_escapes_quotes():
+    rendered = format_sql_for_display("SELECT * FROM t WHERE company = %s;", ["O'Reilly"])
+    assert rendered == "SELECT * FROM t WHERE company = 'O''Reilly';"
