@@ -14,6 +14,7 @@ from typing import Any
 
 from ..db import get_connection
 from ..schemas import STATUS_FAILED, STATUS_SUCCESS, ExecutionResult
+from .structured_sql import format_sql_for_display
 
 logger = logging.getLogger(__name__)
 
@@ -155,6 +156,19 @@ def _format_nearby(center_label: str, radius: float, rows: list[dict[str, Any]])
     return "\n".join(lines)
 
 
+def _nearby_sql_command(
+    label: str,
+    sql: str,
+    params: dict[str, Any],
+) -> dict[str, Any]:
+    return {
+        "label": label,
+        "sql": sql,
+        "sql_params": params,
+        "sql_display": format_sql_for_display(sql, params),
+    }
+
+
 def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
     radius = _extract_radius(final_route)
     limit = _resolve_limit(final_route)
@@ -164,6 +178,7 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
     for name in entities:
         if _company_has_geo(name):
             rows = nearby_by_company(name, radius, limit)
+            params = {"name": name, "radius_m": radius * _METERS_PER_MILE}
             return ExecutionResult(
                 route="geo_search",
                 status=STATUS_SUCCESS,
@@ -173,6 +188,13 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
                     "center": {"kind": "company", "name": name},
                     "radius_miles": radius,
                     "rows": rows,
+                    "sql_commands": [
+                        _nearby_sql_command(
+                            "nearby_by_company",
+                            _NEARBY_BY_COMPANY_SQL,
+                            params,
+                        )
+                    ],
                 },
             )
 
@@ -181,6 +203,7 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
         county = name.replace("County", "").strip()
         if _county_exists(county):
             rows = nearby_by_county(county, radius, limit)
+            params = {"name": county, "radius_m": radius * _METERS_PER_MILE}
             return ExecutionResult(
                 route="geo_search",
                 status=STATUS_SUCCESS,
@@ -190,6 +213,13 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
                     "center": {"kind": "county", "name": county},
                     "radius_miles": radius,
                     "rows": rows,
+                    "sql_commands": [
+                        _nearby_sql_command(
+                            "nearby_by_county",
+                            _NEARBY_BY_COUNTY_SQL,
+                            params,
+                        )
+                    ],
                 },
             )
 

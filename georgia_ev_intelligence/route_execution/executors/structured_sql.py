@@ -9,6 +9,9 @@ it can be unit-tested without a database.
 from __future__ import annotations
 
 import logging
+import re
+from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from .. import answer_formatter as fmt
@@ -26,6 +29,64 @@ MAX_LIMIT = 1000
 # Operations that count rather than list.
 _COUNT_OPS = {"count_records"}
 _GROUP_OPS = {"group_records", "aggregate_records"}
+
+_NAMED_PLACEHOLDER = re.compile(r"%\(([^)]+)\)s")
+
+
+def format_sql_for_display(sql: str, params: list[Any] | tuple[Any, ...] | dict[str, Any]) -> str:
+    """Render a parameterized SQL query with readable literals for audit exports.
+
+    This string is only for logs/XLSX inspection. Execution still uses the
+    original parameterized SQL with bound values.
+    """
+    if not params:
+        return sql
+
+    if isinstance(params, dict):
+        return _NAMED_PLACEHOLDER.sub(
+            lambda match: _sql_literal(params.get(match.group(1))),
+            sql,
+        )
+
+    pieces = sql.split("%s")
+    if len(pieces) == 1:
+        return sql
+
+    rendered = [pieces[0]]
+    for index, value in enumerate(params):
+        rendered.append(_sql_literal(value))
+        if index + 1 < len(pieces):
+            rendered.append(pieces[index + 1])
+    if len(pieces) > len(params) + 1:
+        rendered.extend(pieces[len(params) + 1:])
+    return "".join(rendered)
+
+
+def _sql_literal(value: Any) -> str:
+    if value is None:
+        return "NULL"
+    if isinstance(value, bool):
+        return "TRUE" if value else "FALSE"
+    if isinstance(value, (int, float, Decimal)):
+        return str(value)
+    if isinstance(value, (date, datetime)):
+        return _quote(value.isoformat())
+    if isinstance(value, (list, tuple, set)):
+        return "ARRAY[" + ", ".join(_sql_literal(item) for item in value) + "]"
+    return _quote(str(value))
+
+
+def _quote(value: str) -> str:
+    return "'" + value.replace("'", "''") + "'"
+
+
+def _sql_evidence(sql: str, params: list[Any]) -> dict[str, Any]:
+    return {
+        "sql": sql,
+        "sql_params": params,
+        "sql_display": format_sql_for_display(sql, params),
+    }
+
 
 def _validated_columns(columns: list[str]) -> list[str]:
     return [ensure_allowed(c) for c in columns]
@@ -121,35 +182,44 @@ def execute_structured_sql(final_route: dict[str, Any]) -> ExecutionResult:
             route="structured_sql",
             status=STATUS_SUCCESS,
             answer=fmt.format_count(count),
-            evidence={"type": "count", "count": count, "sql": sql},
+            evidence={"type": "count", "count": count, **_sql_evidence(sql, params)},
         )
 
     if mode == "group":
         if not records:
-            return _hybrid_fallback(final_route, sql)
+            return _hybrid_fallback(final_route, sql, params)
         group_by = [c for c in columns if c != "count"]
         return ExecutionResult(
             route="structured_sql",
             status=STATUS_SUCCESS,
             answer=fmt.format_group_counts(records, group_by),
-            evidence={"type": "group_counts", "groups": records, "sql": sql},
+            evidence={"type": "group_counts", "groups": records, **_sql_evidence(sql, params)},
         )
 
     if not records:
         # Structured filtering matched nothing — often the router put the value on
         # the wrong column or added noise words. Fall back to hybrid retrieval
         # (BM25 + dense) on the question so the answer still has real evidence.
-        return _hybrid_fallback(final_route, sql)
+        return _hybrid_fallback(final_route, sql, params)
 
     return ExecutionResult(
         route="structured_sql",
         status=STATUS_SUCCESS,
         answer=fmt.format_structured_rows(records, columns),
-        evidence={"type": "structured_rows", "rows": records, "columns": columns, "sql": sql},
+        evidence={
+            "type": "structured_rows",
+            "rows": records,
+            "columns": columns,
+            **_sql_evidence(sql, params),
+        },
     )
 
 
-def _hybrid_fallback(final_route: dict[str, Any], structured_sql: str) -> ExecutionResult:
+def _hybrid_fallback(
+    final_route: dict[str, Any],
+    structured_sql: str,
+    structured_params: list[Any],
+) -> ExecutionResult:
     """Run BM25 + dense retrieval when structured filtering returned no rows.
 
     The result is tagged as a fallback (and keeps the originating ``structured_sql``)
@@ -167,11 +237,16 @@ def _hybrid_fallback(final_route: dict[str, Any], structured_sql: str) -> Execut
             status=STATUS_SUCCESS,
             answer="Found 0 matching records.",
             evidence={"type": "structured_rows", "rows": [], "columns": ["company"],
-                      "sql": structured_sql},
+                      **_sql_evidence(structured_sql, structured_params)},
         )
 
     result.route = "structured_sql"
     if isinstance(result.evidence, dict):
         result.evidence["fallback"] = "hybrid_search"
         result.evidence["structured_sql"] = structured_sql
+        result.evidence["structured_sql_params"] = structured_params
+        result.evidence["structured_sql_display"] = format_sql_for_display(
+            structured_sql,
+            structured_params,
+        )
     return result
