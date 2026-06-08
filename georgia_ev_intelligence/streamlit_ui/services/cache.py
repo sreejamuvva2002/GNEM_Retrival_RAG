@@ -129,7 +129,9 @@ def get_county_geojson() -> dict:
         return json.load(fh)
 
 
-def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
+def dispatch_query_cached(
+    query: str, history: tuple[tuple[str, str], ...] | None = None, _on_step=None
+) -> DispatchResult:
     """Run dispatch for one query, emitting live step events via `_on_step`.
 
     NOT cached: `_on_step` writes to a Streamlit layout block (the loading-card
@@ -141,7 +143,8 @@ def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
     calls this exactly once per question, so nothing is recomputed on rerun.
     """
     dispatcher = get_query_dispatcher()
-    return dispatcher.dispatch(query, on_step=_on_step)
+    history_list = list(history) if history else None
+    return dispatcher.dispatch(query, history=history_list, on_step=_on_step)
 
 
 #: Markers shown on the baseline (no-query) map. Kept small so the first map

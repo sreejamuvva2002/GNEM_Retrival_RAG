@@ -42,11 +42,11 @@ class RouteService:
         self._validator = validator or RouteValidator(provider)
         self._pre_router_high_confidence = pre_router_high_confidence
 
-    def route(self, question: str) -> FinalRoute:
+    def route(self, question: str, history: list[tuple[str, str]] | None = None) -> FinalRoute:
         """Return only the validated route contract."""
-        return self.route_with_trace(question).final_route
+        return self.route_with_trace(question, history=history).final_route
 
-    def route_with_trace(self, question: str) -> RouteTrace:
+    def route_with_trace(self, question: str, history: list[tuple[str, str]] | None = None) -> RouteTrace:
         """Return the validated route and every intermediate routing finding."""
         normalized = normalize_question(question)
         pre_route = self._pre_router.route(normalized)
@@ -61,6 +61,7 @@ class RouteService:
                 raw_route = self._get_llm_router().route(
                     normalized["normalized"],
                     self._provider.get_allowed_fields(),
+                    history=history,
                 )
                 selected_router = "llm_router"
                 route_source = "llm_router_validated"

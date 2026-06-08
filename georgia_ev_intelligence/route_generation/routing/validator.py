@@ -465,6 +465,9 @@ class RouteValidator:
             else:
                 items = [text]
         items = [i for i in items if i and i.lower() not in _EMPTY_VALUES]
+        # Strip leading and trailing quotes that the LLM may have left behind
+        items = [i.strip("'\"").strip() for i in items]
+        items = [i for i in items if i]
         return [normalize_for_field(field, i) for i in items]
 
     # -- numeric employment -------------------------------------------------

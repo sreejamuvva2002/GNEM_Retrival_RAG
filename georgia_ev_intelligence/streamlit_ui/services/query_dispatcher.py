@@ -16,9 +16,9 @@ class QueryDispatcher:
         self._map_service = map_service
 
     def dispatch(
-        self, query: str, on_step: Optional[Callable[[str], None]] = None
+        self, query: str, history: list[tuple[str, str]] | None = None, on_step: Optional[Callable[[str], None]] = None
     ) -> DispatchResult:
         query = (query or "").strip()
-        chat = self._chat_service.answer(query, on_step=on_step)
+        chat = self._chat_service.answer(query, history=history, on_step=on_step)
         map_result = self._map_service.locate(query)
         return DispatchResult(query=query, chat=chat, map=map_result)

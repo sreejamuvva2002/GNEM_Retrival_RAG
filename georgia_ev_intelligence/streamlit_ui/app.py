@@ -88,8 +88,9 @@ def _run_pending_query(query: str, placeholder) -> None:
         # The current step is "active"; every earlier step is complete.
         loading_card.render_step(placeholder, active_index=idx, completed_count=idx)
 
+    history_tuples = tuple((m.role, m.content) for m in chat_state.messages()[:-1])
     try:
-        dispatch = dispatch_query_cached(query, _on_step=_on_step)
+        dispatch = dispatch_query_cached(query, history=history_tuples, _on_step=_on_step)
     except Exception as exc:
         placeholder.empty()
         ui_state.clear_pending_query()

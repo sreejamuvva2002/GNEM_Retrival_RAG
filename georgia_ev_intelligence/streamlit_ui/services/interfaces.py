@@ -41,7 +41,7 @@ class DispatchResult:
 
 class IChatService(Protocol):
     def answer(
-        self, query: str, on_step: Optional[Callable[[str], None]] = None
+        self, query: str, history: list[tuple[str, str]] | None = None, on_step: Optional[Callable[[str], None]] = None
     ) -> ChatResult: ...
 
 

@@ -46,7 +46,7 @@ class RouteChatService(IChatService):
             self._route_service = self._route_service_factory()
         return self._route_service
 
-    def answer(self, query: str, on_step: Callable[[str], None] | None = None) -> ChatResult:
+    def answer(self, query: str, history: list[tuple[str, str]] | None = None, on_step: Callable[[str], None] | None = None) -> ChatResult:
         def _step(name: str) -> None:
             if on_step is not None:
                 try:
@@ -61,7 +61,7 @@ class RouteChatService(IChatService):
         # 1. Route: normalize -> pre/LLM router -> validator -> FinalRoute.
         try:
             _step("retrieval")
-            final_route = self._route_service_lazy().route(query)
+            final_route = self._route_service_lazy().route(query, history=history)
             route_dict = final_route.model_dump(mode="json")
             _step("rerank")
         except Exception as exc:

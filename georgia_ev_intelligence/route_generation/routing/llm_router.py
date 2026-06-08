@@ -67,10 +67,10 @@ class LLMRouter:
             return None
 
     # -- public API ---------------------------------------------------------
-    def route(self, question: str, allowed_fields=None) -> RawRoute:
+    def route(self, question: str, allowed_fields=None, history: list[tuple[str, str]] | None = None) -> RawRoute:
         messages = [
             ("system", SYSTEM_PROMPT),
-            ("human", build_user_prompt(question, allowed_fields)),
+            ("human", build_user_prompt(question, allowed_fields, history)),
         ]
         return self._invoke(messages)
 

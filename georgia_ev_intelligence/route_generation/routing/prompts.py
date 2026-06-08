@@ -128,8 +128,16 @@ def _fields_line(allowed_fields) -> str:
     return ", ".join(allowed_fields) if allowed_fields else "(none provided)"
 
 
-def build_user_prompt(question: str, allowed_fields=None) -> str:
+def build_user_prompt(question: str, allowed_fields=None, history: list[tuple[str, str]] | None = None) -> str:
+    history_text = ""
+    if history:
+        history_text = "Conversation History:\n"
+        for role, content in history:
+            history_text += f"[{role.capitalize()}]: {content}\n"
+        history_text += "\n"
+
     return (
+        f"{history_text}"
         f"User question:\n{question}\n\n"
         f"Optional field hints for raw_filters.field_hint (map intent to these "
         f"where relevant, otherwise use your own short hint): {_fields_line(allowed_fields)}\n\n"

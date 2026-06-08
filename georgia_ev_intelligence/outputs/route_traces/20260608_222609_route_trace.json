@@ -1,0 +1,66 @@
+{
+  "question": "Which Georgia companies are classified under Battery Cell or Battery Pack roles, and what tier is each assigned?",
+  "route": "structured_sql",
+  "confidence": 0.9,
+  "operation": "list_records",
+  "entities": [
+    "Georgia",
+    "Battery Cell",
+    "Battery Pack"
+  ],
+  "raw_filters": [
+    {
+      "field_hint": "state",
+      "raw_value": "'Georgia'",
+      "source_text": null,
+      "source": "llm"
+    },
+    {
+      "field_hint": "ev_supply_chain_role",
+      "raw_value": "'Battery Cell' OR 'Battery Pack'",
+      "source_text": null,
+      "source": "llm"
+    },
+    {
+      "field_hint": "category",
+      "raw_value": "null",
+      "source_text": null,
+      "source": "llm"
+    }
+  ],
+  "resolved_filters": {
+    "state": {
+      "operator": "CONTAINS",
+      "value": "'Georgia'"
+    },
+    "ev_supply_chain_role": {
+      "operator": "OR_CONTAINS",
+      "value": [
+        "'Battery Cell'",
+        "'Battery Pack'"
+      ]
+    }
+  },
+  "search_filters": [],
+  "requested_columns": [
+    "category"
+  ],
+  "group_by": [],
+  "sort_by": [],
+  "limit": null,
+  "query_focus": "company classification",
+  "needs_kb_access": true,
+  "needs_document_retrieval": false,
+  "retrieval_sources": [
+    "structured_db"
+  ],
+  "missing_fields": [],
+  "validation_actions": [
+    "changed route exact_lookup -> structured_sql (numeric-comparison/superlative wording)",
+    "moved 'null' from category to ev_supply_chain_role (wording)"
+  ],
+  "validation_status": "valid",
+  "route_source": "validator_corrected",
+  "clarification": null,
+  "reason": "Asking for companies in a specific state and supply chain role, with a focus on company classification."
+}
