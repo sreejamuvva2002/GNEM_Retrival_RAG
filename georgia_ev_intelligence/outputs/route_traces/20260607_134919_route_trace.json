@@ -1,0 +1,46 @@
+{
+  "question": "Show all \"Tier 1/2\" suppliers in Georgia, list their EV Supply Chain Role and Product / Service.",
+  "route": "structured_sql",
+  "confidence": 0.9,
+  "operation": "list_records",
+  "entities": [
+    "suppliers"
+  ],
+  "raw_filters": [
+    {
+      "field_hint": "updated_location",
+      "raw_value": "Georgia",
+      "source": "llm"
+    },
+    {
+      "field_hint": "category",
+      "raw_value": "Tier 1/2",
+      "source": "validator_quoted_value_repair"
+    }
+  ],
+  "resolved_filters": {
+    "updated_location": {
+      "operator": "CONTAINS",
+      "value": "Georgia"
+    },
+    "category": {
+      "operator": "EQUALS",
+      "value": "Tier 1/2"
+    }
+  },
+  "requested_columns": [
+    "ev_supply_chain_role",
+    "product_service"
+  ],
+  "group_by": [],
+  "sort_by": [],
+  "limit": null,
+  "query_focus": "EV Supply Chain Role and Product / Service of suppliers in Georgia",
+  "needs_kb_access": true,
+  "needs_document_retrieval": false,
+  "missing_fields": [],
+  "validation_status": "valid",
+  "route_source": "validator_corrected",
+  "clarification": null,
+  "reason": "User requested specific information about suppliers with exact filters."
+}

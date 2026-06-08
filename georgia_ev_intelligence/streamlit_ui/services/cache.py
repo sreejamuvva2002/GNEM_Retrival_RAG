@@ -13,8 +13,8 @@ from typing import Any, Dict
 import pandas as pd
 import streamlit as st
 
-from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.factory import (
-    build_default_pipeline,
+from georgia_ev_intelligence.route_generation.route_service import (
+    build_default_route_service,
 )
 
 from ..bootstrap.build_companies_db import (
@@ -25,15 +25,16 @@ from ..bootstrap.build_companies_db import (
 )
 from ..spatial.query_planner import QueryPlanner
 from ..spatial.spatial_engine import SpatialEngine
-from .chat_service import ChatService
-from .interfaces import DispatchResult
+from .interfaces import DispatchResult, IChatService
 from .map_service import MapService
 from .query_dispatcher import QueryDispatcher
+from .route_chat_service import RouteChatService
 
 
-@st.cache_resource(show_spinner="Loading hybrid retrieval pipeline...")
-def get_chat_service() -> ChatService:
-    return ChatService(retrieval_pipeline_factory=build_default_pipeline)
+@st.cache_resource(show_spinner="Loading routing pipeline...")
+def get_chat_service() -> IChatService:
+    """Route-aware chat: router + validator + safe per-route executor (+ Ollama)."""
+    return RouteChatService(route_service_factory=build_default_route_service, use_llm=True)
 
 
 @st.cache_resource(show_spinner="Loading spatial engine...")
@@ -161,3 +162,31 @@ def baseline_map_payload() -> tuple:
 @lru_cache(maxsize=1)
 def project_data_dir() -> Path:
     return DEFAULT_GEOJSON_PATH.parent
+
+
+#: The human-validated question set, used to offer quick-pick prompts in the UI.
+_QUESTIONS_CSV = Path(__file__).resolve().parents[3] / "data" / "questions_50.csv"
+
+
+@st.cache_data(show_spinner=False)
+def get_example_questions() -> list[tuple[str, str]]:
+    """Return ``[(question_id, question), ...]`` from ``data/questions_50.csv``.
+
+    Empty list when the file is absent so the empty state degrades gracefully.
+    """
+    if not _QUESTIONS_CSV.exists():
+        return []
+    df = pd.read_csv(_QUESTIONS_CSV)
+    cols = {c.lower(): c for c in df.columns}
+    qid_col = cols.get("question_id")
+    q_col = cols.get("question")
+    if q_col is None:
+        return []
+    out: list[tuple[str, str]] = []
+    for _, row in df.iterrows():
+        question = str(row[q_col]).strip()
+        if not question or question.lower() == "nan":
+            continue
+        qid = str(row[qid_col]).strip() if qid_col else f"q{len(out) + 1:03d}"
+        out.append((qid, question))
+    return out

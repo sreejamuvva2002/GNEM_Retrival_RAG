@@ -1,12 +1,16 @@
-"""Empty state — "Start a conversation", matching chat-interface-with-map.
+"""Empty state — "Start a conversation" plus quick-pick validated questions.
 
-The React app shows only a centered icon tile + heading + subtitle (no
-suggested-question cards), so this mirrors that exactly. `on_pick` is accepted
-for call-site compatibility but unused.
+The centered hero mirrors chat-interface-with-map. Below it we offer the
+human-validated question set (``data/questions_50.csv``) as quick prompts: a few
+one-click buttons and an expander with the full list. ``on_pick(question)`` is
+invoked when the user selects one (wired to the chat submit handler), while
+free-text questions still go through the chat input box.
 """
 from __future__ import annotations
 
 import streamlit as st
+
+_QUICK_PICK_COUNT = 6
 
 
 def render(on_pick=None) -> None:
@@ -26,3 +30,31 @@ def render(on_pick=None) -> None:
         """,
         unsafe_allow_html=True,
     )
+
+    if on_pick is None:
+        return
+
+    # Lazy import keeps the heavy services module out of the import path until the
+    # empty state actually renders.
+    from ..services.cache import get_example_questions
+
+    questions = get_example_questions()
+    if not questions:
+        return
+
+    st.markdown(
+        "<div class='empty-subtitle' style='margin-top:0.5rem'>"
+        "Or try one of the 50 human-validated questions:</div>",
+        unsafe_allow_html=True,
+    )
+
+    for qid, question in questions[:_QUICK_PICK_COUNT]:
+        if st.button(question, key=f"ex_btn_{qid}", use_container_width=True):
+            on_pick(question)
+
+    if len(questions) > _QUICK_PICK_COUNT:
+        with st.expander(f"Browse all {len(questions)} validated questions"):
+            labels = [f"{qid} — {question}" for qid, question in questions]
+            choice = st.selectbox("Pick a question", labels, key="ex_select")
+            if st.button("Ask this question", key="ex_select_run"):
+                on_pick(questions[labels.index(choice)][1])

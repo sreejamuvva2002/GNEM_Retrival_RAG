@@ -1,0 +1,24 @@
+---
+{"title": "Georgia Port", "entity_type": "company", "last_updated": "2026-06-07T12:18:16.399549", "sources": ["sha256:d77d6197baeb3be79ad638a55368da79b8361991889693d8a1c534ba6323bbf4", "sha256:98e4e571135d4325b7f459eafac9e03c7ddaa89874378f1edf9c861d3a682d0a", "sha256:1139ff14c9d5effe08365d1e7269cbd228426a79f658d5a6cd087181a0deb726", "sha256:68736c681c8122dae88c6845b1cc0a60bb6627338506fa7cf974e93ad74a0bd6", "sha256:f1d4822c85b8836cfdee7e372d3f0882ea738d0b088426dbbb405d6966b43e7a", "sha256:9c6e4adb38d526c4782c4f62b9d680024f125e93dfbe0317581ea300bc214f5c", "sha256:c31e9303cec7037ef989f81277b8625220b26c49ced52b5de6a810c527ae2d78"], "related_entities": ["Technical College System of Georgia's Quick Start Office", "Business Facilities", "Georgia Department of Economic Development", "Duckyang", "Centergy building", "Georgia Tech's Enterprise Innovation Institute", "University System of Georgia", "Port of Savannah", "Hartsfield-Jackson Atlanta International Airport", "Advanced Technology Development Center (ATDC)", "Delta", "UCB Inc.", "Georgia", "Select Georgia"], "fact_sources": {"Fastest Growing Port in the nation": ["sha256:d77d6197baeb3be79ad638a55368da79b8361991889693d8a1c534ba6323bbf4"], "Has direct connections to people, suppliers and customers through extensive rail system": ["sha256:d77d6197baeb3be79ad638a55368da79b8361991889693d8a1c534ba6323bbf4"], "Has been at the forefront of economic development for nearly a century.": ["sha256:f1d4822c85b8836cfdee7e372d3f0882ea738d0b088426dbbb405d6966b43e7a"], "Provides comprehensive guidance and hands-on support to companies through site selection services.": ["sha256:f1d4822c85b8836cfdee7e372d3f0882ea738d0b088426dbbb405d6966b43e7a"], "Works on regional economic development in Georgia.": ["sha256:68736c681c8122dae88c6845b1cc0a60bb6627338506fa7cf974e93ad74a0bd6"], "Provides services for existing industry expansions.": ["sha256:68736c681c8122dae88c6845b1cc0a60bb6627338506fa7cf974e93ad74a0bd6"], "The Georgia Experience Center is home base for Georgia Power\u2019s Economic Development team.": ["sha256:1139ff14c9d5effe08365d1e7269cbd228426a79f658d5a6cd087181a0deb726"], "The center provides services including statewide economic development, regional economic development, and strategic solutions.": ["sha256:1139ff14c9d5effe08365d1e7269cbd228426a79f658d5a6cd087181a0deb726"], "Helped companies relocate or expand in Georgia, delivering more than 3,200 jobs and $3 billion in capital investment in Q1 2026.": ["sha256:98e4e571135d4325b7f459eafac9e03c7ddaa89874378f1edf9c861d3a682d0a"], "Was named a Top Utility in Economic Development by Business Facilities magazine for the fifth consecutive year.": ["sha256:98e4e571135d4325b7f459eafac9e03c7ddaa89874378f1edf9c861d3a682d0a"], "Assisted in the expansion of 72 companies in Georgia, contributing to the creation of 12,312 jobs and $3.4B in investments.": ["sha256:c31e9303cec7037ef989f81277b8625220b26c49ced52b5de6a810c527ae2d78"], "Ranked as a Top Utility for Economic Development for 27 years.": ["sha256:c31e9303cec7037ef989f81277b8625220b26c49ced52b5de6a810c527ae2d78"], "Works with state, regional and local partners to help businesses and communities thrive.": ["sha256:9c6e4adb38d526c4782c4f62b9d680024f125e93dfbe0317581ea300bc214f5c"], "Has an experienced team of regional economic development managers": ["sha256:9c6e4adb38d526c4782c4f62b9d680024f125e93dfbe0317581ea300bc214f5c"]}}
+---
+
+# Georgia Port
+
+## Overview
+
+## Key Facts
+
+- Works with state, regional and local partners to help businesses and communities thrive.
+- Has an experienced team of regional economic development managers
+- Assisted in the expansion of 72 companies in Georgia, contributing to the creation of 12,312 jobs and $3.4B in investments.
+- Ranked as a Top Utility for Economic Development for 27 years.
+- Helped companies relocate or expand in Georgia, delivering more than 3,200 jobs and $3 billion in capital investment in Q1 2026.
+- Was named a Top Utility in Economic Development by Business Facilities magazine for the fifth consecutive year.
+- The Georgia Experience Center is home base for Georgia Power’s Economic Development team.
+- The center provides services including statewide economic development, regional economic development, and strategic solutions.
+- Works on regional economic development in Georgia.
+- Provides services for existing industry expansions.
+- Has been at the forefront of economic development for nearly a century.
+- Provides comprehensive guidance and hands-on support to companies through site selection services.
+- Fastest Growing Port in the nation
+- Has direct connections to people, suppliers and customers through extensive rail system
