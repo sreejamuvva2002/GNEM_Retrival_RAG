@@ -3,12 +3,13 @@
 Design stance (README §25-27): validate *structure and executability* only — the
 validator is fully **KB-free**. It never reads KB data values: no canonicalization,
 no fuzzy matching, no metadata candidate lists, and no quoted-value field repair.
-Every filter value is preserved *verbatim* (text-normalized only) behind a safe
-substring operator (``CONTAINS`` / ``OR_CONTAINS``); repeated filters merge into OR
-groups; numeric employment thresholds and ranking come from the question text;
-output columns are separated from filters; and a value the LLM dropped on the
-wrong field is rescued by question wording (not KB). Clarification is reserved for
-genuinely missing information.
+Every filter value is preserved *verbatim* (text-normalized only); category/tier
+values use exact matching while free-text values use safe substring matching.
+Repeated filters merge into OR groups; numeric employment thresholds, grouped
+employment aggregation, and ranking come from the question text; output columns
+are separated from filters; and a value the LLM dropped on the wrong field is
+rescued by question wording (not KB). Clarification is reserved for genuinely
+missing information.
 
 Sequence:
 
@@ -16,7 +17,8 @@ Sequence:
 2. Deterministic route correction by question signals (incl. multi-entity and
    numeric-comparison overrides so multi-company questions never stay exact_lookup).
 3. Build resolved filters: map hints -> columns, OR-merge repeats, preserve every
-   value as CONTAINS/OR_CONTAINS, cross-field rescue (wording), numeric employment.
+   value with exact category matching or free-text substring matching, cross-field
+   rescue (wording), numeric employment.
    A classification value on the wrong field is reverse-rescued onto ``category``;
    a value with an unmappable hint becomes a ``SearchFilter`` (candidate columns by
    name, never KB values) instead of being silently dropped.
@@ -76,6 +78,8 @@ _CORRECTABLE = {
     RouteName.no_retrieval,
     RouteName.out_of_domain,
 }
+_GEO_CORRECTABLE = {*_CORRECTABLE, RouteName.structured_sql}
+_STRUCTURED_CORRECTABLE = {*_CORRECTABLE, RouteName.geo_search}
 # Routes that may be upgraded to hybrid_search when structured filters are paired
 # with web/document-evidence wording (keyword/vector keep their own distinction).
 _HYBRID_UPGRADABLE = {
@@ -85,13 +89,25 @@ _HYBRID_UPGRADABLE = {
     RouteName.exact_lookup,
 }
 _COORD_RE = re.compile(r"-?\d{1,2}\.\d+\s*,\s*-?\d{1,3}\.\d+")
+_PROXIMITY_PLACE_RE = re.compile(
+    r"(?:\bnear\b|\baround\b|\bclosest\s+to\b|"
+    r"\bwithin\s+\d+(?:\.\d+)?\s*(?:km|kilometers?|miles?|mi)\s+of\b)"
+    r"\s+[a-z][a-z .'-]+(?:[?.!,]|$)",
+    re.IGNORECASE,
+)
 _GEO_ANCHOR_WORDS = {"near", "nearby", "closest", "county", "counties", "around", "in"}
+_MAP_OR_SPATIAL_SIGNALS = {"map", "geospatial", "spatial", "county", "counties", "coordinates"}
 # The exact-classification field the LLM most often over-assigns; the only field
 # eligible for cross-field rescue.
 _RESCUE_SOURCE_FIELD = "category"
 # Values that carry no filtering information.
 _EMPTY_VALUES = {"", "unknown", "none", "n/a", "na", "null"}
 _OR_SPLIT_RE = re.compile(r"\bor\b", re.IGNORECASE)
+_GENERIC_ROLE_VALUES = {"supplier", "suppliers"}
+_TOTAL_EMPLOYMENT_RE = re.compile(
+    r"\b(total|sum)\b.{0,50}\bemploy\w*|\bemploy\w*.{0,50}\b(total|sum)\b",
+    re.IGNORECASE,
+)
 
 _MISSING_QUESTION = {
     "query_focus": "What topic should I focus on for the search?",
@@ -145,6 +161,7 @@ class RouteValidator:
         parsed_sort, parsed_limit = parse_ranking(lower)
         sort_by = parsed_sort or list(raw_route.sort_by)
         limit = parsed_limit if parsed_limit is not None else raw_route.limit
+        group_by = self._group_by(raw_route.group_by, lower, actions)
 
         # Hybrid upgrade: structured filters AND web/document-evidence wording ->
         # hybrid_search (structured DB + document chunks), never plain vector_search.
@@ -162,6 +179,15 @@ class RouteValidator:
             source = "validator_corrected"
 
         operation = normalize_operation(raw_route.operation, route.value)
+        if (
+            route is RouteName.structured_sql
+            and _TOTAL_EMPLOYMENT_RE.search(lower)
+            and group_by
+            and operation != Operation.aggregate_records.value
+        ):
+            operation = Operation.aggregate_records.value
+            actions.append("changed operation to aggregate_records (total employment by group)")
+            source = "validator_corrected"
         query_focus = raw_route.query_focus
 
         # relaxed required-field check
@@ -198,7 +224,7 @@ class RouteValidator:
             resolved_filters=resolved_filters,
             search_filters=search_filters,
             requested_columns=requested_columns,
-            group_by=raw_route.group_by,
+            group_by=group_by,
             sort_by=sort_by,
             limit=limit,
             query_focus=query_focus,
@@ -227,26 +253,24 @@ class RouteValidator:
         """Return ``(corrected_route, reason)``; reason is "" when unchanged."""
         if matches_any(lower, DISRUPTION_SIGNALS) and route is not RouteName.disruption_analysis:
             return RouteName.disruption_analysis, "risk/dependency/alternatives wording"
+        if matches_any(lower, AGGREGATE_SIGNALS) and route in _STRUCTURED_CORRECTABLE:
+            return RouteName.structured_sql, "aggregate/count wording"
+        if matches_any(lower, COMPARISON_SIGNALS) and route in _STRUCTURED_CORRECTABLE:
+            return RouteName.structured_sql, "numeric-comparison/superlative wording"
+        # Geospatial intent is broader than radius/proximity: map requests and
+        # county containment should also reach the PostGIS executor.
+        if (
+            (matches_any(lower, PROXIMITY_SIGNALS) or matches_any(lower, _MAP_OR_SPATIAL_SIGNALS) or _COORD_RE.search(lower))
+            and not matches_any(lower, AGGREGATE_SIGNALS)
+            and not matches_any(lower, COMPARISON_SIGNALS)
+            and route in _GEO_CORRECTABLE
+        ):
+            return RouteName.geo_search, "geospatial wording"
         # Multi-company questions must never stay exact_lookup (single-entity only).
         if route is RouteName.exact_lookup and matches_any(lower, MULTI_ENTITY_SIGNALS):
             return RouteName.structured_sql, "multi-entity question"
-        if matches_any(lower, AGGREGATE_SIGNALS) and route in _CORRECTABLE:
-            return RouteName.structured_sql, "aggregate/count wording"
-        if matches_any(lower, COMPARISON_SIGNALS) and route in _CORRECTABLE:
-            return RouteName.structured_sql, "numeric-comparison/superlative wording"
         if matches_any(lower, LIST_SIGNALS) and route in _CORRECTABLE:
             return RouteName.structured_sql, "list wording"
-        # geo_search is only justified by genuine proximity/distance/center wording.
-        # "Map all X in <place>" is a structured location filter (no centre to anchor a
-        # radius), so a geo_search lacking any proximity/coordinate cue is downgraded —
-        # otherwise the geo executor fails with "could not resolve a centre".
-        if route is RouteName.geo_search and not (
-            matches_any(lower, PROXIMITY_SIGNALS) or _COORD_RE.search(lower)
-        ):
-            return RouteName.structured_sql, "geo_search without proximity/centre wording -> structured location filter"
-        # Geo only when there is genuine proximity/distance wording (not "map"/"county").
-        if matches_any(lower, PROXIMITY_SIGNALS) and route in _CORRECTABLE:
-            return RouteName.geo_search, "proximity/distance wording"
         return route, ""
 
     # -- requested output columns ------------------------------------------
@@ -293,6 +317,15 @@ class RouteValidator:
                         f"created search_filter for '{raw_filter.raw_value}' "
                         f"(uncertain field; candidates {sf.field_candidates})"
                     )
+                continue
+            if (
+                field == "ev_supply_chain_role"
+                and str(raw_filter.raw_value or "").strip().casefold() in _GENERIC_ROLE_VALUES
+            ):
+                actions.append(
+                    f"dropped generic '{raw_filter.raw_value}' role filter "
+                    "(supplier is the requested entity type, not a supply-chain role)"
+                )
                 continue
             field, sf, action = self._route_filter_field(field, raw_filter, lower)
             if sf is not None:
@@ -374,9 +407,9 @@ class RouteValidator:
         """Combine all values for one field into ``(operator, value)`` — KB-free.
 
         Every value is preserved *verbatim* (text-normalized only, never matched or
-        canonicalized against KB data) behind a safe substring operator:
-        ``CONTAINS`` for one value, ``OR_CONTAINS`` for several. Repeated filters
-        are OR-merged, so the last value never overwrites earlier ones.
+        canonicalized against KB data). Category values use exact matching; other
+        text values use substring matching. Repeated filters are OR-merged, so the
+        last value never overwrites earlier ones.
         """
         out_values: list[Any] = []
         for raw_value in raw_values:
@@ -390,9 +423,32 @@ class RouteValidator:
         out_values = list(dict.fromkeys(v for v in out_values if str(v).strip()))
         if not out_values:
             return None
+        if len(out_values) == 1 and field == "category":
+            return FilterOperator.EQUALS.value, out_values[0]
+        if len(out_values) > 1 and field == "category":
+            return FilterOperator.OR_EQUALS.value, out_values
         if len(out_values) == 1:
             return FilterOperator.CONTAINS.value, out_values[0]
         return FilterOperator.OR_CONTAINS.value, out_values
+
+    def _group_by(self, raw_group_by: list[str], lower: str, actions: list[str]) -> list[str]:
+        """Normalize safe group fields and infer county for county aggregate questions."""
+        groups: list[str] = []
+        for raw_field in raw_group_by:
+            folded = str(raw_field or "").strip().casefold()
+            if folded in {"county", "counties"}:
+                groups.append("county")
+                continue
+            field = self._map_field(raw_field)
+            if field is not None:
+                groups.append(field)
+            elif folded:
+                actions.append(f"dropped unsupported group_by field '{raw_field}'")
+
+        if not groups and "county" in lower and _TOTAL_EMPLOYMENT_RE.search(lower):
+            groups.append("county")
+            actions.append("inferred group_by county from total employment question")
+        return list(dict.fromkeys(groups))
 
     def _soft_split(self, field: str, raw_value: Any) -> list[str]:
         """Preserve an unmatched value, splitting only clear multi-value phrases."""
@@ -458,7 +514,13 @@ class RouteValidator:
         if route is RouteName.structured_sql:
             return [] if structured_intent else ["filter_or_aggregate"]
         if route is RouteName.geo_search:
-            if "updated_location" in resolved_filters or _COORD_RE.search(lower):
+            if matches_any(lower, {"map", "geospatial", "spatial"}):
+                return []
+            if (
+                "updated_location" in resolved_filters
+                or _COORD_RE.search(lower)
+                or _PROXIMITY_PLACE_RE.search(lower)
+            ):
                 return []
             if has_entity and matches_any(lower, _GEO_ANCHOR_WORDS):
                 return []

@@ -104,9 +104,8 @@ MULTI_ENTITY_SIGNALS = {
     "find georgia companies", "find georgia-based", "show every",
     "show all", "all companies",
 }
-# True proximity/distance wording — the only trigger for geo_search correction.
-# Deliberately EXCLUDES "map" and "county", which are list/location-filter words
-# (a county is a structured location filter, not a distance search).
+# True proximity/distance wording. Map and county-containment signals are handled
+# separately by the validator because they are spatial without requiring a radius.
 PROXIMITY_SIGNALS = {
     "near", "nearby", "closest", "within", "radius", "km", "kilometer",
     "kilometers", "miles", "drive", "distance", "coordinates", "proximity",
@@ -259,7 +258,7 @@ ROUTE_REQUIRED_FIELDS: dict[str, str] = {
     RouteName.exact_lookup.value: "a company / entity to look up",
     RouteName.keyword_search.value: "a keyword or query focus",
     RouteName.structured_sql.value: "at least one resolvable filter or an aggregate target",
-    RouteName.geo_search.value: "a location anchor (city, county, or coordinates)",
+    RouteName.geo_search.value: "a spatial anchor or map/filter request over geocoded records",
     RouteName.vector_search.value: "a query focus (semantic topic)",
     RouteName.hybrid_search.value: "a query focus plus a structured/geo signal",
     RouteName.disruption_analysis.value: "an anchor entity (company or OEM)",

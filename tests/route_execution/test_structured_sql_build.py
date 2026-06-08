@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from georgia_ev_intelligence.route_execution.executors.structured_sql import (
     build_query,
+    execute_structured_sql,
     format_sql_for_display,
 )
 
@@ -96,6 +97,72 @@ def test_group_records():
         "GROUP BY category ORDER BY count DESC;"
     )
     assert params == []
+
+
+def test_total_employment_by_county_builds_sum_aggregate():
+    route = {
+        "question": "Which county has the highest total employment among Tier 1 suppliers?",
+        "operation": "aggregate_records",
+        "resolved_filters": {
+            "category": {"operator": "EQUALS", "value": "Tier 1"},
+        },
+        "group_by": ["county"],
+        "sort_by": ["employment DESC"],
+        "limit": 1,
+    }
+
+    sql, params, columns, mode = build_query(route)
+
+    assert mode == "aggregate"
+    assert columns == ["county", "total_employment"]
+    assert "regexp_match(updated_location, '([^,]+ County)', 'i')" in sql
+    assert "SUM(employment) AS total_employment" in sql
+    assert "category = %s" in sql
+    assert "GROUP BY NULLIF(btrim(" in sql
+    assert "ORDER BY total_employment DESC LIMIT 1" in sql
+    assert params == ["Tier 1"]
+
+
+def test_empty_structured_query_returns_empty_rows_without_hybrid_fallback(monkeypatch):
+    class Cursor:
+        description = [("company",)]
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            return None
+
+        def execute(self, _sql, _params):
+            return None
+
+        def fetchall(self):
+            return []
+
+    class Connection:
+        def cursor(self):
+            return Cursor()
+
+        def close(self):
+            return None
+
+    monkeypatch.setattr(
+        "georgia_ev_intelligence.route_execution.executors.structured_sql.get_connection",
+        Connection,
+    )
+
+    result = execute_structured_sql({
+        "operation": "list_records",
+        "resolved_filters": {
+            "category": {"operator": "EQUALS", "value": "Does Not Exist"},
+        },
+        "requested_columns": ["category"],
+    })
+
+    assert result.answer == "Found 0 matching records."
+    assert result.evidence["type"] == "structured_rows"
+    assert result.evidence["rows"] == []
+    assert "fallback" not in result.evidence
 
 
 def test_explicit_limit_and_sort():
