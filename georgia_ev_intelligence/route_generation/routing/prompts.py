@@ -52,6 +52,7 @@ Core rules:
 Routing rules:
 - Use no_retrieval for greetings, thanks, or questions that do not need KB access.
 - Use exact_lookup only when the user asks about one specific company/entity and wants one or more attributes.
+- Do NOT use exact_lookup for follow-up questions referring to a previous list of companies (e.g. "what about battery cell", "which of these..."). Use structured_sql instead.
 - Do NOT use exact_lookup for multi-record questions such as:
   "which companies", "list all", "identify all", "find companies", "show every", or "which suppliers".
 - Use structured_sql for counts, lists, rankings, grouping, sorting, aggregation, and filtering over structured fields.
