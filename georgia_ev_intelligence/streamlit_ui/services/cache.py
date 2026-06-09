@@ -16,6 +16,7 @@ import streamlit as st
 from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.factory import (
     build_default_pipeline,
 )
+from georgia_ev_intelligence.runtime_pipeline.schemas import ParentContext
 
 from ..bootstrap.build_companies_db import (
     DEFAULT_DB_PATH,
@@ -23,6 +24,7 @@ from ..bootstrap.build_companies_db import (
     DEFAULT_GEOJSON_PATH,
     ensure_companies_db,
 )
+from ..company_data_corrections import apply_company_data_corrections
 from ..spatial.query_planner import QueryPlanner
 from ..spatial.spatial_engine import SpatialEngine
 from .chat_service import ChatService
@@ -33,7 +35,10 @@ from .query_dispatcher import QueryDispatcher
 
 @st.cache_resource(show_spinner="Loading hybrid retrieval pipeline...")
 def get_chat_service() -> ChatService:
-    return ChatService(retrieval_pipeline_factory=build_default_pipeline)
+    return ChatService(
+        retrieval_pipeline_factory=build_default_pipeline,
+        structured_lookup_fn=get_xlsx_lookup,
+    )
 
 
 @st.cache_resource(show_spinner="Loading spatial engine...")
@@ -80,6 +85,7 @@ def get_xlsx_lookup() -> Dict[int, Dict[str, Any]]:
         "ev___battery_relevant": "ev_battery_relevant",
     }
     df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+    df = apply_company_data_corrections(df)
     lookup: Dict[int, Dict[str, Any]] = {}
     for row_index, row in df.iterrows():
         lookup[int(row_index)] = {
@@ -131,7 +137,12 @@ def get_county_geojson() -> dict:
         return json.load(fh)
 
 
-def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
+def dispatch_query_cached(
+    query: str,
+    history: tuple[tuple[str, str], ...] | None = None,
+    previous_contexts: tuple[ParentContext, ...] | None = None,
+    _on_step=None,
+) -> DispatchResult:
     """Run dispatch for one query, emitting live step events via `_on_step`.
 
     NOT cached: `_on_step` writes to a Streamlit layout block (the loading-card
@@ -143,7 +154,12 @@ def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
     calls this exactly once per question, so nothing is recomputed on rerun.
     """
     dispatcher = get_query_dispatcher()
-    return dispatcher.dispatch(query, on_step=_on_step)
+    return dispatcher.dispatch(
+        query,
+        history=list(history) if history else None,
+        previous_contexts=list(previous_contexts) if previous_contexts else None,
+        on_step=_on_step,
+    )
 
 
 #: Markers shown on the baseline (no-query) map. Kept small so the first map

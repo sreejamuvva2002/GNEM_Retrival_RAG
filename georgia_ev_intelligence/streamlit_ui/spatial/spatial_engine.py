@@ -15,6 +15,7 @@ import duckdb
 import numpy as np
 import pandas as pd
 
+from ..company_data_corrections import apply_company_data_corrections
 from .county_geo import load_county_centroids
 
 
@@ -68,7 +69,7 @@ class SpatialEngine:
                 FROM companies
                 """
             ).fetchdf()
-        return df
+        return apply_company_data_corrections(df)
 
     @staticmethod
     def _build_city_centroids(df: pd.DataFrame) -> Dict[str, Tuple[float, float]]:

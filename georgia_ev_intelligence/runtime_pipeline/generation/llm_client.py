@@ -8,7 +8,7 @@ import requests
 from ...shared import config
 
 
-def generate_answer(prompt: str, timeout: int = 180) -> str:
+def generate_answer(prompt: str, timeout: int = 180, json_mode: bool = False) -> str:
     """Generate an answer using the local Ollama model.
 
     Args:
@@ -20,23 +20,27 @@ def generate_answer(prompt: str, timeout: int = 180) -> str:
     """
     model = config.OLLAMA_LLM_MODEL
 
+    payload = {
+        "model": model,
+        "prompt": prompt,
+        "stream": False,
+        # Disable chain-of-thought for reasoning models (e.g. qwen3): we want
+        # a direct, fast answer for the JSON-output RAG prompt, not reasoning
+        # that consumes the whole num_predict budget. No-op for non-thinking
+        # models (llama3, qwen2.5), so it's safe regardless of OLLAMA_LLM_MODEL.
+        "think": False,
+        "options": {
+            "temperature": config.OLLAMA_TEMPERATURE,
+            "top_p": config.OLLAMA_TOP_P,
+            "num_predict": config.OLLAMA_NUM_PREDICT,
+        },
+    }
+    if json_mode:
+        payload["format"] = "json"
+
     resp = requests.post(
         f"{config.OLLAMA_BASE_URL}/api/generate",
-        json={
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            # Disable chain-of-thought for reasoning models (e.g. qwen3): we want
-            # a direct, fast answer for the JSON-output RAG prompt, not reasoning
-            # that consumes the whole num_predict budget. No-op for non-thinking
-            # models (llama3, qwen2.5), so it's safe regardless of OLLAMA_LLM_MODEL.
-            "think": False,
-            "options": {
-                "temperature": config.OLLAMA_TEMPERATURE,
-                "top_p": config.OLLAMA_TOP_P,
-                "num_predict": config.OLLAMA_NUM_PREDICT,
-            },
-        },
+        json=payload,
         timeout=timeout,
     )
     resp.raise_for_status()

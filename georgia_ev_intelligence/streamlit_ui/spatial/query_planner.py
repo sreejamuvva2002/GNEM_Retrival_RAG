@@ -29,6 +29,26 @@ class QueryPlan:
 
 
 class QueryPlanner:
+    NO_RETRIEVAL_PATTERNS = (
+        (
+            re.compile(
+                r"^\s*(?:hi|hello|hey|good\s+(?:morning|afternoon|evening))[\s!.?]*$",
+                re.IGNORECASE,
+            ),
+            "greeting",
+            "Hi! Ask me about companies in Georgia's automotive and EV supply chain.",
+        ),
+        (
+            re.compile(r"^\s*(?:thanks|thank\s+you|thank\s+you\s+very\s+much)[\s!.?]*$", re.IGNORECASE),
+            "thanks",
+            "You're welcome!",
+        ),
+        (
+            re.compile(r"^\s*(?:bye|goodbye|see\s+you|talk\s+to\s+you\s+later)[\s!.?]*$", re.IGNORECASE),
+            "goodbye",
+            "Goodbye!",
+        ),
+    )
     GEO_KEYWORDS = {
         "near", "within", "distance", "km", "mile", "miles", "mi",
         "closest", "coordinate", "coordinates", "radius",
@@ -92,6 +112,21 @@ class QueryPlanner:
     def plan(self, question: str) -> Dict[str, object]:
         text = question.strip()
         lower = text.lower()
+
+        no_retrieval = self._no_retrieval_route(text)
+        if no_retrieval is not None:
+            reason, direct_answer = no_retrieval
+            return QueryPlan(
+                classification="NO_RETRIEVAL",
+                sql=False,
+                geo=False,
+                vector=False,
+                hints={
+                    "analysis_intent": "no_retrieval",
+                    "route_reason": reason,
+                    "direct_answer": direct_answer,
+                },
+            ).to_dict()
 
         hints: Dict[str, object] = {}
         coords = self._extract_coordinates(lower)
@@ -175,6 +210,13 @@ class QueryPlanner:
     def _contains_keyword(text: str, keywords: set) -> bool:
         return any(word in text for word in keywords)
 
+    @classmethod
+    def _no_retrieval_route(cls, text: str) -> Optional[Tuple[str, str]]:
+        for pattern, reason, answer in cls.NO_RETRIEVAL_PATTERNS:
+            if pattern.match(text):
+                return reason, answer
+        return None
+
     @staticmethod
     def _normalize_text(value: object) -> str:
         text = str(value or "").strip().lower()
@@ -227,7 +269,7 @@ class QueryPlanner:
     @staticmethod
     def _extract_city(text: str) -> Optional[str]:
         patterns = [
-            r"\bnear\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
+            r"\bnear(?:\s+to)?\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
             r"\baround\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
             r"\bclosest\s+to\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
             r"\bwithin\s+\d+(?:\.\d+)?\s*(?:km|miles?|mi)\s+of\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",

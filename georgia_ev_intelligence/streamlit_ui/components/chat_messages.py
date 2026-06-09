@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 from ..models.chat import Message
 from ..models.source import SourceViewModel
 from ..state import ui_state
+from . import sources_panel
 from ._markdown import render_assistant_markdown
 
 
@@ -117,8 +118,10 @@ def render(messages: List[Message], sources: List[SourceViewModel]) -> None:
             st.markdown(_assistant_row(message), unsafe_allow_html=True)
             _copy_control(message.content, align="left")
 
-    # Sources button under the last assistant message (reveals the side panel).
+    # Sources button and expanded source list live directly below the latest
+    # assistant answer inside the scrollable conversation.
     last = messages[-1]
+    sources_visible = False
     if last.role == "assistant" and sources:
         count = len(sources)
         open_now = ui_state.sources_panel_open()
@@ -126,15 +129,20 @@ def render(messages: List[Message], sources: List[SourceViewModel]) -> None:
         if st.button(label, key="chat_sources_toggle"):
             ui_state.toggle_sources_panel()
             st.rerun()
+        if open_now:
+            sources_visible = True
+            sources_panel.render(sources)
 
     # Streamlit strips inline <script> from st.markdown, so the auto-scroll runs
     # inside an iframe; window.parent.document reaches the main Streamlit DOM.
+    target_id = "sources-inline-anchor" if sources_visible else "chat-bottom-anchor"
+    target_block = "start" if sources_visible else "end"
     st.markdown("<div id='chat-bottom-anchor'></div>", unsafe_allow_html=True)
     components.html(
-        """
+        f"""
         <script>
-            const target = window.parent.document.getElementById('chat-bottom-anchor');
-            if (target) target.scrollIntoView({behavior: 'smooth', block: 'end'});
+            const target = window.parent.document.getElementById('{target_id}');
+            if (target) target.scrollIntoView({{behavior: 'smooth', block: '{target_block}'}});
         </script>
         """,
         height=0,

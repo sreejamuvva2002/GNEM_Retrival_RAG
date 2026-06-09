@@ -1,0 +1,2823 @@
+===== Ingesting kb/raw_docs/ddg_search.jsonl =====
+[wiki] Using Ollama at http://localhost:11434
+[wiki] Model: qwen2.5:14b
+[wiki] Ingesting from kb/raw_docs/ddg_search.jsonl
+[wiki] Wiki directory: kb/wiki
+[wiki] Processing 1: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 2: Foreign Investment Travels Nonstop to Georgia &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Foreign Investment Travels Nonstop to Georgia &#8211; Site S
+      -> Updated 0 pages: 
+[wiki] Processing 3: Duckyang USA to spend $10,000,000.00 to occupy 230,000 square feet of space in Braselton Georgia. - intelligence360
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 4: BUSINESSKorean Automotive Manufacturer Duckyang to Open Company’s First U.S. Facility in Georgia | Reshoring Initiative
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 5: New EV Battery Storage Plant in Georgia – Duckyang Industrial invests $10M - Energy Forward
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 6: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 7: Gov. Kemp Announces Korean Automotive Manufacturer Duckyang to Open Company&amp;#039;s First U.S. Facility in Jackson County - Georgia Office of the Governor Press release | LegiStorm
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 8: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 9: Powering the Next Generation of Mobility | Select Georgia
+      -> Updated 1 pages: Georgia
+[wiki] Processing 10: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 11: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 12: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 13: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 14: PAJAMAS
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 15: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 16: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 17: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 18: 
+      -> Updated 1 pages: Georgia Department of Economic Development
+[wiki] Processing 19: Site Selection Magazine &#8211; The Magazine of Corporate Expansion &amp; Global Economic Development
+[wiki] Skipping low-value extraction for: Site Selection Magazine &#8211; The Magazine of Corporate Ex
+      -> Updated 0 pages: 
+[wiki] Processing 20: Issues &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Issues &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 21: Site Selection May 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection May 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 22: Next Issue &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Next Issue &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 23: Bonus Web Content &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Bonus Web Content &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 24: Empty CommonSpot Site
+[wiki] Skipping low-value extraction for: Empty CommonSpot Site
+      -> Updated 0 pages: 
+[wiki] Processing 25: Area Spotlights &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Area Spotlights &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 26: Investment Profile &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investment Profile &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 27: Intelligence Reports &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Intelligence Reports &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 28: Investment Reports &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investment Reports &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 29: Web Exclusives &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Web Exclusives &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 30: Economic Developer Directory &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Economic Developer Directory &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 31: Canada Economic Developer Directory &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Canada Economic Developer Directory &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 32: Utilities Directory &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Utilities Directory &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 33: FTZ Ports Directory &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: FTZ Ports Directory &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 34: Online Insider &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Online Insider &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 35: Investor Watch &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 36: Project Bulletin &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Project Bulletin &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 37: Snapshot &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Snapshot &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 38: Archived &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Archived &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 39: Energy Report &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Energy Report &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 40: Aerospace Report &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Aerospace Report &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 41: Life Sciences &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Life Sciences &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 42: OnSite Travel Blog &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: OnSite Travel Blog &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 43: TrustBelt &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: TrustBelt &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 44: Guides and Reports &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Guides and Reports &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 45: Workforce Guides &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Workforce Guides &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 46: State &amp; Area Guides &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: State &amp; Area Guides &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 47: Magazine Subscription &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Magazine Subscription &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 48: The World&#8217;s Most Competitive Cities Report &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The World&#8217;s Most Competitive Cities Report &#8211; Sit
+      -> Updated 0 pages: 
+[wiki] Processing 49: Newsletter Subscription &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Newsletter Subscription &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 50: Conway Projects Database Guidelines &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Conway Projects Database Guidelines &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 51: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 52: Advertise &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection Magazine
+[wiki] Processing 53: Media Kit &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Media Kit &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 54: Impact Report &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Impact Report &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 55: About Site Selection &#8211; Site Selection Magazine
+      -> Updated 1 pages: Conway Data
+[wiki] Processing 56: Press Releases &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection Magazine
+[wiki] Processing 57: Sharjah: The Emirate To Watch in 2015 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Sharjah: The Emirate To Watch in 2015 &#8211; Site Selection
+      -> Updated 0 pages: 
+[wiki] Processing 58: Road to Somewhere &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Road to Somewhere &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 59: A Commitment to Connect &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: A Commitment to Connect &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 60: Made in Texas &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Made in Texas &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 61: 
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 62: Flexing Toward the Future with Xcel Energy &#8211; Site Selection Magazine
+      -> Updated 1 pages: Xcel Energy
+[wiki] Processing 63: 
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 64: Privacy Policy &#8211; Site Selection Magazine
+[wiki] Entity 'Conway Data Inc.' -> merging into existing page 'Conway Data' (score=1.00)
+      -> Updated 1 pages: Conway Data
+[wiki] Processing 65: intelligence360 - The Intelligent News Source
+      -> Updated 1 pages: Orkes
+[wiki] Processing 66: About us - intelligence360
+      -> Updated 1 pages: intelligence360
+[wiki] Processing 67: Contact Us &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Contact Us &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 68: Video News Daily - intelligence360
+[wiki] Skipping low-value extraction for: Video News Daily - intelligence360
+      -> Updated 0 pages: 
+[wiki] Processing 69: Contact Us - intelligence360
+[wiki] Skipping low-value extraction for: Contact Us - intelligence360
+      -> Updated 0 pages: 
+[wiki] Processing 70: Bettepay: Credit Card Processing - Accept Credit Cards Today
+      -> Updated 1 pages: Betterpay
+[wiki] Processing 71: Commercial Relocation Archives - intelligence360
+      -> Updated 1 pages: PT Solutions
+[wiki] Processing 72: 1 Archives - intelligence360
+      -> Updated 1 pages: Pierre Part Belle River Museum
+[wiki] Processing 73: Braselton Archives - intelligence360
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 74: Georgia Archives - intelligence360
+      -> Updated 1 pages: Novant Health
+[wiki] Processing 75: Rochester Michigan based Metalmite Corporation has secured $1,556,600.00 in new commercial capital. - intelligence360
+      -> Updated 1 pages: Metalmite Corporation
+[wiki] Processing 76: Domino&#039;s Pizza to spend $50,300,000.00 to occupy 110,000 square feet of space in Merrillville Indiana. - intelligence360
+      -> Updated 1 pages: Domino’s Pizza
+[wiki] Processing 77: Avoca has raised $125 Million in new Series B Funding - intelligence360
+      -> Updated 1 pages: Avoca
+[wiki] Processing 78: Heartland Dental plans new expansion project in Wesley Chapel, North Carolina - intelligence360
+      -> Updated 1 pages: Heartland Dental
+[wiki] Processing 79: Southern Birth Justice Network plans new expansion project in Miami, Florida - intelligence360
+      -> Updated 1 pages: Southern Birth Justice Network
+[wiki] Processing 80: DaVita plans new expansion project in Albuquerque, New Mexico - intelligence360
+      -> Updated 1 pages: DaVita
+[wiki] Processing 81: Reshoring Initiative | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 82: What is Reshoring? | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 83: Why Reshore? | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 84: Companies Reshoring | Reshoring Initiative
+[wiki] Skipping low-value extraction for: Companies Reshoring | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 85: Reshoring News | Reshoring Initiative
+[wiki] Skipping low-value extraction for: Reshoring News | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 86: Press Releases | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 87: Upcoming Events | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 88: Blog | Reshoring Initiative
+[wiki] Skipping low-value extraction for: Blog | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 89: eNewsletter | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 90: Webinars, Podcasts and Videos | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 91: Resources | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 92: Recent Data | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 93: Case Studies | Reshoring Initiative
+[wiki] Skipping low-value extraction for: Case Studies | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 94: Submit a Case Study | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 95: Presentations | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 96: Programs | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 97: Skilled Workforce Development | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 98: Economic Development Program | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 99: ISP | Reshoring Initiative
+[wiki] Skipping low-value extraction for: ISP | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 100: Webinars | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 101: Reports | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 102: Consulting | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 103: Retail Supplier Resources | Reshoring Initiative
+[wiki] Skipping low-value extraction for: Retail Supplier Resources | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 104: Main Reshoring Library | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 105: Library of Related Categories | Reshoring Initiative
+[wiki] Skipping low-value extraction for: Library of Related Categories | Reshoring Initiative
+      -> Updated 0 pages: 
+[wiki] Processing 106: Total Cost of Ownership Estimator | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 107: Get Involved | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 108: Become a Sponsor | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 109: Donations | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 110: Volunteer | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 111: Amazon Smile | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 112: Likeminded Groups | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 113: Reshoring Initiative Data | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 114: About Reshoring Initiative | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 115: Reshoring Initiative Sponsors | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 116: Media Center | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 117: Contact Us | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 118: Supply Chain Gap Program | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 119: Support the Reshoring Initiative | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 120: Become a Sponsor for Reshoring | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 121: Advanced Search | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 122: Event: Innovation Garage podcast  | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 123: 
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 124: Terms & Conditions | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 125: cropped-Icon_nrgfrwd-dark-1-32x32.png
+[wiki] Skipping low-value extraction for: cropped-Icon_nrgfrwd-dark-1-32x32.png
+      -> Updated 0 pages: 
+[wiki] Processing 126: Privacy Policy | Reshoring Initiative
+      -> Updated 1 pages: Reshoring Initiative
+[wiki] Processing 127: Home - Energy Forward
+[wiki] Skipping low-value extraction for: Home - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 128: Lost Password &lsaquo; Energy Forward &#8212; WordPress
+      -> Updated 1 pages: Energy Forward
+[wiki] Processing 129: Digital Magazine Energy Forward
+      -> Updated 1 pages: Energy Forward
+[wiki] Processing 130: Magazine
+[wiki] Skipping low-value extraction for: Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 131: Interviews
+[wiki] Skipping low-value extraction for: Interviews
+      -> Updated 0 pages: 
+[wiki] Processing 132: Publishing
+[wiki] Skipping low-value extraction for: Publishing
+      -> Updated 0 pages: 
+[wiki] Processing 133: 01 Energy Forward - AI Boom is Fracturing the Energy Grid
+[wiki] Skipping low-value extraction for: 01 Energy Forward - AI Boom is Fracturing the Energy Grid
+      -> Updated 0 pages: 
+[wiki] Processing 134: BP Reports Strong First Quarter 2026
+      -> Updated 1 pages: BP
+[wiki] Processing 135: TotalEnergies Reports Strong First Quarter
+      -> Updated 1 pages: TotalEnergies
+[wiki] Processing 136: Critical Minerals
+[wiki] Skipping low-value extraction for: Critical Minerals
+      -> Updated 0 pages: 
+[wiki] Processing 137: Record Oil Stock Depletion
+[wiki] Skipping low-value extraction for: Record Oil Stock Depletion
+      -> Updated 0 pages: 
+[wiki] Processing 138: Geopolitical Tensions Keep Oil Prices High
+[wiki] Skipping low-value extraction for: Geopolitical Tensions Keep Oil Prices High
+      -> Updated 0 pages: 
+[wiki] Processing 139: The May 2026 Beijing Summit
+[wiki] Skipping low-value extraction for: The May 2026 Beijing Summit
+      -> Updated 0 pages: 
+[wiki] Processing 140: Core Annual Appropriations TFC open now
+[wiki] Skipping low-value extraction for: Core Annual Appropriations TFC open now
+      -> Updated 0 pages: 
+[wiki] Processing 141: Ring Energy 1Q 2022 - Energy Forward
+      -> Updated 1 pages: Ring Energy
+[wiki] Processing 142: Power Archives - Energy Forward
+[wiki] Skipping low-value extraction for: Power Archives - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 143: Lisa Hill, leading in the tech industry - Energy Forward
+[wiki] Skipping low-value extraction for: Lisa Hill, leading in the tech industry - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 144: Al Barner, the importance of strategic fleet solutions - Energy Forward
+      -> Updated 1 pages: Fleet Advantage
+[wiki] Processing 145: Downstream
+[wiki] Skipping low-value extraction for: Downstream
+      -> Updated 0 pages: 
+[wiki] Processing 146: Perpetual Next and Clarksons to Decarbonize Global Shipping
+      -> Updated 1 pages: Perpetual Next
+[wiki] Processing 147: Midstream Archives - Energy Forward
+[wiki] Skipping low-value extraction for: Midstream Archives - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 148: Demolition of Two Uranium Facilities in One Year
+[wiki] Skipping low-value extraction for: Demolition of Two Uranium Facilities in One Year
+      -> Updated 0 pages: 
+[wiki] Processing 149: Hanford Site Tank Farms and Waste Retrieval Efforts - Energy Forward
+[wiki] Skipping low-value extraction for: Hanford Site Tank Farms and Waste Retrieval Efforts - Energy
+      -> Updated 0 pages: 
+[wiki] Processing 150: TotalEnergies signed an MoU with the Syrian Petroleum Company - Energy Forward
+      -> Updated 1 pages: TotalEnergies
+[wiki] Processing 151: Offshore Technology Conference 2026 Moves Forward - Energy Forward
+[wiki] Skipping low-value extraction for: Offshore Technology Conference 2026 Moves Forward - Energy F
+      -> Updated 0 pages: 
+[wiki] Processing 152: How OTC 2026 Redefined the Energy Architecture - Energy Forward
+[wiki] Skipping low-value extraction for: How OTC 2026 Redefined the Energy Architecture - Energy Forw
+      -> Updated 0 pages: 
+[wiki] Processing 153: Topside Decommissioning Projects Set New Efficiency Standards
+      -> Updated 1 pages: Mammoet
+[wiki] Processing 154: New Permit for Bakken Pipeline Company - Energy Forward
+      -> Updated 1 pages: Bakken Pipeline Company LP
+[wiki] Processing 155: TotalEnergies’ Funds to Natural Gas Projects
+      -> Updated 1 pages: TotalEnergies
+[wiki] Processing 156: Louisiana Energy Hub
+[wiki] Skipping low-value extraction for: Louisiana Energy Hub
+      -> Updated 0 pages: 
+[wiki] Processing 157: Strait of Hormuz
+[wiki] Skipping low-value extraction for: Strait of Hormuz
+      -> Updated 0 pages: 
+[wiki] Processing 158: Renewal of Enbridge Energy Pipeline Operations - Energy Forward
+      -> Updated 1 pages: Enbridge Energy
+[wiki] Processing 159: Balancing Biofuel Bridges with E-Fuel Scalability - Energy Forward
+[wiki] Skipping low-value extraction for: Balancing Biofuel Bridges with E-Fuel Scalability - Energy F
+      -> Updated 0 pages: 
+[wiki] Processing 160: Financial Gains and Loses
+[wiki] Skipping low-value extraction for: Financial Gains and Loses
+      -> Updated 0 pages: 
+[wiki] Processing 161: Investors
+[wiki] Skipping low-value extraction for: Investors
+      -> Updated 0 pages: 
+[wiki] Processing 162: Global Institutions Forge Alliance Against Middle East Energy Crisis
+[wiki] Skipping low-value extraction for: Global Institutions Forge Alliance Against Middle East Energ
+      -> Updated 0 pages: 
+[wiki] Processing 163: Ordinary dividend for fiscal year 2022: TotalEnergies
+      -> Updated 1 pages: TotalEnergies
+[wiki] Processing 164: Private equity in oil &amp; gas: HGS North American Meeting
+[wiki] Skipping low-value extraction for: Private equity in oil &amp; gas: HGS North American Meeting
+      -> Updated 0 pages: 
+[wiki] Processing 165: Dr. Stephen Bushby new chief nuclear officer
+      -> Updated 1 pages: AIC Global Holdings Inc
+[wiki] Processing 166: National leader makes strategic senior hires
+      -> Updated 1 pages: Transparent Energy
+[wiki] Processing 167: Industrial Consumers
+[wiki] Skipping low-value extraction for: Industrial Consumers
+      -> Updated 0 pages: 
+[wiki] Processing 168: Hawaiian Electric selects seven solar and storage projects.
+      -> Updated 1 pages: Hawaiian Electric
+[wiki] Processing 169: Oil slides over 3% on Russian price cap talks, U.S. gasoline build.
+[wiki] Skipping low-value extraction for: Oil slides over 3% on Russian price cap talks, U.S. gasoline
+      -> Updated 0 pages: 
+[wiki] Processing 170: Version 9 of RETScreen Clean Energy Management Software.
+      -> Updated 1 pages: RETScreen Division of CanmetENERGY
+[wiki] Processing 171: Vice President announced New U.S. Support for Clean Energy
+[wiki] Skipping low-value extraction for: Vice President announced New U.S. Support for Clean Energy
+      -> Updated 0 pages: 
+[wiki] Processing 172: editor, Author at Energy Forward
+[wiki] Skipping low-value extraction for: editor, Author at Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 173: Battery Storage Archives - Energy Forward
+[wiki] Skipping low-value extraction for: Battery Storage Archives - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 174: georgia Archives - Energy Forward
+      -> Updated 1 pages: ReGenerate Energy Holdings, LLC
+[wiki] Processing 175: duckyang Archives - Energy Forward
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 176: G7 agrees on phase out coal globally by the end of 2021 - Energy Forward
+[wiki] Skipping low-value extraction for: G7 agrees on phase out coal globally by the end of 2021 - En
+      -> Updated 0 pages: 
+[wiki] Processing 177: ev Archives - Energy Forward
+[wiki] Skipping low-value extraction for: ev Archives - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 178: New Jersey strengthens ‘Advanced Clean Truck’ proposal - Energy Forward
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 179: California’s canals and renewable energy goals.
+[wiki] Skipping low-value extraction for: California’s canals and renewable energy goals.
+      -> Updated 0 pages: 
+[wiki] Processing 180: Solar + Storage project in Cali from Terra-Gen secures financing
+      -> Updated 1 pages: Terra-Gen
+[wiki] Processing 181: 30 solar energy projects awarded to U.S. ReneSola in Poland
+      -> Updated 1 pages: ReneSolar
+[wiki] Processing 182: JLG Launches Compact Electric Scissor Lift - Energy Forward
+      -> Updated 1 pages: JLG Industries
+[wiki] Processing 183: Verizon signs four PPAs with Leeward Renewables totaling 640MW
+      -> Updated 1 pages: Leeward Renewable Energy
+[wiki] Processing 184: NV Energy to develop 2 new storage projects for Nevada’s energy transition - Energy Forward
+      -> Updated 1 pages: NV Energy
+[wiki] Processing 185: &quot;Aiming for Zero Methane Emissions Initiative” by the OGCI. - Energy Forward
+      -> Updated 1 pages: OGCI
+[wiki] Processing 186: LegiStorm: Congress Revealed
+[wiki] Skipping low-value extraction for: LegiStorm: Congress Revealed
+      -> Updated 0 pages: 
+[wiki] Processing 187: Rubi Alvarado, Author at Energy Forward
+      -> Updated 1 pages: TotalEnergies
+[wiki] Processing 188: Big Future for Green Hydrogen - Energy Forward
+[wiki] Skipping low-value extraction for: Big Future for Green Hydrogen - Energy Forward
+      -> Updated 0 pages: 
+[wiki] Processing 189: The 119th Congress By the Numbers
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 190: Volvo trucks pushes Albertsons to reach first 100% zero emissions delivery - Energy Forward
+      -> Updated 1 pages: Albertsons Companies
+[wiki] Processing 191: DUCKYANG Co.,LTD.
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 192: Congressional Contact Lists
+[wiki] Skipping low-value extraction for: Congressional Contact Lists
+      -> Updated 0 pages: 
+[wiki] Processing 193: LegiStorm: Congress Revealed
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 194: Official Congressional Expenses - LegiStorm
+[wiki] Skipping low-value extraction for: Official Congressional Expenses - LegiStorm
+      -> Updated 0 pages: 
+[wiki] Processing 195: AWS in talks to build its 1st renewable energy project in Japan - Energy Forward
+      -> Updated 1 pages: AWS
+[wiki] Processing 196: Worst bosses? - LegiStorm
+[wiki] Skipping low-value extraction for: Worst bosses? - LegiStorm
+      -> Updated 0 pages: 
+[wiki] Processing 197: Pricing | LegiStorm
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 198: &quot;Caught Our Eye&quot; archive - LegiStorm
+[wiki] Skipping low-value extraction for: &quot;Caught Our Eye&quot; archive - LegiStorm
+      -> Updated 0 pages: 
+[wiki] Processing 199: LegiStorm&#039;s DevBlog
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 200: Newsletters - LegiStorm
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 201: Mobile App - LegiStorm
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 202: Our Story | LegiStorm
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 203: Media Kit - LegiStorm
+[wiki] Entity 'LegiStorm LLC' -> merging into existing page 'LegiStorm' (score=1.00)
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 204: About Page Claiming - LegiStorm
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 205: LegiStorm - Registration
+[wiki] Skipping low-value extraction for: LegiStorm - Registration
+      -> Updated 0 pages: 
+[wiki] Processing 206: LegiStorm - Request Password
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 207: Free Demo of LegiStorm's Public Affairs Platform
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 208: LegiStorm: Congress Revealed
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 209: Checkmate enters lobbying elite on lean client roster | LegiStorm
+      -> Updated 1 pages: Checkmate Government Relations
+[wiki] Processing 210: LegiStorm&#039;s DevBlog - LegiStorm adds House Q4 salaries and expenses
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 211: LegiStorm&#039;s DevBlog - Latest Senate salary and expense records published
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 212: LegiStorm&#039;s DevBlog - LegiStorm adds House Q3 salaries and expenses
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 213: LegiStorm&#039;s DevBlog - LegiStorm adds House Q2 salaries and expenses
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 214: LegiStorm: Congress Revealed
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 215: Economic Development in Georgia | Select Georgia
+[wiki] Skipping low-value extraction for: Economic Development in Georgia | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 216: Blog | Select Georgia
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 217: LegiStorm: Congress Revealed
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 218: LegiStorm: Congress Revealed
+[wiki] Skipping low-value extraction for: LegiStorm: Congress Revealed
+      -> Updated 0 pages: 
+[wiki] Processing 219: LegiStorm Privacy Policy
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 220: Contact Us | Select Georgia
+      -> Updated 1 pages: Georgia Power Economic Development
+[wiki] Processing 221: Why Georgia | Select Georgia
+[wiki] Skipping low-value extraction for: Why Georgia | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 222: LegiStorm Terms of Use and Other Legal Matters
+[wiki] Entity 'LegiStorm LLC' -> merging into existing page 'LegiStorm' (score=1.00)
+      -> Updated 1 pages: LegiStorm
+[wiki] Processing 223: Business Climate | Select Georgia
+[wiki] Skipping low-value extraction for: Business Climate | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 224: Top Industries | Select Georgia
+[wiki] Skipping low-value extraction for: Top Industries | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 225: Workforce &amp; Education | Select Georgia
+[wiki] Skipping low-value extraction for: Workforce &amp; Education | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 226: Transportation | Select Georgia
+[wiki] Skipping low-value extraction for: Transportation | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 227: Utilities | Select Georgia
+[wiki] Skipping low-value extraction for: Utilities | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 228: Innovation | Select Georgia
+[wiki] Skipping low-value extraction for: Innovation | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 229: International Business | Select Georgia
+[wiki] Skipping low-value extraction for: International Business | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 230: Quality of Life | Select Georgia
+[wiki] Skipping low-value extraction for: Quality of Life | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 231: All Services | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 232: Business Recruitment | Select Georgia
+      -> Updated 1 pages: Georgia Power
+[wiki] Processing 233: Support for Communities | Select Georgia
+      -> Updated 1 pages: Georgia Power
+[wiki] Processing 234: Film Location Solutions | Select Georgia
+[wiki] Skipping low-value extraction for: Film Location Solutions | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 235: Engineering | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 236: Research Solutions | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 237: Submit a Property | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 238: Statewide Economic Development | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 239: About Us | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 240: Georgia Experience Center | Select Georgia
+      -> Updated 1 pages: Georgia Power
+[wiki] Processing 241: Our Team | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 242: Frequently Asked Questions | Select Georgia
+[wiki] Entity 'Select Georgia' -> merging into existing page 'SelectGeorgia' (score=0.96)
+      -> Updated 1 pages: SelectGeorgia
+[wiki] Processing 243: Georgia - A Hub for Electric Transportation | Select Georgia
+      -> Updated 1 pages: Rivian
+[wiki] Processing 244: Georgia Power Locations &amp; Growth in Q1 2026 | Select Georgia
+      -> Updated 1 pages: Georgia Power
+[wiki] Processing 245: Locations and expansions across Georgia | Select Georgia
+      -> Updated 1 pages: Georgia Power
+[wiki] Processing 246: Experience the Art | Select Georgia
+      -> Updated 1 pages: Georgia Experience Center
+[wiki] Processing 247: Retail Programs | Select Georgia
+[wiki] Skipping low-value extraction for: Retail Programs | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 248: Rural transformation in Georgia | Select Georgia
+[wiki] Skipping low-value extraction for: Rural transformation in Georgia | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 249: Success stories in Georgia | Select Georgia
+      -> Updated 1 pages: Fieldale Farms
+[wiki] Processing 250: All Resources | Select Georgia
+[wiki] Skipping low-value extraction for: All Resources | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 251: Regional Economic Development | Select Georgia
+      -> Updated 1 pages: Georgia Power
+[wiki] Processing 252: Workforce programs and education in Georgia | Select Georgia
+[wiki] Skipping low-value extraction for: Workforce programs and education in Georgia | Select Georgia
+      -> Updated 0 pages: 
+[wiki] Processing 253: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 254: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 255: GLOBAL BEST TO INVEST 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: GLOBAL BEST TO INVEST 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 256: 2026 PROSPERITY CUP &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2026 PROSPERITY CUP &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 257: TOP DEALS OF 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: TOP DEALS OF 2025 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 258: TENNESSEE: Why More and More International Companies Are Choosing Tennessee &#8211; Site Selection Magazine
+      -> Updated 1 pages: Tennessee
+[wiki] Processing 259: FAIRFAX COUNTY, VIRGINIA: Innovation Ascends In Fairfax NOVA &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: FAIRFAX COUNTY, VIRGINIA: Innovation Ascends In Fairfax NOVA
+      -> Updated 0 pages: 
+[wiki] Processing 260: Project Bulletin, May 26, 2026: Dubai, United Arab Emirates; Ontario, Canada; Macon, Georgia &#8211; Site Selection Magazine
+      -> Updated 1 pages: Emirates
+[wiki] Processing 261: Resourcing Our Army at the Speed of Capitalism &#8211; Site Selection Magazine
+      -> Updated 1 pages: Army
+[wiki] Processing 262: Project Bulletin, May 18, 2026: Zárate, Argentina; Boulder, Colorado; Orange, Texas &#8211; Site Selection Magazine
+      -> Updated 1 pages: Mercedes-Benz Camiones y Buses
+[wiki] Processing 263: Chipping Away &#8211; Site Selection Magazine
+      -> Updated 1 pages: Massachusetts Technology Collaborative
+[wiki] Processing 264: Project Bulletin, May 11, 2026: St. Joseph, Missouri; Glendale, Kentucky; Morrisville, North Carolina &#8211; Site Selection Magazine
+      -> Updated 1 pages: Clarios
+[wiki] Processing 265: Utah: HOW TO FILL A DONUT &#8211; Site Selection Magazine
+      -> Updated 1 pages: Farmington City
+[wiki] Processing 266: Oregon: Built for the Wild &#8211; Site Selection Magazine
+      -> Updated 1 pages: Danner
+[wiki] Processing 267: Kentucky: A TRIUMPH OVER Tariffs? &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kentucky: A TRIUMPH OVER Tariffs? &#8211; Site Selection Mag
+      -> Updated 0 pages: 
+[wiki] Processing 268: GREAT LAKES EXTRA &#8211; Site Selection Magazine
+      -> Updated 1 pages: National Museum of the Great Lakes
+[wiki] Processing 269: New Jersey: Why Tech Jobs Are Moving to New Jersey &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: New Jersey: Why Tech Jobs Are Moving to New Jersey &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 270: MONTGOMERY COUNTY, MARYLAND: A Future-Forward Economy &#8211; Site Selection Magazine
+      -> Updated 1 pages: Montgomery County Economic Development Corporation
+[wiki] Processing 271: GEORGIA: Thinking Long Term &#8211; Site Selection Magazine
+      -> Updated 1 pages: UCB
+[wiki] Processing 272: Site Selection March 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection March 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 273: Site Selection January 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection January 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 274: Site Selection November 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection November 2025 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 275: Site Selection September 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection September 2025 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 276: Site Selection July 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection July 2025 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 277: Site Selection May 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection May 2025 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 278: Site Selection March 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection March 2025 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 279: Site Selection January 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection January 2025 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 280: Site Selection November 2024 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Nipro Medical Corporation
+[wiki] Processing 281: Site Selection September 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection September 2024 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 282: Site Selection July 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection July 2024 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 283: Site Selection May 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection May 2024 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 284: Site Selection March 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection March 2024 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 285: Site Selection January 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection January 2024 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 286: Site Selection November 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection November 2023 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 287: Site Selection September 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection September 2023 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 288: Site Selection July 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection July 2023 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 289: Site Selection May 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection May 2023 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 290: Site Selection March 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection March 2023 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 291: Site Selection January 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection January 2023 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 292: Site Selection November 2022 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection November 2022 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 293: Site Selection September 2022 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection September 2022 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 294: Site Selection July 2022 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection July 2022 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 295: Issues &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Issues &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 296: Issues &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Issues &#8211; Page 3 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 297: Issues &#8211; Page 8 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Issues &#8211; Page 8 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 298: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 299: DEFENSE MANUFACTURING: Rebuilding The Arsenal &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: DEFENSE MANUFACTURING: Rebuilding The Arsenal &#8211; Site S
+      -> Updated 0 pages: 
+[wiki] Processing 300: FDI IN AMERICA: How Foreign Companies Are Navigating U.S. Investment in A More Complex Environment &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: FDI IN AMERICA: How Foreign Companies Are Navigating U.S. In
+      -> Updated 0 pages: 
+[wiki] Processing 301: HEALTH TECH EXTRA: Health Tech Momentum Builds in the Midwest &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: HEALTH TECH EXTRA: Health Tech Momentum Builds in the Midwes
+      -> Updated 0 pages: 
+[wiki] Processing 302: ECONOMIC DEVELOPMENT RESOURCE GUIDE &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: ECONOMIC DEVELOPMENT RESOURCE GUIDE &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 303: U.S. FOREIGN &#8211; TRADE ZONE RANKINGS: Top Zones Help Hedge Risk &amp; Move Goods &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: U.S. FOREIGN &#8211; TRADE ZONE RANKINGS: Top Zones Help Hed
+      -> Updated 0 pages: 
+[wiki] Processing 304: Global Best to Invest 2026: The Rest of the Story &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Global Best to Invest 2026: The Rest of the Story &#8211; Si
+      -> Updated 0 pages: 
+[wiki] Processing 305: TRIBAL ECONOMIC DEVELOPMENT: Above Oklahoma, Only Open Skies &#8211; Site Selection Magazine
+      -> Updated 1 pages: Choctaw Nation of Oklahoma
+[wiki] Processing 306: NORTH AMERICAN AUTOMOTIVE: Snapshots from the Top 10 Vehicular States &#8211; Site Selection Magazine
+      -> Updated 1 pages: AUMOVIO
+[wiki] Processing 307: HEALTH TECH: Emerging Locations For Tech-Enabled Health Care Innovation &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: HEALTH TECH: Emerging Locations For Tech-Enabled Health Care
+      -> Updated 0 pages: 
+[wiki] Processing 308: WATER RESOURCES: ‘There Is No National Reservoir.’ &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: WATER RESOURCES: ‘There Is No National Reservoir.’ &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 309: AEC SHOWCASE: Postcards From the Field &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: AEC SHOWCASE: Postcards From the Field &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 310: PFLUGERVILLE, TEXAS: Layer by Layer &#8211; Site Selection Magazine
+      -> Updated 1 pages: EOS
+[wiki] Processing 311: WORLD REPORTS: May 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: TikTok
+[wiki] Processing 312: NORTH AMERICAN REPORTS: May 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Meta Platforms
+[wiki] Processing 313: UNITED KINGDOM: Incentivizing the UK’s Quantum Leap &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: UNITED KINGDOM: Incentivizing the UK’s Quantum Leap &#8211; 
+      -> Updated 0 pages: 
+[wiki] Processing 314: QUEBEC: Quebecois Engineering Prowess Drives Motorcoach Maker’s Growth Journey &#8211; Site Selection Magazine
+      -> Updated 1 pages: Prevost
+[wiki] Processing 315: TOP MEXICAN LOCATIONS 2026: NEW RANKINGS Driven by Data &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: TOP MEXICAN LOCATIONS 2026: NEW RANKINGS Driven by Data &#82
+      -> Updated 0 pages: 
+[wiki] Processing 316: ASIA: Site Selection in the ESG Era &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: ASIA: Site Selection in the ESG Era &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 317: IAMC Insider: LETTER FROM THE CHAIR &#8211; Site Selection Magazine
+      -> Updated 1 pages: IAMC
+[wiki] Processing 318: EDITOR ’S VIEW: Out Here In the Field &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection Magazine
+[wiki] Processing 319: Arizona: Leveraging Homegrown Strengths for International Successes &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Arizona: Leveraging Homegrown Strengths for International Su
+      -> Updated 0 pages: 
+[wiki] Processing 320: Florida: Why Florida’s Future Looks NOTHING Like Its Past &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Florida: Why Florida’s Future Looks NOTHING Like Its Past &#
+      -> Updated 0 pages: 
+[wiki] Processing 321: OHIO: Life Sciences Come Alive in Cincinnati &#8211; Site Selection Magazine
+      -> Updated 1 pages: Resilience
+[wiki] Processing 322: Iowa: Home, Sweet Home &#8211; Site Selection Magazine
+      -> Updated 1 pages: Sioux Honey Co-op
+[wiki] Processing 323: GREAT LAKES: A Legacy Constantly in the Making &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: GREAT LAKES: A Legacy Constantly in the Making &#8211; Site 
+      -> Updated 0 pages: 
+[wiki] Processing 324: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 325: Demand and Response: How Utilities Are Answering the Call for Large-Load Power Supply &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Demand and Response: How Utilities Are Answering the Call fo
+      -> Updated 0 pages: 
+[wiki] Processing 326: Smart Insights on Smart Cities &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Smart Insights on Smart Cities &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 327: Start Planning or Fall Behind &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Start Planning or Fall Behind &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 328: Analysis 2025: The Rest of the Global Best to Invest &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Analysis 2025: The Rest of the Global Best to Invest &#8211;
+      -> Updated 0 pages: 
+[wiki] Processing 329: Top Utilities Provide Exclusive Insights Into the Pressing Need for More Power &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection Magazine
+[wiki] Processing 330: Foundations for the Future &#8211; Site Selection Magazine
+      -> Updated 1 pages: SCVEDC
+[wiki] Processing 331: End Game &#8211; Site Selection Magazine
+      -> Updated 1 pages: Zappos
+[wiki] Processing 332: Through the Mill &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Through the Mill &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 333: A Powerful Proposition &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: A Powerful Proposition &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 334: Sanofi and Solvay Make Moves in Italy &#8211; Site Selection Magazine
+      -> Updated 1 pages: Sanofi-Aventis
+[wiki] Processing 335: Fledgling Biotech Firm Finds Andalucia Attractive &#8211; Site Selection Magazine
+      -> Updated 1 pages: Neuron BPh
+[wiki] Processing 336: Victoria’s Vow: ‘To Support the Science’ &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Victoria’s Vow: ‘To Support the Science’ &#8211; Site Select
+      -> Updated 0 pages: 
+[wiki] Processing 337: South Carolina: How South Carolina Captured a Record-Breaking Year of Industry Recruitment &#8211; Site Selection Magazine
+      -> Updated 1 pages: South Carolina
+[wiki] Processing 338: I-4 CORRIDOR: The Land Rush on Interstate 4 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: I-4 CORRIDOR: The Land Rush on Interstate 4 &#8211; Site Sel
+      -> Updated 0 pages: 
+[wiki] Processing 339: CALIFORNIA: Turning in a Vintage Performance in the Inland Empire &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: CALIFORNIA: Turning in a Vintage Performance in the Inland E
+      -> Updated 0 pages: 
+[wiki] Processing 340: PACIFIC NORTHWEST: Evergreen Industries &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: PACIFIC NORTHWEST: Evergreen Industries &#8211; Site Selecti
+      -> Updated 0 pages: 
+[wiki] Processing 341: SOUTH CENTRAL U.S.: Where the Dollar Stretches Further &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: SOUTH CENTRAL U.S.: Where the Dollar Stretches Further &#821
+      -> Updated 0 pages: 
+[wiki] Processing 342: Clean, Green and Cheap: How Illinois Plans to Keep Your Electric Bill Low &#8211; Site Selection Magazine
+      -> Updated 1 pages: ComEd
+[wiki] Processing 343: Minnesota: The Right Kind of Surge &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Minnesota: The Right Kind of Surge &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 344: New Mexico: Why First Impressions Matter In New Mexico &#8211; Site Selection Magazine
+      -> Updated 1 pages: Endurance Technologies Inc.
+[wiki] Processing 345: Maryland: Lighting Up The Old Line State &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Maryland: Lighting Up The Old Line State &#8211; Site Select
+      -> Updated 0 pages: 
+[wiki] Processing 346: NORTHEAST: Major Life Sciences and Film Investments Head NORTHEAST &#8211; Site Selection Magazine
+      -> Updated 1 pages: Eli Lilly and Company
+[wiki] Processing 347: Indiana: How Indiana Leverages Sports for Economic Growth &#8211; Site Selection Magazine
+      -> Updated 1 pages: John Deere
+[wiki] Processing 348: MISSISSIPPI RIVER CORRIDOR: Twin Cities Exhibit Record Numbers And Resilience &#8211; Site Selection Magazine
+      -> Updated 1 pages: GREATER MSP Partnership
+[wiki] Processing 349: INTERSTATE CORRIDORS: Who’s Investing Where Along I-40 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: INTERSTATE CORRIDORS: Who’s Investing Where Along I-40 &#821
+      -> Updated 0 pages: 
+[wiki] Processing 350: Alabama: Projects and business continue to thrive in the Yellowhammer State &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Alabama: Projects and business continue to thrive in the Yel
+      -> Updated 0 pages: 
+[wiki] Processing 351: Area Spotlights &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Area Spotlights &#8211; Page 2 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 352: Area Spotlights &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Area Spotlights &#8211; Page 3 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 353: Area Spotlights &#8211; Page 37 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Area Spotlights &#8211; Page 37 &#8211; Site Selection Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 354: PORT OF SEATTLE: A HISTORICAL, WORKING WATERFRONT BUILT FOR THE FUTURE &#8211; Site Selection Magazine
+      -> Updated 1 pages: Port of Seattle
+[wiki] Processing 355: MARYLAND: Freedom to Maneuver &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: MARYLAND: Freedom to Maneuver &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 356: VIRGINIA: ADVANCING INNOVATION IN THE COMMONWEALTH &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: VIRGINIA: ADVANCING INNOVATION IN THE COMMONWEALTH &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 357: OKLAHOMA DEPARTMENT OF COMMERCE: OKLAHOMA Refines Critical Minerals Onshoring Capabilities &#8211; Site Selection Magazine
+      -> Updated 1 pages: Stardust Power Inc.
+[wiki] Processing 358: SAN BERNARDINO COUNTY, CALIFORNIA: Back to school, back to the future &#8211; Site Selection Magazine
+      -> Updated 1 pages: Loma Linda University Health
+[wiki] Processing 359: Consumers Energy: A POWERFUL FUTURE FOR Michigan &#8211; Site Selection Magazine
+      -> Updated 1 pages: Consumers Energy
+[wiki] Processing 360: TENNESSEE: The Nuclear Revival Likes Tennessee’s Industry IQ &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: TENNESSEE: The Nuclear Revival Likes Tennessee’s Industry IQ
+      -> Updated 0 pages: 
+[wiki] Processing 361: SCHERTZ, TEXAS: No Joke: Schertz Competes to Win In South Texas &#8211; Site Selection Magazine
+      -> Updated 1 pages: Schertz Economic Development Corp
+[wiki] Processing 362: VIRGINIA: Recent Biopharma Wins Are No Coincidence &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: VIRGINIA: Recent Biopharma Wins Are No Coincidence &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 363: SAN BERNARDINO COUNTY, CALIFORNIA: Going Boldly Where No Train Has Gone Before &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: SAN BERNARDINO COUNTY, CALIFORNIA: Going Boldly Where No Tra
+      -> Updated 0 pages: 
+[wiki] Processing 364: WINFIELD, KANSAS: Kansas’ Next Aerospace Industry Cluster Takes Shape &#8211; Site Selection Magazine
+      -> Updated 1 pages: GE Aerospace
+[wiki] Processing 365: PORT OF BROWNSVILLE: New Horizons Beckon In Brownsville &#8211; Site Selection Magazine
+      -> Updated 1 pages: Port of Brownsville
+[wiki] Processing 366: Oklahoma: The Critical State for Critical Minerals &#8211; Site Selection Magazine
+      -> Updated 1 pages: MLB Industrial
+[wiki] Processing 367: SAN BERNARDINO COUNTY, CALIFORNIA: Striking Gold &amp; Other Rare Earths in San Bernardino County &#8211; Site Selection Magazine
+      -> Updated 1 pages: MP Materials
+[wiki] Processing 368: LEDUC/NISKU, ALBERTA: Leduc Keeps Things Moving &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: LEDUC/NISKU, ALBERTA: Leduc Keeps Things Moving &#8211; Site
+      -> Updated 0 pages: 
+[wiki] Processing 369: COUNTRY OF GEORGIA: Rising Trends Converge in Georgia &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: COUNTRY OF GEORGIA: Rising Trends Converge in Georgia &#8211
+      -> Updated 0 pages: 
+[wiki] Processing 370: CONSUMERS ENERGY: Over a Thousand Acres of Advanced Manufacturing Opportunity &#8211; Site Selection Magazine
+      -> Updated 1 pages: Consumers Energy
+[wiki] Processing 371: SAN BERNARDINO COUNTY, CALIFORNIA: Precision Production Plants Its Flag in San Bernardino County &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: SAN BERNARDINO COUNTY, CALIFORNIA: Precision Production Plan
+      -> Updated 0 pages: 
+[wiki] Processing 372: NEW YORK CITY: Re:MADE In Brooklyn &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: NEW YORK CITY: Re:MADE In Brooklyn &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 373: ASCENSION PARISH, LOUISIANA: Why RiverPlex MegaPark Is on Every Site Selector’s Radar &#8211; Site Selection Magazine
+      -> Updated 1 pages: RiverPlex MegaPark
+[wiki] Processing 374: Investment Profile &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Silicon Ranch
+[wiki] Processing 375: Investment Profile &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investment Profile &#8211; Page 3 &#8211; Site Selection Mag
+      -> Updated 0 pages: 
+[wiki] Processing 376: Investment Profile &#8211; Page 24 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investment Profile &#8211; Page 24 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 377: HAMPTON ROADS: Authentic &amp; Transformative &#8211; Site Selection Magazine
+      -> Updated 1 pages: Hampton Roads Alliance
+[wiki] Processing 378: TENNESSEE VALLEY AUTHORITY: Town &amp; Country &#8211; Site Selection Magazine
+      -> Updated 1 pages: Tennessee Valley Authority
+[wiki] Processing 379: GREATER PHOENIX INTELLIGENCE REPORT: NEXT-GENERATION TRANSPORTATION: ON THE MOVE &#8211; Site Selection Magazine
+      -> Updated 1 pages: Honeywell Aerospace
+[wiki] Processing 380: GREATER PHOENIX INTELLIGENCE REPORT: HIGHER EDUCATION, WORKFORCE &amp; AI: Where AI Gets Real &#8211; Site Selection Magazine
+      -> Updated 1 pages: Cognite
+[wiki] Processing 381: GREATER PHOENIX INTELLIGENCE REPORT: BIOSCIENCE: ‘Transformative’ Describes Life Sciences Investments and the Scientific Progress Behind Them &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: GREATER PHOENIX INTELLIGENCE REPORT: BIOSCIENCE: ‘Transforma
+      -> Updated 0 pages: 
+[wiki] Processing 382: GREATER PHOENIX INTELLIGENCE REPORT: SEMICONDUCTORS: Where the Action Is &#8211; Site Selection Magazine
+      -> Updated 1 pages: TSMC
+[wiki] Processing 383: GREATER PHOENIX INTELLIGENCE REPORT: INTRODUCTION: A Region Coming Into Its Own &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: GREATER PHOENIX INTELLIGENCE REPORT: INTRODUCTION: A Region 
+      -> Updated 0 pages: 
+[wiki] Processing 384: GRAND JUNCTION, COLORADO: More Than Just A Pretty Place &#8211; Site Selection Magazine
+      -> Updated 1 pages: Goose Gear
+[wiki] Processing 385: Find Your Town &#8211; Site Selection Magazine
+      -> Updated 1 pages: TexasEDConnection
+[wiki] Processing 386: GEORGIA Moves Into a ‘New Phase’ &#8211; Site Selection Magazine
+      -> Updated 1 pages: GDEcD
+[wiki] Processing 387: Riverside County Offers ‘Powerhouse’ Ecosystem Driven by Diversity of Endeavors and Cultures &#8211; Site Selection Magazine
+      -> Updated 1 pages: Voltu Motor
+[wiki] Processing 388: Greater Phoenix: Breaking New Ground &#8211; Site Selection Magazine
+      -> Updated 1 pages: Arizona Commerce Authority
+[wiki] Processing 389: Greater Phoenix: Laying the Foundation for Innovation &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Greater Phoenix: Laying the Foundation for Innovation &#8211
+      -> Updated 0 pages: 
+[wiki] Processing 390: Get On the Bus for The Best of Texas &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Get On the Bus for The Best of Texas &#8211; Site Selection 
+      -> Updated 0 pages: 
+[wiki] Processing 391: Spoiler Alert: Quad Cities No Longer Best Kept Secret &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Spoiler Alert: Quad Cities No Longer Best Kept Secret &#8211
+      -> Updated 0 pages: 
+[wiki] Processing 392: Atlanta Stakes Claim As Soccer City USA &#8211; Site Selection Magazine
+      -> Updated 1 pages: U.S. Soccer Federation
+[wiki] Processing 393: Supercharging Growth Through Worker Training &#8211; Site Selection Magazine
+      -> Updated 1 pages: Kia
+[wiki] Processing 394: Innovative Archer Aviation Has Landed in Georgia &#8211; Site Selection Magazine
+      -> Updated 1 pages: Archer Aviation
+[wiki] Processing 395: Q&#038;A With the Commissioner &#8211; Site Selection Magazine
+      -> Updated 1 pages: Georgia Department of Economic Development
+[wiki] Processing 396: Georgia Digs In On EVs &#038; Clean Energy &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Georgia Digs In On EVs &#038; Clean Energy &#8211; Site Sele
+      -> Updated 0 pages: 
+[wiki] Processing 397: It Only Starts with Atlanta &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: It Only Starts with Atlanta &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 398: Tennessee Valley Authority: Born Ready &#8211; Site Selection Magazine
+      -> Updated 1 pages: Tennessee Valley Authority
+[wiki] Processing 399: More Than Just Fun &#038; Games &#8211; Site Selection Magazine
+      -> Updated 1 pages: Charlotte FC
+[wiki] Processing 400: Intelligence Reports &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Intelligence Reports &#8211; Page 2 &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 401: Intelligence Reports &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Intelligence Reports &#8211; Page 3 &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 402: Intelligence Reports &#8211; Page 4 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Intelligence Reports &#8211; Page 4 &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 403: Downtown Atlanta: City Within a City &#8211; Site Selection Magazine
+      -> Updated 1 pages: Centennial Yards Company
+[wiki] Processing 404: Costa Rica: The Evolution of an Economy &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Costa Rica: The Evolution of an Economy &#8211; Site Selecti
+      -> Updated 0 pages: 
+[wiki] Processing 405: Aligned for Sustainable Growth &#8211; Site Selection Magazine
+      -> Updated 1 pages: Boston Scientific Corp
+[wiki] Processing 406: Site Development: A Bedrock Principle &#8211; Site Selection Magazine
+      -> Updated 1 pages: Duke Energy
+[wiki] Processing 407: DAYLIGHT COME AND WE WANT TO GROW MORE &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: DAYLIGHT COME AND WE WANT TO GROW MORE &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 408: ‘Quality Human Capital’ Includes a Growing Cohort of Remote Workers &#8211; Site Selection Magazine
+      -> Updated 1 pages: Akamai
+[wiki] Processing 409: ‘A Natural Choice’ &#8211; Site Selection Magazine
+      -> Updated 1 pages: Bayer Group
+[wiki] Processing 410: WHERE CONNECTORS CONNECT &#8211; Site Selection Magazine
+      -> Updated 1 pages: Samtec
+[wiki] Processing 411: SPHERES OF INFLUENCE &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: SPHERES OF INFLUENCE &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 412: 200 Years Old this Year, Costa Rica Leads the Way Toward the Fourth Industrial Revolution &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 200 Years Old this Year, Costa Rica Leads the Way Toward the
+      -> Updated 0 pages: 
+[wiki] Processing 413: AQABA The Key to the Kingdom &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: AQABA The Key to the Kingdom &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 414: A Natural Hub to Reach the Americas &#038; the World &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: A Natural Hub to Reach the Americas &#038; the World &#8211;
+      -> Updated 0 pages: 
+[wiki] Processing 415: Essential Opportunity &#8211; Site Selection Magazine
+      -> Updated 1 pages: McKinsey & Co.
+[wiki] Processing 416: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 417: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 418: A More Civil Data Center Discourse &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: A More Civil Data Center Discourse &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 419: MROs Chart New Flight Plan in Broward County &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: MROs Chart New Flight Plan in Broward County &#8211; Site Se
+      -> Updated 0 pages: 
+[wiki] Processing 420: The Tariff Tradeoff &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The Tariff Tradeoff &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 421: Is Remote Work Even Remotely Working? &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Is Remote Work Even Remotely Working? &#8211; Site Selection
+      -> Updated 0 pages: 
+[wiki] Processing 422: Bay Area Bonanza &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Bay Area Bonanza &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 423: Fingers on the Federal Pulse &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Fingers on the Federal Pulse &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 424: Top Markets for New Markets &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Top Markets for New Markets &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 425: Health Care Report Card Finds Hawkeye State Cares Best &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Health Care Report Card Finds Hawkeye State Cares Best &#821
+      -> Updated 0 pages: 
+[wiki] Processing 426: Project Bulletin, May 4, 2026: Tempe, Arizona; Osceola, Arkansas; Chicago, Illinois &#8211; Site Selection Magazine
+      -> Updated 1 pages: Syenta
+[wiki] Processing 427: Project Bulletin, April 27, 2026: LaGrange, Georgia; Durham, North Carolina; Tulsa, Oklahoma &#8211; Site Selection Magazine
+      -> Updated 1 pages: Google
+[wiki] Processing 428: Investor Watch: May 26, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: May 26, 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 429: Investor Watch: May 21, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Automobili Lamborghini
+[wiki] Processing 430: Investor Watch: May 18, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: May 18, 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 431: Investor Watch: May 14, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: May 14, 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 432: Investor Watch: May 11, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: RoyOMartin
+[wiki] Processing 433: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 434: Economic Developer Directory &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Economic Developer Directory &#8211; Page 2 &#8211; Site Sel
+      -> Updated 0 pages: 
+[wiki] Processing 435: Economic Developer Directory &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Economic Developer Directory &#8211; Page 3 &#8211; Site Sel
+      -> Updated 0 pages: 
+[wiki] Processing 436: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 437: Canada Economic Developer Directory &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Canada Economic Developer Directory &#8211; Page 2 &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 438: Canada Economic Developer Directory &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Canada Economic Developer Directory &#8211; Page 3 &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 439: Canada Economic Developer Directory &#8211; Page 5 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Canada Economic Developer Directory &#8211; Page 5 &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 440: Economic Development Groups &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Economic Development Groups &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 441: Utilities &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Utilities &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 442: Ports and FTZs &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Ports and FTZs &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 443: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 444: Utilities Directory &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Utilities Directory &#8211; Page 2 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 445: Utilities Directory &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Utilities Directory &#8211; Page 3 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 446: Utilities Directory &#8211; Page 4 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Utilities Directory &#8211; Page 4 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 447: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 448: FTZ Ports Directory &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: FTZ Ports Directory &#8211; Page 2 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 449: FTZ Ports Directory &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: FTZ Ports Directory &#8211; Page 3 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 450: FTZ Ports Directory &#8211; Page 7 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: FTZ Ports Directory &#8211; Page 7 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 451: Where Law Careers Take Off &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Where Law Careers Take Off &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 452: A New Transit Solution Glyds Into Atlanta &#8211; Site Selection Magazine
+      -> Updated 1 pages: Glydways
+[wiki] Processing 453: How BPO Leaders Can Outwit AI Disruption and Political Uncertainty &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: How BPO Leaders Can Outwit AI Disruption and Political Uncer
+      -> Updated 0 pages: 
+[wiki] Processing 454: 2025- Globetrotting Multinational Remains in Gift Capital &#8211; Site Selection Magazine
+      -> Updated 1 pages: S.C. Unlimited
+[wiki] Processing 455: SoDo ATLANTA: Leaving Cookie-Cutter on the Cutting-Room Floor &#8211; Site Selection Magazine
+      -> Updated 1 pages: SoDo Atlanta LLC
+[wiki] Processing 456: An Incentives Wish List — What Companies Searching for Their Next Office Location Really Want from an Incentives Package &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: An Incentives Wish List — What Companies Searching for Their
+      -> Updated 0 pages: 
+[wiki] Processing 457: Looking for Greatness? Montana Has It. &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Looking for Greatness? Montana Has It. &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 458: Why a Key U.S. Drug Supplier is Doubling Down on Boca Raton &#8211; Site Selection Magazine
+      -> Updated 1 pages: ADMA Biologics
+[wiki] Processing 459: From Brownfield to Beacon &#8211; Site Selection Magazine
+      -> Updated 1 pages: Stonemont Financial Group
+[wiki] Processing 460: The Developer Who’s Transforming West Palm Beach &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The Developer Who’s Transforming West Palm Beach &#8211; Sit
+      -> Updated 0 pages: 
+[wiki] Processing 461: Egypt to Maximize Mineral Opportunities with Assist from China &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Egypt to Maximize Mineral Opportunities with Assist from Chi
+      -> Updated 0 pages: 
+[wiki] Processing 462: Programmed for Success: Pittsburgh’s Approach to Innovation Dominance &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Programmed for Success: Pittsburgh’s Approach to Innovation 
+      -> Updated 0 pages: 
+[wiki] Processing 463: Made In America, But Not In My Backyard &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Made In America, But Not In My Backyard &#8211; Site Selecti
+      -> Updated 0 pages: 
+[wiki] Processing 464: Coming to America: Lessons Learned from New Factory Investments &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Coming to America: Lessons Learned from New Factory Investme
+      -> Updated 0 pages: 
+[wiki] Processing 465: A Workforce of 85,000 International Data Scientists &#8211; Site Selection Magazine
+      -> Updated 1 pages: Zindi
+[wiki] Processing 466: How a Midwest Town Became America’s No. 1 Youth Sports Hub &#8211; Site Selection Magazine
+      -> Updated 1 pages: Westfield
+[wiki] Processing 467: Atlanta Area Airport Ramps Up for the World Cup — and What Comes After &#8211; Site Selection Magazine
+      -> Updated 1 pages: Fulton County Executive Airport
+[wiki] Processing 468: How to Build the Best City From Scratch &#8211; Site Selection Magazine
+      -> Updated 1 pages: Johns Creek
+[wiki] Processing 469: Georgia Tech Reimagines Community Connection &#8211; Site Selection Magazine
+      -> Updated 1 pages: Georgia Institute of Technology
+[wiki] Processing 470: Online Insider &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Online Insider &#8211; Page 2 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 471: Online Insider &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Online Insider &#8211; Page 3 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 472: Online Insider &#8211; Page 12 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Online Insider &#8211; Page 12 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 473: Investor Watch: May 7, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: May 7, 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 474: Investor Watch: May 4, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: May 4, 2026 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 475: Investor Watch: April 30, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Cushman & Wakefield
+[wiki] Processing 476: Investor Watch: April 27, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: April 27, 2026 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 477: Investor Watch: April 23, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: April 23, 2026 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 478: Investor Watch: April 20, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: April 20, 2026 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 479: Investor Watch: April 16, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: ZEISS Industrial Quality Solutions
+[wiki] Processing 480: Investor Watch: April 9, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Group14 Technologies
+[wiki] Processing 481: Investor Watch: April 13, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Meta
+[wiki] Processing 482: Investor Watch: March 30, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Ascend Elements
+[wiki] Processing 483: Investor Watch: April 6, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: April 6, 2026 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 484: Investor Watch: April 2, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: April 2, 2026 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 485: Investor Watch: March 16, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Joby Aviation
+[wiki] Processing 486: Investor Watch: March 23, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: March 23, 2026 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 487: Investor Watch: March 9, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: TSMC
+[wiki] Processing 488: Investor Watch: March 26, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Vector Systems Inc.
+[wiki] Processing 489: Investor Watch: March 12, 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch: March 12, 2026 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 490: Investor Watch: March 5, 2026 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Ho-Chunk Inc.
+[wiki] Processing 491: Investor Watch &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch &#8211; Page 2 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 492: Investor Watch &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch &#8211; Page 3 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 493: Investor Watch &#8211; Page 33 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Investor Watch &#8211; Page 33 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 494: Project Bulletin, April 20, 2026: Kaohsiung, Taiwan; Hale County, Texas; Griffin, Georgia &#8211; Site Selection Magazine
+      -> Updated 1 pages: Advanced Semiconductor Engineering
+[wiki] Processing 495: Project Bulletin, April 13, 2026: Seoul, South Korea; El Segundo, California; Lahti, Finland &#8211; Site Selection Magazine
+      -> Updated 1 pages: Hyundai Motor Group
+[wiki] Processing 496: Project Bulletin, April 6, 2026: Vance, Alabama; Lappeenranta, Finland; Norton Shores, Michigan &#8211; Site Selection Magazine
+      -> Updated 1 pages: Mercedes-Benz
+[wiki] Processing 497: Project Bulletin, March 30, 2026: Georgetown, Kentucky, and Princeton, Indiana; Liberty, Missouri; McAllen, Texas &#8211; Site Selection Magazine
+      -> Updated 1 pages: Toyota Motor Company
+[wiki] Processing 498: Project Bulletin, March 23, 2026: Pike County, Ohio; Nagpur, India; Joliet, Illinois &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Project Bulletin, March 23, 2026: Pike County, Ohio; Nagpur,
+      -> Updated 0 pages: 
+[wiki] Processing 499: Project Bulletin, March 16, 2026: Incheon, South Korea; Boston, Massachusetts; Kankakee, Illinois &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Project Bulletin, March 16, 2026: Incheon, South Korea; Bost
+      -> Updated 0 pages: 
+[wiki] Processing 500: Project Bulletin, February 23, 2026: Montgomery County, Pennsylvania; Jonesboro, Arkansas; Borlänge, Sweden &#8211; Site Selection Magazine
+      -> Updated 1 pages: Johnson & Johnson
+[wiki] Processing 501: Project Bulletin, March 9, 2026: Batavia Township, Ohio; Athlone, Ireland; Iberville Parish, Louisiana &#8211; Site Selection Magazine
+      -> Updated 1 pages: Dainty Foods
+[wiki] Processing 502: Project Bulletin, March 2, 2026: Caddo and Bossier Parishes, Louisiana; Gunsan, South Korea; Hurt, Virginia &#8211; Site Selection Magazine
+      -> Updated 1 pages: Amazon
+[wiki] Processing 503: Project Bulletin, February 16, 2026: Chennai, Tamil Nadu, India; Singapore; Cyberjaya, Selangor, Malaysia &#8211; Site Selection Magazine
+      -> Updated 1 pages: Mitsubishi Electric India
+[wiki] Processing 504: Project Bulletin, January 12, 2026: Santa Teresa, New Mexico; Dayton, Ohio; Hanover, Germany &#8211; Site Selection Magazine
+      -> Updated 1 pages: GreenPower Motor Company
+[wiki] Processing 505: Project Bulletin, January 5, 2026: Cedar Park, Texas; Chesapeake, Virginia; Westpoort, Amsterdam &#8211; Site Selection Magazine
+      -> Updated 1 pages: Creative 3D Technologies
+[wiki] Processing 506: Project Bulletin, December 29, 2025: Saint Francisville, Louisiana; Norton, Massachusetts; Jacksonville, Florida &#8211; Site Selection Magazine
+      -> Updated 1 pages: Hut 8
+[wiki] Processing 507: Project Bulletin &#8211; Page 6 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Project Bulletin &#8211; Page 6 &#8211; Site Selection Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 508: Project Bulletin &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Project Bulletin &#8211; Page 2 &#8211; Site Selection Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 509: 125 Years and Counting: A Glimpse Into One Nashville Company’s Widening Portfolio and Historic Photo Album &#8211; Site Selection Magazine
+      -> Updated 1 pages: John Bouchard & Sons
+[wiki] Processing 510: Who Cares? A Whole Lot of Us. &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Who Cares? A Whole Lot of Us. &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 511: Inc. 5000 Analysis Shows Spike in Health Care and Financial Services Firms &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Inc. 5000 Analysis Shows Spike in Health Care and Financial 
+      -> Updated 0 pages: 
+[wiki] Processing 512: Kings of the Mountain: Top Metros and Cities by Inc. 5000 Firms &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kings of the Mountain: Top Metros and Cities by Inc. 5000 Fi
+      -> Updated 0 pages: 
+[wiki] Processing 513: Eyes on the Prize: Top Performing States and Institutions at SkillsUSA &#8211; Site Selection Magazine
+      -> Updated 1 pages: SkillsUSA
+[wiki] Processing 514: Report Examines Regional Impact of NIH &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Report Examines Regional Impact of NIH &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 515: Places to Thrive &#8211; Site Selection Magazine
+      -> Updated 1 pages: Sun Home Saunas
+[wiki] Processing 516: Emerging Services Destinations in North America &#8211; Site Selection Magazine
+      -> Updated 1 pages: OCO Global
+[wiki] Processing 517: Johns Hopkins Tops List Again &#8211; Site Selection Magazine
+      -> Updated 1 pages: Johns Hopkins University
+[wiki] Processing 518: New Census Data Shine Light on Growing Metros, Cities and Towns &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: New Census Data Shine Light on Growing Metros, Cities and To
+      -> Updated 0 pages: 
+[wiki] Processing 519: May 29, 2025: Is Your Country Carrying Dead Weight? &#8211; Site Selection Magazine
+      -> Updated 1 pages: TMF Group
+[wiki] Processing 520: Ocean Breezes Rule: Puerto Rico and Oceania Top New Air Quality Rankings &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Ocean Breezes Rule: Puerto Rico and Oceania Top New Air Qual
+      -> Updated 0 pages: 
+[wiki] Processing 521: Hungry for Solutions? &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Hungry for Solutions? &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 522: Biggest of the Big &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Biggest of the Big &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 523: Female-Founded Unicorns Surge in New VC Deal Report from PitchBook &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Female-Founded Unicorns Surge in New VC Deal Report from Pit
+      -> Updated 0 pages: 
+[wiki] Processing 524: Taking Time with Census Data Makes Business Sense &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Taking Time with Census Data Makes Business Sense &#8211; Si
+      -> Updated 0 pages: 
+[wiki] Processing 525: Snapshot &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Snapshot &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 526: DHL’s ‘China Plus X’ Report Highlights a Familiar Strategy &#8211; Site Selection Magazine
+      -> Updated 1 pages: DHL
+[wiki] Processing 527: ‘Employers Definitely Need to Prepare’ &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: ‘Employers Definitely Need to Prepare’ &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 528: Snapshot &#8211; Page 4 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Snapshot &#8211; Page 4 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 529: Snapshot &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Snapshot &#8211; Page 3 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 530: Can Developers Breathe New Life into Dead Malls? &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Can Developers Breathe New Life into Dead Malls? &#8211; Sit
+      -> Updated 0 pages: 
+[wiki] Processing 531: Gambling on Growth &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Gambling on Growth &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 532: Quantifying the Impact of Foxconn &#8211; Site Selection Magazine
+      -> Updated 1 pages: Foxconn Technology Group
+[wiki] Processing 533: Banking on the Business of Sports &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Banking on the Business of Sports &#8211; Site Selection Mag
+      -> Updated 0 pages: 
+[wiki] Processing 534: Down on the Farm, a Simple Retail Formula Still Works &#8211; Site Selection Magazine
+      -> Updated 1 pages: Tractor Supply Co.
+[wiki] Processing 535: Fishers Test Kitchen Chefs Announced &#8211; Site Selection Magazine
+      -> Updated 1 pages: Fishers Test Kitchen
+[wiki] Processing 536: How Not to Mess Up a Site Selection Deal &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: How Not to Mess Up a Site Selection Deal &#8211; Site Select
+      -> Updated 0 pages: 
+[wiki] Processing 537: Help Wanted: Workers Who Speak Robot &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Help Wanted: Workers Who Speak Robot &#8211; Site Selection 
+      -> Updated 0 pages: 
+[wiki] Processing 538: At the Edge of Disorder &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: At the Edge of Disorder &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 539: How Louisville Competes for Talent in the Med-Tech Space &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: How Louisville Competes for Talent in the Med-Tech Space &#8
+      -> Updated 0 pages: 
+[wiki] Processing 540: How Millennials Are Changing the World of Work &#8211; Site Selection Magazine
+      -> Updated 1 pages: Ember
+[wiki] Processing 541: Moron Moments in Hong Kong &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Moron Moments in Hong Kong &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 542: Louisville Set to Host 5th Annual TrustBelt Corporates &#038; Consultants Forum August 19-21 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Louisville Set to Host 5th Annual TrustBelt Corporates &#038
+      -> Updated 0 pages: 
+[wiki] Processing 543: Minnesota Creates Launchpad for Growing Startups &#8211; Site Selection Magazine
+      -> Updated 1 pages: DEED
+[wiki] Processing 544: Ten Reasons to Visit Louisville for TrustBelt 2019 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Ten Reasons to Visit Louisville for TrustBelt 2019 &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 545: Why Indy, Philly Stand a Shot to Land Amazon &#8211; Site Selection Magazine
+      -> Updated 1 pages: Amazon
+[wiki] Processing 546: Archived &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Archived &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 547: Archived &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Archived &#8211; Page 3 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 548: Archived &#8211; Page 27 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Merck
+[wiki] Processing 549: Charging Ahead &#8211; Site Selection Magazine
+      -> Updated 1 pages: Volkswagen
+[wiki] Processing 550: The Push and Pull of Green Building &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The Push and Pull of Green Building &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 551: Swedish Catalyst &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Swedish Catalyst &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 552: Where Do All the Batteries Go? &#8211; Site Selection Magazine
+      -> Updated 1 pages: Groupe Renault
+[wiki] Processing 553: Windows on a More Efficient World &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Windows on a More Efficient World &#8211; Site Selection Mag
+      -> Updated 0 pages: 
+[wiki] Processing 554: Berlin and the Burgh &#8211; Site Selection Magazine
+      -> Updated 1 pages: Siemens
+[wiki] Processing 555: Hanging in the Balance &#8211; Site Selection Magazine
+      -> Updated 1 pages: MEAG Power
+[wiki] Processing 556: Lost Generation &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Lost Generation &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 557: Define Your Therms &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Define Your Therms &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 558: Ladies and Gentlemen, Charge Your Engines &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Ladies and Gentlemen, Charge Your Engines &#8211; Site Selec
+      -> Updated 0 pages: 
+[wiki] Processing 559: Refinery Restart Awaits Legislative Approval in the U.S. Virgin Islands &#8211; Site Selection Magazine
+      -> Updated 1 pages: HOVENSA
+[wiki] Processing 560: Power Game &#8211; Site Selection Magazine
+      -> Updated 1 pages: Duke Energy Renewables
+[wiki] Processing 561: Sun and Wind Projects Debut in Northwest Ohio &#8211; Site Selection Magazine
+      -> Updated 1 pages: First Solar
+[wiki] Processing 562: Soup’s On in New Jersey &#8211; Site Selection Magazine
+      -> Updated 1 pages: Campbell Soup Company
+[wiki] Processing 563: Mexico Past and Future &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Mexico Past and Future &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 564: New Solar Census, No Sunny Consensus &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: New Solar Census, No Sunny Consensus &#8211; Site Selection 
+      -> Updated 0 pages: 
+[wiki] Processing 565: Lessons from the Neverending Winter &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Lessons from the Neverending Winter &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 566: Autonomous Autos Roll On &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Autonomous Autos Roll On &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 567: The Pipeline Promise &#8211; Site Selection Magazine
+      -> Updated 1 pages: Inter Pipeline
+[wiki] Processing 568: Making High Performance Buildings Cost Less &#8211; Site Selection Magazine
+      -> Updated 1 pages: cove.tool
+[wiki] Processing 569: Norway’s Trump Card &#8211; Site Selection Magazine
+      -> Updated 1 pages: Statoil
+[wiki] Processing 570: Massachusetts, California and Rhode Island Do the Most to Use the Least &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Massachusetts, California and Rhode Island Do the Most to Us
+      -> Updated 0 pages: 
+[wiki] Processing 571: Get Charged Up &#8211; Site Selection Magazine
+      -> Updated 1 pages: Electrify America
+[wiki] Processing 572: Electron Immigration &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Electron Immigration &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 573: Energy Report &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Energy Report &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 574: Energy Report &#8211; Page 11 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Energy Report &#8211; Page 11 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 575: Energy Report &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Energy Report &#8211; Page 3 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 576: Starship Troopers &#8211; Site Selection Magazine
+      -> Updated 1 pages: Aerojet Rocketdyne
+[wiki] Processing 577: Univ. of Nottingham To Collaborate on Asia Aerospace City &#8211; Site Selection Magazine
+      -> Updated 1 pages: The University of Nottingham
+[wiki] Processing 578: To the Moon, Alice! &#8211; Site Selection Magazine
+[wiki] Entity 'XCOR Aerospace' -> merging into existing page 'GE Aerospace' (score=0.83)
+      -> Updated 1 pages: GE Aerospace
+[wiki] Processing 579: US, Global Locations Ranked For Manufacturing Attractiveness  &#8211; Site Selection Magazine
+      -> Updated 1 pages: PwC
+[wiki] Processing 580: Malaysian Investment Development Authority Hosts Aerospace Industry Forum &#8211; Site Selection Magazine
+      -> Updated 1 pages: MIDA
+[wiki] Processing 581: The Multiplier Effect &#8211; Site Selection Magazine
+      -> Updated 1 pages: Apple Computer
+[wiki] Processing 582: Why Connecticut, United Technologies Corp. Inked a Landmark Agreement &#8211; Site Selection Magazine
+      -> Updated 1 pages: United Technologies Corp.
+[wiki] Processing 583: The Aerotropolis EMEA Conference Report, Part 2: &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The Aerotropolis EMEA Conference Report, Part 2: &#8211; Sit
+      -> Updated 0 pages: 
+[wiki] Processing 584: The Aerotropolis EMEA Conference Report, Part 3: &#8211; Site Selection Magazine
+      -> Updated 1 pages: Dube Tradeport
+[wiki] Processing 585: How a Small State Supports A Big and Growing Aerospace Sector &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: How a Small State Supports A Big and Growing Aerospace Secto
+      -> Updated 0 pages: 
+[wiki] Processing 586: GE Aviation Invests in Indiana, Alabama Facilities  &#8211; Site Selection Magazine
+      -> Updated 1 pages: GE Aviation
+[wiki] Processing 587: Cultivating Ontario’s Aerospace Future at Downsview Park &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Cultivating Ontario’s Aerospace Future at Downsview Park &#8
+      -> Updated 0 pages: 
+[wiki] Processing 588: Washington Wins 777X Assembly Facility &#8211; Site Selection Magazine
+      -> Updated 1 pages: Boeing
+[wiki] Processing 589: A ‘Second Golden Age’ for the US Aviation Industry &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: A ‘Second Golden Age’ for the US Aviation Industry &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 590: Nevada and five other sites are chosen for UAV development work &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Nevada and five other sites are chosen for UAV development w
+      -> Updated 0 pages: 
+[wiki] Processing 591: The Aerospace Industry &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The Aerospace Industry &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 592: Drones &#8216;R&#8217; Us &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Drones &#8216;R&#8217; Us &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 593: Clear Air Ahead &#8211; Site Selection Magazine
+      -> Updated 1 pages: West Star Aviation
+[wiki] Processing 594: Aerospace Report &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Gatwick Diamond Business
+[wiki] Processing 595: Where to Get Vertical &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Where to Get Vertical &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 596: A to Zed, Part Two &#8211; Site Selection Magazine
+      -> Updated 1 pages: AstraZeneca
+[wiki] Processing 597: The First Portland &#8211; Site Selection Magazine
+      -> Updated 1 pages: Covetrus
+[wiki] Processing 598: Promega Catalyzes Community, Clones Sustainability Strategy &#8211; Site Selection Magazine
+      -> Updated 1 pages: Promega Corporation
+[wiki] Processing 599: Tipping the Scales? &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Tipping the Scales? &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 600: McKesson’s Big Move &#8211; Site Selection Magazine
+      -> Updated 1 pages: McKesson Corporation
+[wiki] Processing 601: BD Injects More Capital into Nebraska &#8211; Site Selection Magazine
+      -> Updated 1 pages: Becton, Dickinson and Co.
+[wiki] Processing 602: Healing and Learning Combine to Drive Earnings &#8211; Site Selection Magazine
+      -> Updated 1 pages: Mayo Clinic
+[wiki] Processing 603: Silent Scourge &#8211; Site Selection Magazine
+      -> Updated 1 pages: Quest Diagnostics
+[wiki] Processing 604: THC, CBD and GDP &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection Magazine
+[wiki] Processing 605: Site Selection for Life Sciences Companies in Europe &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection for Life Sciences Companies in Europe &#8211;
+      -> Updated 0 pages: 
+[wiki] Processing 606: Fresh Blood &#8211; Site Selection Magazine
+      -> Updated 1 pages: Grifols
+[wiki] Processing 607: Mini Brains and Not-So-Mini Brains &#8211; Site Selection Magazine
+      -> Updated 1 pages: Montreal Neurological Institute and Hospital
+[wiki] Processing 608: Biologics Bonanza &#8211; Site Selection Magazine
+      -> Updated 1 pages: WuXi Biologics
+[wiki] Processing 609: Running with the Pack &#8211; Site Selection Magazine
+      -> Updated 1 pages: Revolution
+[wiki] Processing 610: Where the Scientists Go &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Where the Scientists Go &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 611: Health Tech On the Upswing in Trio of Quebec Metros &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Health Tech On the Upswing in Trio of Quebec Metros &#8211; 
+      -> Updated 0 pages: 
+[wiki] Processing 612: Spallation Sensation &#8211; Site Selection Magazine
+      -> Updated 1 pages: ESS
+[wiki] Processing 613: Lights Out &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Lights Out &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 614: Kaiser Saves Money with Move to Bay Area &#8211; Site Selection Magazine
+      -> Updated 1 pages: Kaiser Family Foundation
+[wiki] Processing 615: &#8216;Top Down and Sideways&#8217; &#8211; Site Selection Magazine
+      -> Updated 1 pages: Teva Pharmaceuticals
+[wiki] Processing 616: High Signs &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: High Signs &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 617: Is It Real? &#8211; Site Selection Magazine
+      -> Updated 1 pages: Syndaver
+[wiki] Processing 618: Life Sciences &#8211; Page 11 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Life Sciences &#8211; Page 11 &#8211; Site Selection Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 619: &#8216;You Can&#8217;t Find This Stuff in Papers&#8217; &#8211; Site Selection Magazine
+      -> Updated 1 pages: MIT
+[wiki] Processing 620: Only in Australia &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Only in Australia &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 621: One Night in Bangkok &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: One Night in Bangkok &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 622: Everything&#8217;s Better with Lime &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Everything&#8217;s Better with Lime &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 623: Searching for Friday in Sydney &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Searching for Friday in Sydney &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 624: Oktoberfest in Munich &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Oktoberfest in Munich &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 625: Alligators, Transexual Cats and Corn Fritters &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Alligators, Transexual Cats and Corn Fritters &#8211; Site S
+      -> Updated 0 pages: 
+[wiki] Processing 626: Breathing Beijing &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Breathing Beijing &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 627: Flinging food in Beijing &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Flinging food in Beijing &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 628: I&#8217;m in Micanopy. On Purpose. &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: I&#8217;m in Micanopy. On Purpose. &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 629: A Very Thai Massage &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: A Very Thai Massage &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 630: My Shanghai Addiction &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: My Shanghai Addiction &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 631: At the Edge of Disorder: Welcome to the New World &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: At the Edge of Disorder: Welcome to the New World &#8211; Si
+      -> Updated 0 pages: 
+[wiki] Processing 632: TrustBelt &#8211; Page 4 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Cabela's
+[wiki] Processing 633: TrustBelt &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: TrustBelt &#8211; Page 2 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 634: TrustBelt &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: TrustBelt &#8211; Page 3 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 635: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 636: Texas Economic Development Guide 2026 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Texas Economic Development Guide 2026 &#8211; Site Selection
+      -> Updated 0 pages: 
+[wiki] Processing 637: Great Lakes Investment Guide 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Great Lakes Investment Guide 2025 &#8211; Site Selection Mag
+      -> Updated 0 pages: 
+[wiki] Processing 638: Illinois Investment Guide 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Illinois Investment Guide 2025 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 639: 2026 Workforce Guide &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2026 Workforce Guide &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 640: 2025 Workforce Guide &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2025 Workforce Guide &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 641: 2024 Workforce Guide &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2024 Workforce Guide &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 642: 2023 Workforce Guide &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2023 Workforce Guide &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 643: 2022 Workforce Guide &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2022 Workforce Guide &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 644: World's Most Competitive Cities 2018
+[wiki] Skipping low-value extraction for: World's Most Competitive Cities 2018
+      -> Updated 0 pages: 
+[wiki] Processing 645: Mississippi Development Guide 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Mississippi Development Guide 2025 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 646: Michigan Development Guide 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Michigan Development Guide 2025 &#8211; Site Selection Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 647: Texas Economic Development Guide 2025: BIGGER BETTER TEXAS &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Texas Economic Development Guide 2025: BIGGER BETTER TEXAS &
+      -> Updated 0 pages: 
+[wiki] Processing 648: Kentucky Economic Development Guide 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kentucky Economic Development Guide 2025 &#8211; Site Select
+      -> Updated 0 pages: 
+[wiki] Processing 649: Arkansas Economic Development Guide 2025 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Arkansas Economic Development Guide 2025 &#8211; Site Select
+      -> Updated 0 pages: 
+[wiki] Processing 650: Illinois Investment Guide 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Illinois Investment Guide 2024 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 651: Mississippi Development Guide 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Mississippi Development Guide 2024 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 652: Oregon Investment Guide 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Oregon Investment Guide 2024 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 653: Ohio Business Growth Guide 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Ohio Business Growth Guide 2024 &#8211; Site Selection Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 654: The Future is Texas 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: The Future is Texas 2024 &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 655: Kentucky Economic Development Guide 2024: Forward Together &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kentucky Economic Development Guide 2024: Forward Together &
+      -> Updated 0 pages: 
+[wiki] Processing 656: Kansas 2024 &#8211; The New Gold Standard &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kansas 2024 &#8211; The New Gold Standard &#8211; Site Selec
+      -> Updated 0 pages: 
+[wiki] Processing 657: Choose Washington 2023 &#8211; 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Choose Washington 2023 &#8211; 2024 &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 658: Illinois Investment Guide 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Illinois Investment Guide 2023 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 659: Mississippi Development Guide 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Mississippi Development Guide 2023 &#8211; Site Selection Ma
+      -> Updated 0 pages: 
+[wiki] Processing 660: Michigan Development Guide 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Michigan Development Guide 2023 &#8211; Site Selection Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 661: Building The Texas Of Tomorrow 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Building The Texas Of Tomorrow 2023 &#8211; Site Selection M
+      -> Updated 0 pages: 
+[wiki] Processing 662: Massachusetts &#8211; Economic Development Guide 2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Massachusetts &#8211; Economic Development Guide 2023 &#8211
+      -> Updated 0 pages: 
+[wiki] Processing 663: State &amp; Area Guides &#8211; Page 2 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: State &amp; Area Guides &#8211; Page 2 &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 664: State &amp; Area Guides &#8211; Page 3 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: State &amp; Area Guides &#8211; Page 3 &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 665: State &amp; Area Guides &#8211; Page 5 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: State &amp; Area Guides &#8211; Page 5 &#8211; Site Selectio
+      -> Updated 0 pages: 
+[wiki] Processing 666: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 667: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 668: World&#8217;s Most Competitive Cities 2018 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: World&#8217;s Most Competitive Cities 2018 &#8211; Site Sele
+      -> Updated 0 pages: 
+[wiki] Processing 669: World&#8217;s Most Competitive Cities 2017 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: World&#8217;s Most Competitive Cities 2017 &#8211; Site Sele
+      -> Updated 0 pages: 
+[wiki] Processing 670: World&#8217;s Most Competitive Cities 2015 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: World&#8217;s Most Competitive Cities 2015 &#8211; Site Sele
+      -> Updated 0 pages: 
+[wiki] Processing 671: World&#8217;s Most Competitive Cities 2013 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: World&#8217;s Most Competitive Cities 2013 &#8211; Site Sele
+      -> Updated 0 pages: 
+[wiki] Processing 672: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 673: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 674: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 675: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 676: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 677: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 678: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 679: (Print & Digital) Qualified Paid,  Nonpaid
+[wiki] Skipping low-value extraction for: (Print & Digital) Qualified Paid,  Nonpaid
+      -> Updated 0 pages: 
+[wiki] Processing 680: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 681: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 682: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 683: 
+      -> Updated 1 pages: Conway Data
+[wiki] Processing 684: Ron Starner &#8211; Site Selection Magazine
+[wiki] Entity 'Conway Data Inc.' -> merging into existing page 'Conway Data' (score=1.00)
+      -> Updated 1 pages: Conway Data
+[wiki] Processing 685: Adam Bruns &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Adam Bruns &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 686: Kelly Barraza &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kelly Barraza &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 687: Alexis Elmore &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Alexis Elmore &#8211; Site Selection Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 688: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 689: 
+      -> Updated 1 pages: Site Selection
+[wiki] Processing 690: 2026-03-02: Texas and North Dakota Named Site Selection Magazine Governor&#8217;s Cup Champions &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2026-03-02: Texas and North Dakota Named Site Selection Maga
+      -> Updated 0 pages: 
+[wiki] Processing 691: 2026-01-05: Dallas-Ft. Worth Top Tech Hub; North Carolina No. 1 in Workforce Development &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2026-01-05: Dallas-Ft. Worth Top Tech Hub; North Carolina No
+      -> Updated 0 pages: 
+[wiki] Processing 692: 2025-11-03: Texas Claims Site Selection&#8217;s Top State Business Climate for 2025 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection Magazine
+[wiki] Processing 693: 2025-09-02: Site Selection Names Global Groundwork Index Leaders, Canada&#8217;s Best Locations and Top Utilities in Economic Development &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2025-09-02: Site Selection Names Global Groundwork Index Lea
+      -> Updated 0 pages: 
+[wiki] Processing 694: 2025-07-01: Site Selection Publishes 2025 Sustainability Rankings, America’s Best Counties &#038; Top Startup Ecosystems &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2025-07-01: Site Selection Publishes 2025 Sustainability Ran
+      -> Updated 0 pages: 
+[wiki] Processing 695: 2025-05-01: Site Selection Names Global Best to Invest Locations, Awards Prosperity Cup and Mac Conway Awards for Excellence in Regional Economic Development &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: 2025-05-01: Site Selection Names Global Best to Invest Locat
+      -> Updated 0 pages: 
+[wiki] Processing 696: 2025-03-03: Texas, South Dakota Repeat as Site Selection Magazine Governor&#8217;s Cup Champions &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection
+[wiki] Processing 697: 2024-11-01: Texas Claims Top State Business Climate for 2024 &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection
+[wiki] Processing 698: Site Selection Names Global Groundwork Index Leaders, Canada&#8217;s Best Locations and Top Utilities in Economic Development &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Site Selection Names Global Groundwork Index Leaders, Canada
+      -> Updated 0 pages: 
+[wiki] Processing 699: Texas, South Dakota Earn Site Selection Magazine&#8217;s Governor&#8217;s Cup Awards &#8211; Site Selection Magazine
+      -> Updated 1 pages: Site Selection
+[wiki] Processing 700: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 701: 
+      -> Updated 1 pages: Cluttons
+[wiki] Processing 702: Putting On the Miles &#8211; Site Selection Magazine
+      -> Updated 1 pages: Giti Tire
+[wiki] Processing 703: Fired Up &#8211; Site Selection Magazine
+      -> Updated 1 pages: Deltech
+[wiki] Processing 704: Project Bulletin: May 20, 2024 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Project Bulletin: May 20, 2024 &#8211; Site Selection Magazi
+      -> Updated 0 pages: 
+[wiki] Processing 705: SIDEBAR: A Checklist for Corporate Campus Planners &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: SIDEBAR: A Checklist for Corporate Campus Planners &#8211; S
+      -> Updated 0 pages: 
+[wiki] Processing 706: SILICON RANCH: How Communities Win In the Solar Farm Arena &#8211; Site Selection Magazine
+      -> Updated 1 pages: Silicon Ranch
+[wiki] Processing 707: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 708: 
+[wiki] Skipping low-value extraction for: 
+      -> Updated 0 pages: 
+[wiki] Processing 709: Kentucky by the Numbers 2020-2023 &#8211; Site Selection Magazine
+[wiki] Skipping low-value extraction for: Kentucky by the Numbers 2020-2023 &#8211; Site Selection Mag
+      -> Updated 0 pages: 
+[wiki] Processing 710: What Businesses are Coming to Right to Work Georgia? - NRTWC
+[wiki] Skipping low-value extraction for: What Businesses are Coming to Right to Work Georgia? - NRTWC
+      -> Updated 0 pages: 
+[wiki] Processing 711: apple-icon-57x57.png
+[wiki] Skipping low-value extraction for: apple-icon-57x57.png
+      -> Updated 0 pages: 
+[wiki] Processing 712: apple-icon-60x60.png
+[wiki] Skipping low-value extraction for: apple-icon-60x60.png
+      -> Updated 0 pages: 
+[wiki] Processing 713: apple-icon-72x72.png
+[wiki] Skipping low-value extraction for: apple-icon-72x72.png
+      -> Updated 0 pages: 
+[wiki] Processing 714: apple-icon-76x76.png
+[wiki] Skipping low-value extraction for: apple-icon-76x76.png
+      -> Updated 0 pages: 
+[wiki] Processing 715: apple-icon-114x114.png
+[wiki] Skipping low-value extraction for: apple-icon-114x114.png
+      -> Updated 0 pages: 
+[wiki] Processing 716: apple-icon-120x120.png
+[wiki] Skipping low-value extraction for: apple-icon-120x120.png
+      -> Updated 0 pages: 
+[wiki] Processing 717: apple-icon-144x144.png
+[wiki] Skipping low-value extraction for: apple-icon-144x144.png
+      -> Updated 0 pages: 
+[wiki] Processing 718: apple-icon-152x152.png
+[wiki] Skipping low-value extraction for: apple-icon-152x152.png
+      -> Updated 0 pages: 
+[wiki] Processing 719: apple-icon-180x180.png
+[wiki] Skipping low-value extraction for: apple-icon-180x180.png
+      -> Updated 0 pages: 
+[wiki] Processing 720: android-icon-192x192.png
+[wiki] Skipping low-value extraction for: android-icon-192x192.png
+      -> Updated 0 pages: 
+[wiki] Processing 721: favicon-32x32.png
+[wiki] Skipping low-value extraction for: favicon-32x32.png
+      -> Updated 0 pages: 
+[wiki] Processing 722: favicon-96x96.png
+[wiki] Skipping low-value extraction for: favicon-96x96.png
+      -> Updated 0 pages: 
+[wiki] Processing 723: favicon-16x16.png
+[wiki] Skipping low-value extraction for: favicon-16x16.png
+      -> Updated 0 pages: 
+[wiki] Processing 724: What Businesses are Coming to Right to Work Georgia? - NRTWC
+[wiki] Skipping low-value extraction for: What Businesses are Coming to Right to Work Georgia? - NRTWC
+      -> Updated 0 pages: 
+[wiki] Processing 725: National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 726: About The National Right to Work Committee - NRTWC
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 727: Right To Work
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 728: Join Us Today! - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 729: Contact National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 730: National Right to Work Act Petition - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 731: State Legislation - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 732: Federal Legislation - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 733: News - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 734: Newsletter Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 735: 
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 736: Freedom from Union Violence Act - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 737: Legislation Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 738: The National Right to Work Act - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 739: Police &amp; Fire Monopoly Bargaining - National Right To Work Committee
+[wiki] Skipping low-value extraction for: Police &amp; Fire Monopoly Bargaining - National Right To Wo
+      -> Updated 0 pages: 
+[wiki] Processing 740: Donate - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 741: Right to Work Georgia Sees Growth from Heliox and Others - NRTWC
+[wiki] Skipping low-value extraction for: Right to Work Georgia Sees Growth from Heliox and Others - N
+      -> Updated 0 pages: 
+[wiki] Processing 742: Welcome and Thank You for taking action today! - NRTWC
+      -> Updated 1 pages: NRTWC
+[wiki] Processing 743: Facebook
+[wiki] Skipping low-value extraction for: Facebook
+      -> Updated 0 pages: 
+[wiki] Processing 744: Georgia Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 745: Economic Development in RTW States Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 746: Right to Work Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 747: Right To Work States Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 748: Braselton Archives - National Right To Work Committee
+[wiki] Skipping low-value extraction for: Braselton Archives - National Right To Work Committee
+      -> Updated 0 pages: 
+[wiki] Processing 749: Area Development Magazine Archives - National Right To Work Committee
+[wiki] Skipping low-value extraction for: Area Development Magazine Archives - National Right To Work 
+      -> Updated 0 pages: 
+[wiki] Processing 750: economic development Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 751: economic development in Right to Work States Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 752: economic growth Archives - National Right To Work Committee
+      -> Updated 1 pages: Porpiglia Farms
+[wiki] Processing 753: economy Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 754: expansion Archives - National Right To Work Committee
+[wiki] Skipping low-value extraction for: expansion Archives - National Right To Work Committee
+      -> Updated 0 pages: 
+[wiki] Processing 755: Right to Work states Archives - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 756: Mobilization Frustrates Forced-Dues Scheme - NRTWC
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 757: Michigan Workers and Families Have Been Hurt - NRTWC
+      -> Updated 1 pages: National Right To Work Committee
+[wiki] Processing 758: Will Idaho Bust Big Labor Collection Racket?  - NRTWC
+[wiki] Skipping low-value extraction for: Will Idaho Bust Big Labor Collection Racket?  - NRTWC
+      -> Updated 0 pages: 
+[wiki] Processing 759: Privacy Policy - National Right To Work Committee
+      -> Updated 1 pages: National Right To Work Committee
+
+[wiki] Done!
+[wiki] Documents processed: 759
+[wiki] Page updates: 341
+[wiki] Total pages: 205
+===== Ingesting kb/raw_docs/gov_docs.jsonl =====
+[wiki] Using Ollama at http://localhost:11434
+[wiki] Model: qwen2.5:14b
+[wiki] Ingesting from kb/raw_docs/gov_docs.jsonl
+[wiki] Wiki directory: kb/wiki
+[wiki] Processing 1: Green Vehicle Guide | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 2: Department of Energy
+      -> Updated 1 pages: Department of Energy
+[wiki] Processing 3: Alternative Fuels Data Center: Alternative Fueling Station Locator
+[wiki] Skipping low-value extraction for: Alternative Fuels Data Center: Alternative Fueling Station L
+      -> Updated 0 pages: 
+[wiki] Processing 4: Currently Active Alerts | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 5: 404 - File or directory not found. | Federal Highway Administration
+      -> Updated 1 pages: Federal Highway Administration
+[wiki] Processing 6: Environmental Topics | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 7: U.S. Environmental Protection Agency | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 8: Air Topics | US EPA
+[wiki] Skipping low-value extraction for: Air Topics | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 9: Bed Bugs: Get Them Out and Keep Them Out | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 10: Chemicals, Pesticides and Toxics Topics | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 11: Emergency Response | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 12: Environmental Information by Location | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 13: Health Topics | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 14: Land, Waste, and Cleanup Topics | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 15: Lead | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 16: Mold | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 17: Radon | US EPA
+[wiki] Skipping low-value extraction for: Radon | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 18: Research | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 19: Science Topics | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 20: Water Topics | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 21: Laws &amp; Regulations | US EPA
+[wiki] Skipping low-value extraction for: Laws &amp; Regulations | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 22: Regulatory Information By Business Sector | US EPA
+[wiki] Skipping low-value extraction for: Regulatory Information By Business Sector | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 23: Regulatory and Guidance Information By Topic | US EPA
+[wiki] Skipping low-value extraction for: Regulatory and Guidance Information By Topic | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 24: Compliance | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 25: Enforcement | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 26: EPA Guidance Documents | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 27: Laws and Executive Orders | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 28: Regulations | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 29: Report a Violation | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 30: EPA OIG Hotline Complaint Form | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 31: About EPA | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 32: Our Mission and What We Do | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 33: Regional and Geographic Offices | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 34: Research Centers, Programs, and Science Advisory Organizations | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 35: Planning, Budget, and Results | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 36: EPA Organization Chart | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 37: EPA History | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 38: The EPA Automotive Trends Report | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 39: 50 Years of EPA’s Automotive Trends Report | US EPA
+      -> Updated 1 pages: EPA
+[wiki] Processing 40: Think You Know About Cars? | US EPA
+[wiki] Skipping low-value extraction for: Think You Know About Cars? | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 41: Plug-in Electric Vehicle Charging: The Basics | US EPA
+[wiki] Skipping low-value extraction for: Plug-in Electric Vehicle Charging: The Basics | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 42: Getting Started with Home EV Charging | US EPA
+[wiki] Skipping low-value extraction for: Getting Started with Home EV Charging | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 43: Watt&#039;s Important? Seven Tips Every EV Driver Should Know! | US EPA
+[wiki] Skipping low-value extraction for: Watt&#039;s Important? Seven Tips Every EV Driver Should Kno
+      -> Updated 0 pages: 
+[wiki] Processing 44: Electric Vehicle Myths | US EPA
+[wiki] Skipping low-value extraction for: Electric Vehicle Myths | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 45: Electric &amp; Plug-In Hybrid Electric Vehicles | US EPA
+[wiki] Skipping low-value extraction for: Electric &amp; Plug-In Hybrid Electric Vehicles | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 46: Hydrogen in Transportation | US EPA
+[wiki] Skipping low-value extraction for: Hydrogen in Transportation | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 47: Popular Pages | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 48: Learn About Green Vehicles | US EPA
+[wiki] Skipping low-value extraction for: Learn About Green Vehicles | US EPA
+      -> Updated 0 pages: 
+[wiki] Processing 49: Consider a SmartWay Vehicle | US EPA
+      -> Updated 1 pages: US EPA
+[wiki] Processing 50: Plug-in Electric Vehicle Charging: The Details | US EPA
+[wiki] Skipping low-value extraction for: Plug-in Electric Vehicle Charging: The Details | US EPA
+      -> Updated 0 pages: 
+
+[wiki] Done!
+[wiki] Documents processed: 50
+[wiki] Page updates: 35
+[wiki] Total pages: 209
+===== Ingesting kb/raw_docs/news.jsonl =====
+[wiki] Using Ollama at http://localhost:11434
+[wiki] Model: qwen2.5:14b
+[wiki] Ingesting from kb/raw_docs/news.jsonl
+[wiki] Wiki directory: kb/wiki
+[wiki] Processing 1: Page not found | Georgia Environmental Finance Authority
+      -> Updated 1 pages: Georgia Environmental Finance Authority
+[wiki] Processing 2: Georgia | Electrek
+[wiki] Skipping low-value extraction for: Georgia | Electrek
+      -> Updated 0 pages: 
+[wiki] Processing 3: Page Not Found - Green Car Reports
+[wiki] Skipping low-value extraction for: Page Not Found - Green Car Reports
+      -> Updated 0 pages: 
+[wiki] Processing 4: 404
+[wiki] Entity 'GeorgiaPower' -> merging into existing page 'Georgia Power' (score=0.96)
+      -> Updated 1 pages: Georgia Power
+
+[wiki] Done!
+[wiki] Documents processed: 4
+[wiki] Page updates: 2
+[wiki] Total pages: 210
+===== Ingesting kb/raw_docs/other.jsonl =====
+[wiki] Using Ollama at http://localhost:11434
+[wiki] Model: qwen2.5:14b
+[wiki] Ingesting from kb/raw_docs/other.jsonl
+[wiki] Wiki directory: kb/wiki
+[wiki] Processing 1: Duckyang Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Duckyang Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 2: Korea-Based Duckyang Opens Braselton, Georgia, Manufacturing Plant - Area Development
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 3: Braselton Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Braselton Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 4: Features - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Features - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 5: Upfront - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Upfront - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 6: Opinion - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Opinion - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 7: Our State - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Our State - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 8: Downtime - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Downtime - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 9: Honors - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Honors - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 10: Annual Publications - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 11: Special Sections - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Special Sections - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 12: About Us - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 13: Subscribe - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 14: Advertise - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 15: Nominations - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 16: Contact Us - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 17: Issue Archive - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Issue Archive - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 18: Latest Trends - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Latest Trends - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 19: Plaques - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 20: Subscribe - E-News - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend
+[wiki] Processing 21: Georgia Trend Magazine - Georgia Business, Politics and Economic Development
+[wiki] Skipping low-value extraction for: Georgia Trend Magazine - Georgia Business, Politics and Econ
+      -> Updated 0 pages: 
+[wiki] Processing 22: Electric Revolution - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Electric Revolution - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 23: Business Industry Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Business Industry Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 24: Features Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Features Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 25: Search:  - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Search:  - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 26: Economic Development Around the State - Georgia Trend Magazine
+      -> Updated 1 pages: Duckyang
+[wiki] Processing 27: Economic Development Around The State Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Economic Development Around The State Archives - Georgia Tre
+      -> Updated 0 pages: 
+[wiki] Processing 28: Georgia Trend 2022 40 Under 40 - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Georgia Trend 2022 40 Under 40 - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 29: 2022 100 Most Influential Georgians: Steering the Ship - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: 2022 100 Most Influential Georgians: Steering the Ship - Geo
+      -> Updated 0 pages: 
+[wiki] Processing 30: Georgia Trend 2021 40 Under 40 - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Georgia Trend 2021 40 Under 40 - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 31: 2022 Georgian of the Year: Team Captain - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Ports Authority
+[wiki] Processing 32: 2021 Georgia’s Top 100 Public Companies - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: 2021 Georgia’s Top 100 Public Companies - Georgia Trend Maga
+      -> Updated 0 pages: 
+[wiki] Processing 33: 2021 Economic Yearbook: Businesses Bounce Back - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: 2021 Economic Yearbook: Businesses Bounce Back - Georgia Tre
+      -> Updated 0 pages: 
+[wiki] Processing 34: Unofficial Guide Issue 5.19: Eat, Visit, Do, and Shop - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Unofficial Guide Issue 5.19: Eat, Visit, Do, and Shop - Geor
+      -> Updated 0 pages: 
+[wiki] Processing 35: Unofficial Guide Issue 5.05: Eat, Visit, Do, and Shop - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Unofficial Guide Issue 5.05: Eat, Visit, Do, and Shop - Geor
+      -> Updated 0 pages: 
+[wiki] Processing 36: Georgia Trend Daily - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Georgia Trend Daily - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 37: Organizations Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Organizations Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 38: Sustainable Georgia Roundup Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Sustainable Georgia Roundup Archives - Georgia Trend Magazin
+      -> Updated 0 pages: 
+[wiki] Processing 39: Trendsetters Archives - Georgia Trend Magazine
+      -> Updated 1 pages: Natural Born Tillers
+[wiki] Processing 40: Green Room Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Green Room Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 41: Sustainable Georgia Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Sustainable Georgia Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 42: Economic Development Features Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Economic Development Features Archives - Georgia Trend Magaz
+      -> Updated 0 pages: 
+[wiki] Processing 43: State of Mind Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: State of Mind Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 44: Economy Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Economy Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 45: The Georgia File Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: The Georgia File Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 46: Business Casual Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Business Casual Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 47: At Issue Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: At Issue Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 48: Georgia View Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Georgia View Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 49: Neely Young Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Neely Young Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 50: Guest Commentary Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Guest Commentary Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 51: Opinions Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Opinions Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 52: People Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: People Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 53: Education Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Education Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 54: Environment Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Environment Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 55: Health Care Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Health Care Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 56: Sports Leisure Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Sports Leisure Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 57: Metro Atlanta Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Metro Atlanta Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 58: Central Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Central Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 59: East Central Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: East Central Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 60: West Central Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: West Central Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 61: Northeast Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Northeast Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 62: Northwest Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Northwest Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 63: Southeast Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Southeast Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 64: Southwest Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Southwest Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 65: Georgia Fare Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Georgia Fare Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 66: Sports Desk Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Sports Desk Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 67: Catching Up With... Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Catching Up With... Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 68: Art of the Meal Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Art of the Meal Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 69: Legends Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Legends Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 70: Power Players Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Power Players Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 71: Georgian of the Year Archives - Georgia Trend Magazine
+      -> Updated 1 pages: Georgia Trend Magazine
+[wiki] Processing 72: Legal Elite Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Legal Elite Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 73: 40 under 40 Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: 40 under 40 Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 74: Area Development Consultants Forum for Economic Development Professionals
+      -> Updated 1 pages: Area Development Consultants Forum
+[wiki] Processing 75: Respected Leader Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Respected Leader Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 76: Subscribe to Area Development - Area Development
+[wiki] Skipping low-value extraction for: Subscribe to Area Development - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 77: Best Places Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Best Places Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 78: Influential Georgians Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Influential Georgians Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 79: Hall of Fame Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Hall of Fame Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 80: Area Development | Site Selection, Facility Planning and Workforce Development for Business Executives
+[wiki] Skipping low-value extraction for: Area Development | Site Selection, Facility Planning and Wor
+      -> Updated 0 pages: 
+[wiki] Processing 81: Notable Georgians Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Notable Georgians Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 82: Business Globalization - Area Development
+[wiki] Skipping low-value extraction for: Business Globalization - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 83: Privacy Policy - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Privacy Policy - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 84: Corporate Exec Survey Results - Area Development
+[wiki] Skipping low-value extraction for: Corporate Exec Survey Results - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 85: Economy / Market Analysis - Area Development
+[wiki] Skipping low-value extraction for: Economy / Market Analysis - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 86: Government Policy / Business Climate - Area Development
+[wiki] Skipping low-value extraction for: Government Policy / Business Climate - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 87: Corporate Site Selection Factors and Strategy - Area Development
+[wiki] Skipping low-value extraction for: Corporate Site Selection Factors and Strategy - Area Develop
+      -> Updated 0 pages: 
+[wiki] Processing 88: Logistics / Infrastructure - Area Development
+[wiki] Skipping low-value extraction for: Logistics / Infrastructure - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 89: Taxes / Incentives - Area Development
+[wiki] Skipping low-value extraction for: Taxes / Incentives - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 90: Asset / Facility Management  - Area Development
+[wiki] Skipping low-value extraction for: Asset / Facility Management  - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 91: Construction / Project Planning - Area Development
+[wiki] Skipping low-value extraction for: Construction / Project Planning - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 92: Sustainable Development - Area Development
+[wiki] Skipping low-value extraction for: Sustainable Development - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 93: Labor Costs / Organized Labor - Area Development
+[wiki] Skipping low-value extraction for: Labor Costs / Organized Labor - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 94: Skilled Labor / STEM - Area Development
+[wiki] Skipping low-value extraction for: Skilled Labor / STEM - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 95: Workforce Training / Education  - Area Development
+[wiki] Skipping low-value extraction for: Workforce Training / Education  - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 96: Workplace Trends - Area Development
+[wiki] Skipping low-value extraction for: Workplace Trends - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 97: Annual Gold & Silver Shovel Awards: Recognizing State Economic Development and Job Creation Excellence - Area Development
+[wiki] Skipping low-value extraction for: Annual Gold & Silver Shovel Awards: Recognizing State Econom
+      -> Updated 0 pages: 
+[wiki] Processing 98: Frontline - Area Development
+[wiki] Skipping low-value extraction for: Frontline - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 99: International Location Reports - Area Development
+[wiki] Skipping low-value extraction for: International Location Reports - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 100: Leading Metro Locations - Area Development
+[wiki] Skipping low-value extraction for: Leading Metro Locations - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 101: Top States for Business - Area Development
+[wiki] Skipping low-value extraction for: Top States for Business - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 102: Transparency and Infrastructure Foresight as Competitive Advantages - Area Development
+[wiki] Skipping low-value extraction for: Transparency and Infrastructure Foresight as Competitive Adv
+      -> Updated 0 pages: 
+[wiki] Processing 103: Why Industrial Developers Are Turning to On-Site Energy - Area Development
+[wiki] Skipping low-value extraction for: Why Industrial Developers Are Turning to On-Site Energy - Ar
+      -> Updated 0 pages: 
+[wiki] Processing 104: The Geography of Packaging: Why Location Strategy Matters More Than Ever - Area Development
+[wiki] Skipping low-value extraction for: The Geography of Packaging: Why Location Strategy Matters Mo
+      -> Updated 0 pages: 
+[wiki] Processing 105: The New Industrial Revolution in Biotech - Area Development
+[wiki] Skipping low-value extraction for: The New Industrial Revolution in Biotech - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 106: Navigating Generational Differences in Location and Workplace Strategy - Area Development
+[wiki] Skipping low-value extraction for: Navigating Generational Differences in Location and Workplac
+      -> Updated 0 pages: 
+[wiki] Processing 107: In Focus: Korea’s Blueprint for Sustainable U.S. Expansion - Area Development
+[wiki] Skipping low-value extraction for: In Focus: Korea’s Blueprint for Sustainable U.S. Expansion -
+      -> Updated 0 pages: 
+[wiki] Processing 108: The Permit Puzzle and the Path to Groundbreaking - Area Development
+[wiki] Skipping low-value extraction for: The Permit Puzzle and the Path to Groundbreaking - Area Deve
+      -> Updated 0 pages: 
+[wiki] Processing 109: Workforce Is the New Incentive in Life Sciences - Area Development
+[wiki] Skipping low-value extraction for: Workforce Is the New Incentive in Life Sciences - Area Devel
+      -> Updated 0 pages: 
+[wiki] Processing 110: The Site Selection Corporate Checklist - Area Development
+[wiki] Skipping low-value extraction for: The Site Selection Corporate Checklist - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 111: Too Much of a Good Thing: Can Overbuilt Spec Development Benefit Manufacturers? - Area Development
+[wiki] Skipping low-value extraction for: Too Much of a Good Thing: Can Overbuilt Spec Development Ben
+      -> Updated 0 pages: 
+[wiki] Processing 112: Electrons Are the New Gatekeepers - Area Development
+[wiki] Skipping low-value extraction for: Electrons Are the New Gatekeepers - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 113: Your Next Factory Might Already Be Built - Area Development
+[wiki] Skipping low-value extraction for: Your Next Factory Might Already Be Built - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 114: Site Readiness Is Broken: What Manufacturers Should Demand From Their Locations - Area Development
+[wiki] Skipping low-value extraction for: Site Readiness Is Broken: What Manufacturers Should Demand F
+      -> Updated 0 pages: 
+[wiki] Processing 115: How Canada Stays Competitive - Area Development
+[wiki] Skipping low-value extraction for: How Canada Stays Competitive - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 116: How Consumer Trends Are Reshaping Food Facilities - Area Development
+[wiki] Skipping low-value extraction for: How Consumer Trends Are Reshaping Food Facilities - Area Dev
+      -> Updated 0 pages: 
+[wiki] Processing 117: Rewriting the Rules of Warehouse ROI - Area Development
+[wiki] Skipping low-value extraction for: Rewriting the Rules of Warehouse ROI - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 118: Project Announcements | corporate real estate news, economic development news, expansion announcements - Area Development
+      -> Updated 1 pages: U.S. Smokeless Tobacco Co.
+[wiki] Processing 119: Disruption in the Automotive Industry - Area Development
+[wiki] Skipping low-value extraction for: Disruption in the Automotive Industry - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 120: Immigration Tips for International Business Travelers During the Pandemic - Area Development
+[wiki] Skipping low-value extraction for: Immigration Tips for International Business Travelers During
+      -> Updated 0 pages: 
+[wiki] Processing 121: Realignment of the Automotive Supply Base - Area Development
+[wiki] Skipping low-value extraction for: Realignment of the Automotive Supply Base - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 122: Shifts in Mobility and Transportation Infrastructure in a COVID-19 World - Area Development
+      -> Updated 1 pages: Volkswagen Group of America
+[wiki] Processing 123: The New Normal in the Automotive Supply Chain - Area Development
+[wiki] Skipping low-value extraction for: The New Normal in the Automotive Supply Chain - Area Develop
+      -> Updated 0 pages: 
+[wiki] Processing 124: Georgia State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Georgia State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 125: Automotive - Area Development
+[wiki] Skipping low-value extraction for: Automotive - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 126: Slate Auto Expands Troy, Michigan, Headquarters Operations - Area Development
+      -> Updated 1 pages: Slate Auto
+[wiki] Processing 127: Clarios Expands St. Joseph, Missouri, Operations - Area Development
+      -> Updated 1 pages: Clarios
+[wiki] Processing 128: LEV Manufacturing Plans Putnam County, Tennessee, Assembly-Logistics Operations - Area Development
+[wiki] Skipping low-value extraction for: LEV Manufacturing Plans Putnam County, Tennessee, Assembly-L
+      -> Updated 0 pages: 
+[wiki] Processing 129: GMB USA Plans Opelika, Alabama, Production Operations - Area Development
+[wiki] Skipping low-value extraction for: GMB USA Plans Opelika, Alabama, Production Operations - Area
+      -> Updated 0 pages: 
+[wiki] Processing 130: Manufacturing / Industrial - Area Development
+[wiki] Skipping low-value extraction for: Manufacturing / Industrial - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 131: U.S. Smokeless Tobacco Expands Hopkinsville, Kentucky, Operations - Area Development
+[wiki] Entity 'U.S. Smokeless Tobacco' -> merging into existing page 'U.S. Smokeless Tobacco Co.' (score=1.00)
+      -> Updated 1 pages: U.S. Smokeless Tobacco Co.
+[wiki] Processing 132: McCarl’s Expands Beaver County, Pennsylvania, Manufacturing Operations - Area Development
+[wiki] Skipping low-value extraction for: McCarl’s Expands Beaver County, Pennsylvania, Manufacturing 
+      -> Updated 0 pages: 
+[wiki] Processing 133: Bittermilk Bottling Expands Charleston County, South Carolina, Production Operations - Area Development
+[wiki] Skipping low-value extraction for: Bittermilk Bottling Expands Charleston County, South Carolin
+      -> Updated 0 pages: 
+[wiki] Processing 134: Eden Pharmacy Expands Albuquerque, New Mexico, Operations - Area Development
+      -> Updated 1 pages: Eden Pharmacy
+[wiki] Processing 135: Rethinking Auto Site Strategy in the Age of Tariffs and Powertrain Shifts - Area Development
+[wiki] Skipping low-value extraction for: Rethinking Auto Site Strategy in the Age of Tariffs and Powe
+      -> Updated 0 pages: 
+[wiki] Processing 136: Automotive Site Selection Is Evolving as Future Mobility Takes Hold - Area Development
+[wiki] Skipping low-value extraction for: Automotive Site Selection Is Evolving as Future Mobility Tak
+      -> Updated 0 pages: 
+[wiki] Processing 137: The Impact of the November Election on the Auto Industry: Navigating a Revolutionary Transition - Area Development
+[wiki] Skipping low-value extraction for: The Impact of the November Election on the Auto Industry: Na
+      -> Updated 0 pages: 
+[wiki] Processing 138: The Cost of Labor and Workforce Skills Necessary for the Transition to an Electrified Auto Industry - Area Development
+[wiki] Skipping low-value extraction for: The Cost of Labor and Workforce Skills Necessary for the Tra
+      -> Updated 0 pages: 
+[wiki] Processing 139: The Challenge of Securing Sufficient Electrical Power for Battery Cell Plants - Area Development
+[wiki] Skipping low-value extraction for: The Challenge of Securing Sufficient Electrical Power for Ba
+      -> Updated 0 pages: 
+[wiki] Processing 140: The Partnerships Driving Virginia’s Biopharma Success - Area Development
+      -> Updated 1 pages: VEDP
+[wiki] Processing 141: What Companies Need from Modern Manufacturing Sites - Area Development
+[wiki] Skipping low-value extraction for: What Companies Need from Modern Manufacturing Sites - Area D
+      -> Updated 0 pages: 
+[wiki] Processing 142: Manhattan’s Old Ramps, New Logistics - Area Development
+[wiki] Skipping low-value extraction for: Manhattan’s Old Ramps, New Logistics - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 143: The Cold Chain Sector Recalibration - Area Development
+[wiki] Skipping low-value extraction for: The Cold Chain Sector Recalibration - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 144: Tariff Shockwaves Hit the Industrial Sector - Area Development
+[wiki] Skipping low-value extraction for: Tariff Shockwaves Hit the Industrial Sector - Area Developme
+      -> Updated 0 pages: 
+[wiki] Processing 145: Innovative Defense Technologies Expands Arlington County, Virginia, Operations   - Area Development
+      -> Updated 1 pages: Innovative Defense Technologies
+[wiki] Processing 146: Barilla Expands Avon, New York, Production Operations - Area Development
+      -> Updated 1 pages: Barilla
+[wiki] Processing 147: Intermountain Electronics Expands Centralia, Illinois, Production Operations - Area Development
+      -> Updated 1 pages: Intermountain Electronics
+[wiki] Processing 148: Italy-Based CEP USA Plans Little Rock, Arkansas, Manufacturing Operations - Area Development
+[wiki] Skipping low-value extraction for: Italy-Based CEP USA Plans Little Rock, Arkansas, Manufacturi
+      -> Updated 0 pages: 
+[wiki] Processing 149: Quantum Space Plans Tulsa, Oklahoma, Manufacturing Operations - Area Development
+      -> Updated 1 pages: Quantum Space
+[wiki] Processing 150: Where Workforce Capacity Is Being Built — and Where It’s Being Deployed - Area Development
+      -> Updated 1 pages: Area Development
+[wiki] Processing 151: 40th Annual Corporate and 22nd Annual Consultant Site Selection Survey Results - Area Development
+      -> Updated 1 pages: Area Development
+[wiki] Processing 152: Top States for Doing Business in 2024: A Continued Legacy of Excellence - Area Development
+      -> Updated 1 pages: Area Development
+[wiki] Processing 153: 2025’s Top States for Business: How the Winners Are Outpacing the Rest - Area Development
+[wiki] Skipping low-value extraction for: 2025’s Top States for Business: How the Winners Are Outpacin
+      -> Updated 0 pages: 
+[wiki] Processing 154: The Workforce Bottleneck in America’s Manufacturing Revival - Area Development
+[wiki] Skipping low-value extraction for: The Workforce Bottleneck in America’s Manufacturing Revival 
+      -> Updated 0 pages: 
+[wiki] Processing 155: Economic Developer Role Shifting from Deal-Making to Systems Stewardship - Area Development
+[wiki] Skipping low-value extraction for: Economic Developer Role Shifting from Deal-Making to Systems
+      -> Updated 0 pages: 
+[wiki] Processing 156: What Does “Site Readiness” Really Mean? - Area Development
+[wiki] Skipping low-value extraction for: What Does “Site Readiness” Really Mean? - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 157: Q1 2026 Issue of Area Development Magazine - Table of Contents - Area Development
+[wiki] Skipping low-value extraction for: Q1 2026 Issue of Area Development Magazine - Table of Conten
+      -> Updated 0 pages: 
+[wiki] Processing 158: Area Development Magazine Archives | Back Issues - Area Development
+[wiki] Skipping low-value extraction for: Area Development Magazine Archives | Back Issues - Area Deve
+      -> Updated 0 pages: 
+[wiki] Processing 159: Delaware State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Delaware State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 160: Maryland State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Maryland State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 161: New Jersey State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: New Jersey State Resources | financial incentives, tax credi
+      -> Updated 0 pages: 
+[wiki] Processing 162: New York State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: New York State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 163: Pennsylvania - Area Development
+[wiki] Skipping low-value extraction for: Pennsylvania - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 164: Illinois State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Illinois State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 165: Indiana State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Indiana State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 166: Iowa State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Iowa State Resources | financial incentives, tax credits, bu
+      -> Updated 0 pages: 
+[wiki] Processing 167: Michigan State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Michigan State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 168: Missouri State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Missouri State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 169: Minnesota State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Minnesota State Resources | financial incentives, tax credit
+      -> Updated 0 pages: 
+[wiki] Processing 170: Ohio State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Ohio State Resources | financial incentives, tax credits, bu
+      -> Updated 0 pages: 
+[wiki] Processing 171: Wisconsin State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Wisconsin State Resources | financial incentives, tax credit
+      -> Updated 0 pages: 
+[wiki] Processing 172: Colorado State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Colorado State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 173: Idaho State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Idaho State Resources | financial incentives, tax credits, b
+      -> Updated 0 pages: 
+[wiki] Processing 174: Montana State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Montana State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 175: Nevada State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Nevada State Resources | financial incentives, tax credits, 
+      -> Updated 0 pages: 
+[wiki] Processing 176: Utah State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Utah State Resources | financial incentives, tax credits, bu
+      -> Updated 0 pages: 
+[wiki] Processing 177: Wyoming State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Wyoming State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 178: Connecticut State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Connecticut State Resources | financial incentives, tax cred
+      -> Updated 0 pages: 
+[wiki] Processing 179: Massachusetts State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Massachusetts State Resources | financial incentives, tax cr
+      -> Updated 0 pages: 
+[wiki] Processing 180: Maine State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Maine State Resources | financial incentives, tax credits, b
+      -> Updated 0 pages: 
+[wiki] Processing 181: New Hampshire State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: New Hampshire State Resources | financial incentives, tax cr
+      -> Updated 0 pages: 
+[wiki] Processing 182: Rhode Island State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Rhode Island State Resources | financial incentives, tax cre
+      -> Updated 0 pages: 
+[wiki] Processing 183: Vermont State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Vermont State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 184: Alaska State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Alaska State Resources | financial incentives, tax credits, 
+      -> Updated 0 pages: 
+[wiki] Processing 185: California State Resources | financial incentives, tax credits, business taxes, economic development contacts, demographics - Area Development
+[wiki] Skipping low-value extraction for: California State Resources | financial incentives, tax credi
+      -> Updated 0 pages: 
+[wiki] Processing 186: Hawaii State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Hawaii State Resources | financial incentives, tax credits, 
+      -> Updated 0 pages: 
+[wiki] Processing 187: Oregon - Area Development
+[wiki] Skipping low-value extraction for: Oregon - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 188: Washington State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Washington State Resources | financial incentives, tax credi
+      -> Updated 0 pages: 
+[wiki] Processing 189: Kansas State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Kansas State Resources | financial incentives, tax credits, 
+      -> Updated 0 pages: 
+[wiki] Processing 190: Nebraska State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Nebraska State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 191: North Dakota State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: North Dakota State Resources | financial incentives, tax cre
+      -> Updated 0 pages: 
+[wiki] Processing 192: South Dakota - Area Development
+[wiki] Skipping low-value extraction for: South Dakota - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 193: Alabama Resources | direct financial incentives, business taxes, economic development contacts, demographics - Area Development
+[wiki] Skipping low-value extraction for: Alabama Resources | direct financial incentives, business ta
+      -> Updated 0 pages: 
+[wiki] Processing 194: Arkansas State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Arkansas State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 195: Kentucky State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Kentucky State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 196: Louisiana State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Louisiana State Resources | financial incentives, tax credit
+      -> Updated 0 pages: 
+[wiki] Processing 197: Mississippi State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Mississippi State Resources | financial incentives, tax cred
+      -> Updated 0 pages: 
+[wiki] Processing 198: Tennessee State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Tennessee State Resources | financial incentives, tax credit
+      -> Updated 0 pages: 
+[wiki] Processing 199: Florida State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Florida State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 200: North Carolina State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: North Carolina State Resources | financial incentives, tax c
+      -> Updated 0 pages: 
+[wiki] Processing 201: South Carolina | financial incentives, tax credits, business taxes, contacts   - Area Development
+[wiki] Skipping low-value extraction for: South Carolina | financial incentives, tax credits, business
+      -> Updated 0 pages: 
+[wiki] Processing 202: Virginia State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Virginia State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 203: West Virginia State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: West Virginia State Resources | financial incentives, tax cr
+      -> Updated 0 pages: 
+[wiki] Processing 204: Arizona State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Arizona State Resources | financial incentives, tax credits,
+      -> Updated 0 pages: 
+[wiki] Processing 205: New Mexico State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: New Mexico State Resources | financial incentives, tax credi
+      -> Updated 0 pages: 
+[wiki] Processing 206: Oklahoma State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Oklahoma State Resources | financial incentives, tax credits
+      -> Updated 0 pages: 
+[wiki] Processing 207: Texas State Resources | financial incentives, tax credits, business taxes, contacts - Area Development
+[wiki] Skipping low-value extraction for: Texas State Resources | financial incentives, tax credits, b
+      -> Updated 0 pages: 
+[wiki] Processing 208: Capital Access / Finance - Area Development
+[wiki] Skipping low-value extraction for: Capital Access / Finance - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 209: Portfolio Management / CRE - Area Development
+[wiki] Skipping low-value extraction for: Portfolio Management / CRE - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 210: Economic Development Best Practices - Area Development
+[wiki] Skipping low-value extraction for: Economic Development Best Practices - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 211: Location Notebooks - Area Development
+[wiki] Skipping low-value extraction for: Location Notebooks - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 212: U.S. Regional Reports - Area Development
+[wiki] Skipping low-value extraction for: U.S. Regional Reports - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 213: Around the Horn - Area Development
+[wiki] Skipping low-value extraction for: Around the Horn - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 214: Contributed Content - Area Development
+[wiki] Skipping low-value extraction for: Contributed Content - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 215: Last Word - Area Development
+[wiki] Skipping low-value extraction for: Last Word - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 216: Podcasts - Area Development
+[wiki] Skipping low-value extraction for: Podcasts - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 217: Viewpoint - Area Development
+      -> Updated 1 pages: American Battery Technology Company
+[wiki] Processing 218: Advanced Manufacturing - Area Development
+[wiki] Skipping low-value extraction for: Advanced Manufacturing - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 219: Aerospace - Area Development
+[wiki] Skipping low-value extraction for: Aerospace - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 220: Biotech / Life Sciences - Area Development
+[wiki] Skipping low-value extraction for: Biotech / Life Sciences - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 221: Energy / Clean Tech - Area Development
+[wiki] Skipping low-value extraction for: Energy / Clean Tech - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 222: Food Processing - Area Development
+[wiki] Skipping low-value extraction for: Food Processing - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 223: Location Canada - Area Development
+[wiki] Skipping low-value extraction for: Location Canada - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 224: Location USA | United States Inward Investing Guide - Area Development
+[wiki] Skipping low-value extraction for: Location USA | United States Inward Investing Guide - Area D
+      -> Updated 0 pages: 
+[wiki] Processing 225: Corporate HQ / Office - Area Development
+[wiki] Skipping low-value extraction for: Corporate HQ / Office - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 226: Data Centers - Area Development
+[wiki] Skipping low-value extraction for: Data Centers - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 227: DCs / Warehousing - Area Development
+[wiki] Skipping low-value extraction for: DCs / Warehousing - Area Development
+      -> Updated 0 pages: 
+[wiki] Processing 228: RSS Feeds - Area Development
+      -> Updated 1 pages: Area Development
+[wiki] Processing 229: About Area Development Magazine | Halcyon Business Publications, Inc. - Area Development
+      -> Updated 1 pages: Halcyon Business Publications, Inc.
+[wiki] Processing 230: Contact | Area Development Magazine Staff, Editors, Publisher, Design, Production  - Area Development
+      -> Updated 1 pages: Area Development
+[wiki] Processing 231: Navigating Foreign Direct Investment, Foreign-Trade Zones and Manufacturing in a Volatile Market: Insights from Area Development's Site & Facility Planning Podcast - Area Development
+      -> Updated 1 pages: Area Development
+[wiki] Processing 232: The Evolving Landscape of AI Infrastructure: Insights from Area Development's Site & Facility Planning Podcast - Area Development
+[wiki] Skipping low-value extraction for: The Evolving Landscape of AI Infrastructure: Insights from A
+      -> Updated 0 pages: 
+[wiki] Processing 233: Leading Metro Locations 2025: Smaller Markets, Stronger Momentum - Area Development
+[wiki] Skipping low-value extraction for: Leading Metro Locations 2025: Smaller Markets, Stronger Mome
+      -> Updated 0 pages: 
+[wiki] Processing 234: Search:  - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Search:  - Georgia Trend Magazine
+      -> Updated 0 pages: 
+[wiki] Processing 235: 20th Annual Area Development Gold and Silver Shovel Awards  - Area Development
+[wiki] Skipping low-value extraction for: 20th Annual Area Development Gold and Silver Shovel Awards  
+      -> Updated 0 pages: 
+[wiki] Processing 236: From the Publisher: Transforming Trails and Transit - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: From the Publisher: Transforming Trails and Transit - Georgi
+      -> Updated 0 pages: 
+[wiki] Processing 237: Gainesville | Hall County: Regional Powerhouse - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Gainesville | Hall County: Regional Powerhouse - Georgia Tre
+      -> Updated 0 pages: 
+[wiki] Processing 238: Our State Archives - Georgia Trend Magazine
+[wiki] Skipping low-value extraction for: Our State Archives - Georgia Trend Magazine
+      -> Updated 0 pages: 
+
+[wiki] Done!
+[wiki] Documents processed: 238
+[wiki] Page updates: 33
+[wiki] Total pages: 227
+[wiki] Using Ollama at http://localhost:11434
+[wiki] Model: qwen2.5:14b
+✓ Exported wiki to outputs/gnem_wiki_full.md
+[wiki] Using Ollama at http://localhost:11434
+[wiki] Model: qwen2.5:14b
+
+📊 Wiki Statistics:
+
+Total Pages: 227
+Documents Processed: 1051
+Unique Entities: 884
+Last Updated: 2026-06-08T23:13:00.718884
+
+By Entity Type:
+  company: 170
+  concept: 2
+  event: 1
+  government: 1
+  institution: 5
+  location: 15
+  magazine: 1
+  organization: 24
+  product: 5
+  publication: 1
+  publisher: 2
+

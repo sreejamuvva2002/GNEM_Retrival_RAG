@@ -25,6 +25,9 @@ class MapService(IMapDataService):
 
         records_df = pd.DataFrame()
         context = MapContext(map_mode="standard")
+        if plan.get("classification") == "NO_RETRIEVAL":
+            context.map_mode = "no_retrieval"
+            return MapResult(records=[], context=context)
 
         coords_hint = hints.get("coordinates") or {}
         center_lat = _safe_float(coords_hint.get("lat"))
@@ -104,12 +107,12 @@ def filter_records_to_companies(
     """Keep only map records whose company matches one of the cited companies.
 
     `normalized_names` is a set of normalized company names (see
-    chat_service.extract_cited_company_names). Matching is done on the same
-    normalized form. If the cited set is empty we return the records unchanged
-    so the map still shows something (e.g. no-result / non-company answers).
+    chat_service.extract_cited_company_names). Matching is exact after
+    normalization so similarly named companies do not create extra markers. If
+    the cited set is empty, no company markers are shown.
     """
     if not normalized_names:
-        return records
+        return []
 
     from .chat_service import normalize_company_name
 
@@ -118,10 +121,7 @@ def filter_records_to_companies(
         haystack = normalize_company_name(str(record.get("company") or ""))
         if not haystack:
             continue
-        if any(
-            needle and (needle in haystack or haystack in needle)
-            for needle in normalized_names
-        ):
+        if haystack in normalized_names:
             kept.append(record)
     return kept
 
@@ -152,5 +152,4 @@ def _records_to_list(df: pd.DataFrame) -> List[Dict[str, Any]]:
     else:
         df["map_weight"] = 0.6
 
-    df = df.head(180)
     return df.to_dict(orient="records")
