@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LLM Wiki — GNEM EV Intelligence</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #06080f;
+    --surface: #0d1117;
+    --surface2: #161b22;
+    --border: #21262d;
+    --accent: #6e57ff;
+    --accent2: #00d4aa;
+    --accent3: #ff6b6b;
+    --accent4: #ffb347;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --code-bg: #0d1117;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+  }
+
+  /* ── Slide container ── */
+  .deck {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 60px 80px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    transform: translateY(30px);
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+  }
+
+  /* ── Progress bar ── */
+  #progress-bar {
+    position: fixed;
+    bottom: 0; left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    transition: width 0.4s ease;
+    z-index: 100;
+  }
+
+  /* ── Navigation ── */
+  #nav {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    z-index: 100;
+    background: rgba(13,17,23,0.8);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 10px 20px;
+  }
+
+  #nav button {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px 10px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    font-family: inherit;
+  }
+
+  #nav button:hover { color: var(--text); background: var(--surface2); }
+  #nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  #slide-counter {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+    min-width: 60px;
+    text-align: center;
+  }
+
+  /* ── Slide number (top right) ── */
+  .slide-num {
+    position: fixed;
+    top: 24px; right: 32px;
+    font-size: 12px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    z-index: 99;
+  }
+
+  /* ── Background blobs ── */
+  .blob {
+    position: fixed;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .blob-1 { width:500px; height:500px; background:var(--accent); top:-100px; left:-100px; }
+  .blob-2 { width:400px; height:400px; background:var(--accent2); bottom:-100px; right:-50px; }
+  .blob-3 { width:300px; height:300px; background:var(--accent3); top:50%; right:20%; }
+
+  /* ── Typography ── */
+  .tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(110,87,255,0.15);
+    border: 1px solid rgba(110,87,255,0.3);
+    color: #a08fff;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 100px;
+    margin-bottom: 20px;
+  }
+
+  h1 {
+    font-size: clamp(36px, 5vw, 64px);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #fff 30%, #a08fff 70%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    font-size: clamp(28px, 3.5vw, 46px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, #fff 40%, #a08fff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 32px;
+    align-self: flex-start;
+  }
+
+  .subtitle {
+    font-size: 20px;
+    color: var(--text-muted);
+    font-weight: 400;
+    max-width: 680px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  p { color: var(--text-muted); line-height: 1.7; font-size: 16px; }
+
+  /* ── Cards ── */
+  .cards {
+    display: grid;
+    gap: 16px;
+    width: 100%;
+    max-width: 1100px;
+  }
+
+  .cards.cols-2 { grid-template-columns: 1fr 1fr; }
+  .cards.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .cards.cols-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .card:hover { transform: translateY(-2px); border-color: rgba(110,87,255,0.4); }
+  .card:hover::before { opacity: 1; }
+
+  .card-icon {
+    font-size: 28px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .card h3 {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .card p { font-size: 14px; color: var(--text-muted); }
+
+  /* ── Code blocks ── */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #79c0ff;
+    width: 100%;
+    max-width: 900px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .code-block .line-comment { color: #8b949e; }
+  .code-block .kw { color: #ff7b72; }
+  .code-block .str { color: #a5d6ff; }
+  .code-block .fn { color: #d2a8ff; }
+  .code-block .cls { color: #ffa657; }
+  .code-block .val { color: #79c0ff; }
+  .code-block .label { color: var(--accent2); }
+
+  /* ── Flow diagram ── */
+  .flow {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+    max-width: 1000px;
+    flex-wrap: nowrap;
+  }
+
+  .flow-step {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px 14px;
+    text-align: center;
+    position: relative;
+  }
+
+  .flow-step .icon { font-size: 28px; display: block; margin-bottom: 8px; }
+  .flow-step .step-label { font-size: 12px; font-weight: 700; color: var(--text); }
+  .flow-step .step-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .flow-arrow {
+    width: 32px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .flow-arrow::after {
+    content: '▶';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 10px;
+    color: var(--accent2);
+  }
+
+  /* ── Highlight pill ── */
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .pill-purple { background: rgba(110,87,255,0.2); color: #a08fff; border: 1px solid rgba(110,87,255,0.3); }
+  .pill-green  { background: rgba(0,212,170,0.15); color: #00d4aa; border: 1px solid rgba(0,212,170,0.3); }
+  .pill-red    { background: rgba(255,107,107,0.15); color: #ff6b6b; border: 1px solid rgba(255,107,107,0.3); }
+  .pill-orange { background: rgba(255,179,71,0.15); color: #ffb347; border: 1px solid rgba(255,179,71,0.3); }
+
+  /* ── List ── */
+  .fact-list {
+    list-style: none;
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .fact-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 15px;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+
+  .fact-list li .bullet {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+
+  /* ── Stat boxes ── */
+  .stat-row {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 900px;
+  }
+
+  .stat {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+  }
+
+  .stat .num {
+    font-size: 42px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat .lbl { font-size: 13px; color: var(--text-muted); font-weight: 500; }
+
+  /* ── 2-col layout ── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 1100px;
+    align-items: start;
+  }
+
+  /* ── Before/After ── */
+  .before-after {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 1000px;
+  }
+
+  .ba-box {
+    border-radius: 14px;
+    padding: 20px;
+    border: 1px solid;
+  }
+
+  .ba-box.before { background: rgba(255,107,107,0.05); border-color: rgba(255,107,107,0.3); }
+  .ba-box.after  { background: rgba(0,212,170,0.05);  border-color: rgba(0,212,170,0.3); }
+
+  .ba-box .ba-label {
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .before .ba-label { color: var(--accent3); }
+  .after  .ba-label { color: var(--accent2); }
+
+  .ba-box ul { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+  .ba-box li { font-size: 14px; color: var(--text-muted); display: flex; gap: 8px; align-items: flex-start; }
+  .ba-box li::before { content: '×'; color: var(--accent3); font-weight: 700; flex-shrink:0; }
+  .after .ba-box li::before { content: '✓'; color: var(--accent2); }
+
+  /* ── Title slide specifics ── */
+  #slide-1 { text-align: center; }
+  #slide-1 h1 { font-size: clamp(44px, 6vw, 76px); }
+
+  /* ── Glow line ── */
+  .glow-line {
+    width: 120px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2));
+    border-radius: 100px;
+    margin: 20px auto;
+    box-shadow: 0 0 20px rgba(110,87,255,0.6);
+  }
+
+  /* ── Method table ── */
+  .method-table {
+    width: 100%;
+    max-width: 1000px;
+    border-collapse: separate;
+    border-spacing: 0 8px;
+  }
+
+  .method-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 0 16px 8px;
+  }
+
+  .method-table td {
+    padding: 12px 16px;
+    font-size: 14px;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+
+  .method-table td:first-child {
+    border-left: 1px solid var(--border);
+    border-radius: 10px 0 0 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: #d2a8ff;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .method-table td:last-child {
+    border-right: 1px solid var(--border);
+    border-radius: 0 10px 10px 0;
+    color: var(--text-muted);
+  }
+
+  .z1 { position: relative; z-index: 1; }
+</style>
+</head>
+<body>
+
+<!-- Ambient blobs -->
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div class="blob blob-3"></div>
+
+<div class="deck" id="deck">
+
+  <!-- ── SLIDE 1: Title ── -->
+  <div class="slide active" id="slide-1">
+    <div class="z1" style="text-align:center">
+      <div class="tag">🧠 GNEM EV Intelligence</div>
+      <h1>LLM Wiki</h1>
+      <div class="glow-line"></div>
+      <p class="subtitle">
+        An incremental, LLM-powered knowledge graph that transforms raw crawled documents
+        into a structured, searchable, and traceable wiki — one entity at a time.
+      </p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:32px;flex-wrap:wrap">
+        <span class="pill pill-purple">📁 llm_wiki.py</span>
+        <span class="pill pill-green">🦙 Ollama · mistral:latest</span>
+        <span class="pill pill-orange">📖 Markdown output</span>
+        <span class="pill pill-red">🔗 Provenance tracking</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 2: What is it? ── -->
+  <div class="slide" id="slide-2">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Overview</div>
+      <h2>What is LLM Wiki?</h2>
+      <div class="cards cols-3">
+        <div class="card">
+          <span class="card-icon">📥</span>
+          <h3>Input</h3>
+          <p>JSONL files of raw crawled documents — news articles, web pages, government docs — each linked to a company.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🤖</span>
+          <h3>Processing</h3>
+          <p>A local Ollama LLM reads each document and extracts: entity name, entity type, key facts, and related entities — as structured JSON.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">📖</span>
+          <h3>Output</h3>
+          <p>Persistent Markdown wiki pages, one per company/concept, continuously updated as new documents are ingested. Full provenance tracking.</p>
+        </div>
+      </div>
+      <div class="stat-row" style="margin-top:20px">
+        <div class="stat"><div class="num">14MB</div><div class="lbl">Raw JSONL source data</div></div>
+        <div class="stat"><div class="num">642</div><div class="lbl">Lines of wiki code</div></div>
+        <div class="stat"><div class="num">0</div><div class="lbl">External databases needed</div></div>
+        <div class="stat"><div class="num">100%</div><div class="lbl">Local / offline capable</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 3: Architecture ── -->
+  <div class="slide" id="slide-3">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Architecture</div>
+      <h2>System Components</h2>
+      <div class="cards cols-2">
+        <div class="card">
+          <span class="card-icon">🗂️</span>
+          <h3>LLMWiki Class <span class="pill pill-purple" style="font-size:10px;vertical-align:middle">llm_wiki.py</span></h3>
+          <p>Core engine. Manages the wiki directory, calls Ollama, normalizes entities, merges duplicates, and tracks provenance.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">⚙️</span>
+          <h3>WikiPage Dataclass</h3>
+          <p>In-memory representation of one page: <code style="color:#d2a8ff;font-family:JetBrains Mono">title, content, entity_type, sources, related_entities, fact_sources</code>.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">📜</span>
+          <h3>Markdown + Frontmatter</h3>
+          <p>Each entity is saved as a <code style="color:#d2a8ff;font-family:JetBrains Mono">.md</code> file with JSON frontmatter tracking sources, last updated, and per-fact provenance.</p>
+        </div>
+        <div class="card">
+          <span class="card-icon">🗃️</span>
+          <h3>_index.json</h3>
+          <p>Central registry. Tracks all pages, entity cross-references, and which source document hashes have already been processed — enabling safe restarts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 4: Ingestion Pipeline ── -->
+  <div class="slide" id="slide-4">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Pipeline</div>
+      <h2>Ingestion Pipeline</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <span class="icon">📄</span>
+          <div class="step-label">JSONL Source</div>
+          <div class="step-sub">ddg_search.jsonl<br/>gov_docs.jsonl</div>
+        </div>
+        <div class="flow-arrow"></div>
+        <div class="flow-step">
+          <span class="icon">🔍</span>
+          <div class="step-label">Dedup Check</div>
+          <div class="step-sub">SHA-256 hash<br/>skip if seen</div>
+        </div>
+        <div class="flow-arrow"></div>
+        <div class="flow-step">
+          <span class="icon">🤖</span>
+          <div class="step-label">LLM Extraction</div>
+          <div class="step-sub">Ollama → JSON<br/>entity + facts</div>
+        </div>
+        <div class="flow-arrow"></div>
+        <div class="flow-step">
+          <span class="icon">🔗</span>
+          <div class="step-label">Normalize Entity</div>
+          <div class="step-sub">fuzzy match<br/>canonical name</div>
+        </div>
+        <div class="flow-arrow"></div>
+        <div class="flow-step">
+          <span class="icon">✍️</span>
+          <div class="step-label">Create/Update Page</div>
+          <div class="step-sub">merge facts<br/>dedup + provenance</div>
+        </div>
+        <div class="flow-arrow"></div>
+        <div class="flow-step">
+          <span class="icon">💾</span>
+          <div class="step-label">Save to Disk</div>
+          <div class="step-sub">.md + _index.json<br/>updated</div>
+        </div>
+      </div>
+      <div class="code-block" style="margin-top:24px;max-width:100%">
+        <span class="line-comment"># Entry point — ingest_wiki.py</span><br/>
+        <span class="kw">python</span> -m georgia_ev_intelligence.kb_builder.ingest_wiki \<br/>
+        &nbsp;&nbsp;--source kb/raw_docs/ddg_search.jsonl \<br/>
+        &nbsp;&nbsp;--limit <span class="val">50</span> \<br/>
+        &nbsp;&nbsp;--wiki-dir kb/wiki \<br/>
+        &nbsp;&nbsp;--export kb/wiki_export.md
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 5: LLM Extraction ── -->
+  <div class="slide" id="slide-5">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Core Logic</div>
+      <h2>LLM Extraction</h2>
+      <div class="two-col">
+        <div>
+          <p style="margin-bottom:16px;font-size:15px">For each document, a carefully crafted prompt is sent to Ollama. The LLM must return <strong style="color:#fff">only valid JSON</strong> — no prose.</p>
+          <ul class="fact-list">
+            <li><span class="bullet"></span>Company hint is labeled as a <em>hint</em>, not a directive — LLM decides the real entity from content</li>
+            <li><span class="bullet"></span>Instructions to return <code style="color:#d2a8ff;font-family:JetBrains Mono">"Unknown"</code> for index/magazine/navigation pages</li>
+            <li><span class="bullet"></span>Minimum 2 specific, substantive facts required — otherwise page is skipped entirely</li>
+            <li><span class="bullet"></span>3-layer JSON extraction: direct parse → substring parse → fallback skip</li>
+          </ul>
+        </div>
+        <div class="code-block" style="font-size:12px;line-height:1.65">
+          <span class="line-comment"># Prompt structure sent to Ollama</span><br/><br/>
+          Analyze this document...<br/><br/>
+          <span class="label">Document Title:</span> {title}<br/>
+          <span class="label">URL:</span> {url}<br/>
+          <span class="label">Hint:</span> {linked_company}<br/><br/>
+          <span class="label">Content:</span> {body_text[:1500]}<br/><br/>
+          <span class="kw">Rules:</span><br/>
+          - main_entity = PRIMARY subject<br/>
+          - If magazine/directory → "Unknown"<br/>
+          - facts = specific, substantive only<br/>
+          - no emails, URLs in entities<br/><br/>
+          <span class="fn">{"main_entity": ..., "facts": [...], ...}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 6: Entity Normalization ── -->
+  <div class="slide" id="slide-6">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Deduplication</div>
+      <h2>Entity Normalization</h2>
+      <div class="two-col">
+        <div>
+          <p style="margin-bottom:20px;font-size:15px">Without normalization, the same company generates multiple fragmented pages. A fuzzy-match pipeline prevents this.</p>
+          <div class="code-block" style="font-size:12px">
+            <span class="line-comment"># Strip corporate suffixes first</span><br/>
+            "Duckyang Co.,Ltd." → "duckyang"<br/>
+            "DUCKYANG CO.,LTD." → "duckyang"<br/>
+            "Duckyang Industrial Co." → "duckyang"<br/>
+            "Duckyang Ind." → "duckyang"<br/><br/>
+            <span class="line-comment"># Then fuzzy match with SequenceMatcher</span><br/>
+            threshold = <span class="val">0.82</span><br/>
+            score("duckyang", "duckyang") = <span class="val">1.00</span> ✓<br/><br/>
+            <span class="line-comment"># Cluster → pick shortest as canonical</span><br/>
+            canonical = <span class="str">"Duckyang"</span>  <span class="line-comment"># wins</span>
+          </div>
+        </div>
+        <div>
+          <div class="cards cols-1" style="display:flex;flex-direction:column;gap:12px">
+            <div class="card" style="border-color:rgba(0,212,170,0.3)">
+              <h3 style="color:var(--accent2)">Cluster-based Merging</h3>
+              <p>All near-duplicates are clustered first, then the best canonical title is chosen (shortest normalized name, most sources as tiebreaker).</p>
+            </div>
+            <div class="card" style="border-color:rgba(110,87,255,0.3)">
+              <h3 style="color:#a08fff">Real-time Resolution</h3>
+              <p><code style="font-family:JetBrains Mono;color:#d2a8ff">_find_canonical_entity()</code> runs on every ingest — new docs automatically merge into the right existing page.</p>
+            </div>
+            <div class="card" style="border-color:rgba(255,179,71,0.3)">
+              <h3 style="color:var(--accent4)">Email/URL Guard</h3>
+              <p>Entities containing <code style="font-family:JetBrains Mono;color:#d2a8ff">@</code> or starting with <code style="font-family:JetBrains Mono;color:#d2a8ff">http</code> are silently dropped before any page creation.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 7: Wiki Page Format ── -->
+  <div class="slide" id="slide-7">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Storage Format</div>
+      <h2>Wiki Page Structure</h2>
+      <div class="two-col">
+        <div>
+          <p style="margin-bottom:16px;font-size:15px">Each entity is stored as a <code style="color:#d2a8ff;font-family:JetBrains Mono">.md</code> file with embedded JSON frontmatter:</p>
+          <div class="code-block" style="font-size:12px;line-height:1.7">
+            ---<br/>
+            {<br/>
+            &nbsp;&nbsp;<span class="label">"title"</span>: <span class="str">"Duckyang"</span>,<br/>
+            &nbsp;&nbsp;<span class="label">"entity_type"</span>: <span class="str">"company"</span>,<br/>
+            &nbsp;&nbsp;<span class="label">"last_updated"</span>: <span class="str">"2026-06-07T..."</span>,<br/>
+            &nbsp;&nbsp;<span class="label">"sources"</span>: [<span class="str">"sha256:abc1..."</span>],<br/>
+            &nbsp;&nbsp;<span class="label">"related_entities"</span>: [<span class="str">"SK Innovation"</span>],<br/>
+            &nbsp;&nbsp;<span class="label">"fact_sources"</span>: {<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"Invests $10M in Georgia"</span>: [<span class="str">"sha256:abc1..."</span>]<br/>
+            &nbsp;&nbsp;}<br/>
+            }<br/>
+            ---<br/><br/>
+            <span class="fn"># Duckyang</span><br/><br/>
+            <span class="fn">## Overview</span><br/><br/>
+            <span class="fn">## Key Facts</span><br/>
+            - Invests $10M in Braselton, Georgia plant<br/>
+            - Hiring 285 people for EV battery parts<br/>
+            - Founded 1990, Seoul, South Korea<br/>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="border-color:rgba(110,87,255,0.3)">
+            <h3>📁 kb/wiki/ directory</h3>
+            <p>One <code style="font-family:JetBrains Mono;color:#d2a8ff">.md</code> file per entity, named by safe-filename conversion of the entity title.</p>
+          </div>
+          <div class="card" style="border-color:rgba(0,212,170,0.3)">
+            <h3>🗃️ _index.json</h3>
+            <p>Master lookup for all pages, entity cross-references, and the <code style="font-family:JetBrains Mono;color:#d2a8ff">sources_processed</code> set that prevents duplicate ingestion.</p>
+          </div>
+          <div class="card" style="border-color:rgba(255,179,71,0.3)">
+            <h3>🔗 fact_sources</h3>
+            <p>Per-fact provenance: maps each bullet-point fact to the list of source doc SHA-256 hashes that contributed it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 8: Provenance ── -->
+  <div class="slide" id="slide-8">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">New Feature</div>
+      <h2>Fact Provenance Tracking</h2>
+      <div class="two-col">
+        <div>
+          <p style="margin-bottom:18px;font-size:15px">Every fact is now traceable to the exact source document(s) that contributed it — crucial for RAG validation and audit.</p>
+          <div class="code-block" style="font-size:12px;line-height:1.7">
+            <span class="line-comment"># Query provenance at any time</span><br/>
+            wiki = <span class="cls">LLMWiki</span>(<span class="str">"kb/wiki"</span>)<br/>
+            <span class="kw">print</span>(wiki.<span class="fn">get_provenance</span>(<span class="str">"Volkswagen"</span>))<br/><br/>
+            <span class="line-comment"># Output:</span><br/>
+            <span class="fn">## Provenance: Volkswagen</span><br/><br/>
+            - Investing $2.1B in Scout Motors plant<br/>
+            &nbsp;&nbsp;Sources: <span class="str">sha256:abc123ef...</span><br/><br/>
+            - Plans to hire 4,000 workers by 2026<br/>
+            &nbsp;&nbsp;Sources: <span class="str">sha256:abc123ef..., sha256:def456...</span><br/>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="border-color:rgba(0,212,170,0.3)">
+            <h3 style="color:var(--accent2)">✓ Corroboration visible</h3>
+            <p>If two documents say the same thing, both source IDs appear — showing the fact is independently corroborated.</p>
+          </div>
+          <div class="card" style="border-color:rgba(0,212,170,0.3)">
+            <h3 style="color:var(--accent2)">✓ Survives deduplication</h3>
+            <p>When duplicate facts are merged, their provenance is combined — no source information is lost.</p>
+          </div>
+          <div class="card" style="border-color:rgba(0,212,170,0.3)">
+            <h3 style="color:var(--accent2)">✓ Survives entity merges</h3>
+            <p>When duplicate entity pages are merged (e.g. "Duckyang Co.,Ltd." → "Duckyang"), all fact_sources are preserved.</p>
+          </div>
+          <div class="card">
+            <h3>Legacy facts</h3>
+            <p>Facts written before provenance was added show <em>"predates provenance tracking"</em> — a clean, honest signal.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 9: Key Methods ── -->
+  <div class="slide" id="slide-9">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">API Reference</div>
+      <h2>Key Methods</h2>
+      <table class="method-table">
+        <thead>
+          <tr>
+            <th>Method</th>
+            <th>Purpose</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>ingest_document(doc_id, doc)</td><td>Main entry point. Calls Ollama, resolves entity, creates/updates wiki page. Returns list of pages updated.</td></tr>
+          <tr><td>_find_canonical_entity(name)</td><td>Fuzzy-matches a name against all existing page titles. Returns canonical title if score ≥ 0.82, else None.</td></tr>
+          <tr><td>merge_duplicates(dry_run)</td><td>Clusters all near-duplicate page titles, picks canonical, merges content + provenance, deletes orphan files.</td></tr>
+          <tr><td>get_provenance(title)</td><td>Returns human-readable report mapping each fact → source doc SHA-256 IDs.</td></tr>
+          <tr><td>search(query, top_k)</td><td>Keyword search over page titles and entity types. Returns ranked results with content previews.</td></tr>
+          <tr><td>export_as_markdown(output)</td><td>Compiles all wiki pages into one big markdown file, grouped by entity type.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 10: Issues Fixed ── -->
+  <div class="slide" id="slide-10">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Improvements</div>
+      <h2>Issues Fixed During Development</h2>
+      <div class="before-after">
+        <div class="ba-box before">
+          <div class="ba-label">❌ Before</div>
+          <ul>
+            <li>Ollama model <code style="font-family:JetBrains Mono">qwen2.5:32b</code> not installed → 404 on every call</li>
+            <li>Fallback used <code style="font-family:JetBrains Mono">linked_company</code> → all docs credited to "Duckyang"</li>
+            <li>5 separate pages for the same company: Duckyang, Duckyang Co.,Ltd., DUCKYANG Co.,Ltd., Duckyang Ind., Duckyang Industrial Co.</li>
+            <li>25 stub pages with only "Related to Duckyang" as content</li>
+            <li>"Related to X" fact repeated 4× per page (no deduplication on save)</li>
+            <li>Site Selection Magazine facts polluting Duckyang's page</li>
+            <li>UnicodeEncodeError on Windows (→ arrow in print statements)</li>
+            <li>No way to trace which fact came from which document</li>
+          </ul>
+        </div>
+        <div class="ba-box after">
+          <div class="ba-label">✅ After</div>
+          <ul>
+            <li>Model set to <code style="font-family:JetBrains Mono">mistral:latest</code> in .env — confirmed working</li>
+            <li>On Ollama failure: skip doc entirely (no page pollution)</li>
+            <li>All 5 Duckyang variants cluster and merge → 1 canonical page</li>
+            <li>Related entity stubs eliminated — metadata only, no empty .md files</li>
+            <li><code style="font-family:JetBrains Mono">_deduplicate_facts()</code> called on every save, not just merges</li>
+            <li>Improved prompt: "Hint" not directive, skip magazine/directory pages</li>
+            <li>All print statements use ASCII <code style="font-family:JetBrains Mono">-></code></li>
+            <li>Full fact-level provenance via <code style="font-family:JetBrains Mono">fact_sources</code> dict</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 11: How to use ── -->
+  <div class="slide" id="slide-11">
+    <div class="z1" style="width:100%;max-width:1100px">
+      <div class="tag">Usage Guide</div>
+      <h2>Running the Wiki</h2>
+      <div class="cards cols-2">
+        <div>
+          <div class="code-block" style="font-size:12px;line-height:1.8">
+            <span class="line-comment"># 1. Activate venv</span><br/>
+            .\.venv\Scripts\Activate.ps1<br/><br/>
+            <span class="line-comment"># 2. Run ingestion (first 50 docs)</span><br/>
+            python -m georgia_ev_intelligence.kb_builder.ingest_wiki \<br/>
+            &nbsp;&nbsp;--source kb/raw_docs/ddg_search.jsonl \<br/>
+            &nbsp;&nbsp;--limit <span class="val">50</span> \<br/>
+            &nbsp;&nbsp;--wiki-dir kb/wiki<br/><br/>
+            <span class="line-comment"># 3. Export full wiki to one file</span><br/>
+            python -m ... --export kb/wiki_export.md<br/><br/>
+            <span class="line-comment"># 4. Merge duplicates after a big run</span><br/>
+            wiki.<span class="fn">merge_duplicates</span>()<br/><br/>
+            <span class="line-comment"># 5. Check fact provenance</span><br/>
+            wiki.<span class="fn">get_provenance</span>(<span class="str">"Volkswagen"</span>)
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="border-color:rgba(255,179,71,0.3)">
+            <h3 style="color:var(--accent4)">⚠️ Prerequisites</h3>
+            <p>Ollama must be running locally with <code style="font-family:JetBrains Mono;color:#d2a8ff">mistral:latest</code> pulled. Verify with <code style="font-family:JetBrains Mono;color:#d2a8ff">ollama list</code>.</p>
+          </div>
+          <div class="card" style="border-color:rgba(0,212,170,0.3)">
+            <h3 style="color:var(--accent2)">💡 Recommended workflow</h3>
+            <p>Start with <code style="font-family:JetBrains Mono;color:#d2a8ff">--limit 5</code> to validate Ollama is working, then increase. The index tracks processed docs safely across runs.</p>
+          </div>
+          <div class="card">
+            <h3>🔁 Idempotent</h3>
+            <p>Re-running with the same source is safe — already-processed doc hashes are skipped via SHA-256 index. Interrupted runs pick up where they left off.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SLIDE 12: End ── -->
+  <div class="slide" id="slide-12">
+    <div class="z1" style="text-align:center">
+      <div class="tag">Summary</div>
+      <h1>A Self-Building<br/>Knowledge Graph</h1>
+      <div class="glow-line"></div>
+      <p class="subtitle" style="max-width:600px;margin:0 auto">
+        LLM Wiki turns a stream of raw web documents into a curated, structured, provenance-tracked encyclopedia — automatically, incrementally, and entirely locally.
+      </p>
+      <div class="stat-row" style="margin-top:40px;max-width:700px;margin-left:auto;margin-right:auto">
+        <div class="stat"><div class="num">∞</div><div class="lbl">Scalable to any corpus</div></div>
+        <div class="stat"><div class="num">🔒</div><div class="lbl">100% local / private</div></div>
+        <div class="stat"><div class="num">♻️</div><div class="lbl">Resumable at any point</div></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<!-- Navigation -->
+<div id="nav">
+  <button id="btn-prev" onclick="go(-1)" disabled>←</button>
+  <span id="slide-counter">1 / 12</span>
+  <button id="btn-next" onclick="go(1)">→</button>
+</div>
+
+<div id="progress-bar" style="width:8.33%"></div>
+<div class="slide-num" id="slide-num">01 / 12</div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+
+  function go(dir) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(total - 1, current + dir));
+    slides[current].classList.add('active');
+    update();
+  }
+
+  function update() {
+    document.getElementById('slide-counter').textContent = `${current+1} / ${total}`;
+    document.getElementById('slide-num').textContent = String(current+1).padStart(2,'0') + ' / ' + String(total).padStart(2,'0');
+    document.getElementById('progress-bar').style.width = `${((current+1)/total)*100}%`;
+    document.getElementById('btn-prev').disabled = current === 0;
+    document.getElementById('btn-next').disabled = current === total - 1;
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') go(1);
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')   go(-1);
+  });
+
+  // Touch swipe
+  let tx = 0;
+  document.addEventListener('touchstart', e => tx = e.touches[0].clientX);
+  document.addEventListener('touchend',   e => {
+    const dx = e.changedTouches[0].clientX - tx;
+    if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1);
+  });
+
+  update();
+</script>
+</body>
+</html>

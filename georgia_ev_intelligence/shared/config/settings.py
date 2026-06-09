@@ -46,6 +46,17 @@ OLLAMA_TEMPERATURE = _env_optional_float("OLLAMA_TEMPERATURE", 0.1)
 OLLAMA_TOP_P = _env_optional_float("OLLAMA_TOP_P", 0.9)
 OLLAMA_NUM_PREDICT = _env_optional_int("OLLAMA_NUM_PREDICT", 4096)
 
+# Query routing (all optional; the route-generation package owns the behavior).
+ROUTER_CONFIDENCE_THRESHOLD = _env_optional_float("ROUTER_CONFIDENCE_THRESHOLD", 0.65)
+PRE_ROUTER_HIGH_CONFIDENCE = _env_optional_float("PRE_ROUTER_HIGH_CONFIDENCE", 0.90)
+ROUTER_TEMPERATURE = _env_optional_float("ROUTER_TEMPERATURE", 0.0)
+ROUTER_NUM_PREDICT = _env_optional_int("ROUTER_NUM_PREDICT", 1024)
+METADATA_PROVIDER = os.environ.get("METADATA_PROVIDER", "live")
+METADATA_SNAPSHOT_PATH = os.environ.get(
+    "METADATA_SNAPSHOT_PATH",
+    str(OUTPUTS_DIR / "route_metadata_snapshot.json"),
+)
+
 EMBEDDING_MODEL = _env("EMBEDDING_MODEL")
 EMBEDDING_LOCAL_FILES_ONLY = _env_bool("EMBEDDING_LOCAL_FILES_ONLY")
 EMBEDDING_TRUST_REMOTE_CODE = _env_bool("EMBEDDING_TRUST_REMOTE_CODE")

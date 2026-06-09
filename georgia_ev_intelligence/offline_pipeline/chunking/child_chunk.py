@@ -22,6 +22,7 @@ CHILD_CHUNK_FIELDS: dict[ChildChunkType, tuple[str, ...]] = {
     ChildChunkType.IDENTITY: (
         KBColumns.COMPANY,
         KBColumns.CATEGORY,
+        KBColumns.STATE,
         KBColumns.INDUSTRY_GROUP,
         KBColumns.UPDATED_LOCATION,
     ),
@@ -39,6 +40,7 @@ CHILD_CHUNK_FIELDS: dict[ChildChunkType, tuple[str, ...]] = {
     ),
     ChildChunkType.LOCATION_EMPLOYMENT: (
         KBColumns.COMPANY,
+        KBColumns.STATE,
         KBColumns.UPDATED_LOCATION,
         KBColumns.ADDRESS,
         KBColumns.LATITUDE,

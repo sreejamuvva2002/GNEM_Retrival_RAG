@@ -9,12 +9,12 @@ Product/Service, EV/Battery Relevant) — matching the React grid.
 from __future__ import annotations
 
 import html
-from typing import List, Optional
+from typing import Optional
 
 import streamlit as st
 
 from ..models.chat import Settings
-from ..models.source import SourceViewModel
+from ..models.source import Provenance, SourceViewModel
 from ..state import ui_state
 
 
@@ -52,14 +52,45 @@ def _grid_html(source: SourceViewModel) -> str:
     return f"<div class='source-grid'>{''.join(fields)}</div>"
 
 
-def render(sources: List[SourceViewModel], settings: Settings) -> None:
+def _subtitle(provenance: Provenance) -> str:
+    if provenance.kind == "count":
+        return "Derived from a count query"
+    if provenance.kind == "groups":
+        n = len(provenance.group_rows)
+        return f"{n} group{'' if n == 1 else 's'} found"
+    n = len(provenance.sources)
+    return f"{n} source{'' if n == 1 else 's'} found"
+
+
+def _render_query(provenance: Provenance) -> None:
+    """The executed SQL — *how* the records were retrieved, not a source itself."""
+    if not provenance.sql_queries:
+        return
+    with st.expander("Query — how this answer was retrieved"):
+        for item in provenance.sql_queries:
+            label = item.get("label") or "Query"
+            sql = item.get("sql") or ""
+            st.caption(label)
+            st.code(sql, language="sql")
+
+
+def _render_group_rows(provenance: Provenance) -> None:
+    """Aggregate/count answers have no per-company record; show the rows behind
+    the number as their provenance."""
+    if not provenance.group_rows:
+        return
+    st.caption("Result rows")
+    st.dataframe(provenance.group_rows, use_container_width=True, hide_index=True)
+
+
+def render(provenance: Provenance, settings: Settings) -> None:
     st.markdown(
         f"""
         <div class="sources-header">
             <div>
                 <div class="sources-header__title">Sources</div>
                 <div class="sources-header__subtitle">
-                    {len(sources)} source{'s' if len(sources) != 1 else ''} found
+                    {_subtitle(provenance)}
                 </div>
             </div>
         </div>
@@ -71,7 +102,7 @@ def render(sources: List[SourceViewModel], settings: Settings) -> None:
         ui_state.set_sources_panel_open(False)
         st.rerun()
 
-    if not sources:
+    if not provenance.has_content():
         st.info("Submit a question to see retrieved sources here.")
         return
 
@@ -79,7 +110,12 @@ def render(sources: List[SourceViewModel], settings: Settings) -> None:
     # right column (shrunk map + this panel + docked chat input) fits in one
     # viewport without page scroll.
     with st.container(height=280):
-        for source in sources:
-            name = source.title or source.record_id or "Source"
-            with st.expander(name):
-                st.markdown(_grid_html(source), unsafe_allow_html=True)
+        # Method first (the query), then the evidence it returned.
+        _render_query(provenance)
+        if provenance.sources:
+            for source in provenance.sources:
+                name = source.title or source.record_id or "Source"
+                with st.expander(name):
+                    st.markdown(_grid_html(source), unsafe_allow_html=True)
+        else:
+            _render_group_rows(provenance)

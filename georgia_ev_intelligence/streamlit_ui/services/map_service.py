@@ -6,15 +6,15 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 
 from ..models.map import MapContext, MapResult
+from ..spatial.postgis_spatial_engine import PostGISSpatialEngine
 from ..spatial.query_planner import QueryPlanner
-from ..spatial.spatial_engine import SpatialEngine
 from .interfaces import IMapDataService
 
 
 class MapService(IMapDataService):
     """Run the spatial pipeline (QueryPlanner → SpatialEngine) for a question."""
 
-    def __init__(self, spatial_engine: SpatialEngine, query_planner: QueryPlanner) -> None:
+    def __init__(self, spatial_engine: PostGISSpatialEngine, query_planner: QueryPlanner) -> None:
         self._spatial_engine = spatial_engine
         self._query_planner = query_planner
 
@@ -42,17 +42,10 @@ class MapService(IMapDataService):
                 context.focus_label = str(city).title()
 
         if (center_lat is None or center_lon is None) and company_name:
-            origin = self._spatial_engine.companies_df[
-                self._spatial_engine.companies_df["company"]
-                .fillna("")
-                .astype(str)
-                .str.lower()
-                .str.contains(str(company_name).lower())
-            ].dropna(subset=["latitude", "longitude"])
-            if not origin.empty:
-                center_lat = float(origin.iloc[0]["latitude"])
-                center_lon = float(origin.iloc[0]["longitude"])
-                context.focus_label = str(origin.iloc[0]["company"])
+            resolved = self._spatial_engine.resolve_place_coordinates(str(company_name))
+            if resolved:
+                center_lat, center_lon = resolved
+                context.focus_label = str(company_name)
 
         # Branch on intent / hints.
         if analysis_intent == "gap_analysis":
@@ -75,6 +68,9 @@ class MapService(IMapDataService):
             context.map_mode = "county_filter"
             context.counties = counties
             records_df = self._spatial_engine.companies_in_counties(counties)
+            resolved = self._spatial_engine.resolve_place_coordinates(str(counties[0]))
+            if resolved:
+                context.center_lat, context.center_lon = resolved
         else:
             # No spatial signal — render every company we know about.
             context.map_mode = "standard"

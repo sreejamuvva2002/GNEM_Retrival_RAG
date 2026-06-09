@@ -39,7 +39,8 @@ def _coord(value: Any):
     return f
 
 
-def _popup_html(record: Dict[str, Any]) -> str:
+def _company_block(record: Dict[str, Any]) -> str:
+    """One company's name + detail lines for a popup."""
     company = html.escape(str(record.get("company") or "Company"))
     lines = [f"<p style='font-weight:600; margin:0 0 2px 0;'>{company}</p>"]
     for key in ("address", "product_service"):
@@ -48,11 +49,45 @@ def _popup_html(record: Dict[str, Any]) -> str:
             lines.append(
                 f"<p style='color:#64748b; margin:0;'>{html.escape(str(val).strip())}</p>"
             )
+    return "".join(lines)
+
+
+def _popup_html(records: List[Dict[str, Any]]) -> str:
+    """Popup for one location; lists every company sharing that point."""
+    if len(records) > 1:
+        header = (
+            f"<p style='font-weight:700; margin:0 0 6px 0; color:#0f172a;'>"
+            f"{len(records)} companies at this location</p>"
+        )
+        blocks = "<hr style='border:none; border-top:1px solid #e2e8f0; margin:6px 0;'>".join(
+            _company_block(r) for r in records
+        )
+        body = header + blocks
+    else:
+        body = _company_block(records[0])
     return (
         "<div style='font:13px/1.4 Inter,system-ui,sans-serif; min-width:180px;'>"
-        + "".join(lines)
+        + body
         + "</div>"
     )
+
+
+def _group_by_location(records: List[Dict[str, Any]]) -> Dict[tuple, List[Dict[str, Any]]]:
+    """Bucket records by exact coordinate so co-located companies share one pin.
+
+    Several companies can occupy the same physical site (e.g. an OEM campus), so
+    plotting one marker per record stacks them invisibly. Grouping by rounded
+    lat/lon keeps the plain-marker look while making every company reachable
+    through the shared pin's popup.
+    """
+    groups: Dict[tuple, List[Dict[str, Any]]] = {}
+    for record in records:
+        lat = _coord(record.get("latitude"))
+        lon = _coord(record.get("longitude"))
+        if lat is None or lon is None:
+            continue
+        groups.setdefault((round(lat, 6), round(lon, 6)), []).append(record)
+    return groups
 
 
 def _build_map(records: List[Dict[str, Any]]) -> folium.Map:
@@ -63,15 +98,16 @@ def _build_map(records: List[Dict[str, Any]]) -> folium.Map:
         control_scale=True,
     )
 
-    for record in records:
-        lat = _coord(record.get("latitude"))
-        lon = _coord(record.get("longitude"))
-        if lat is None or lon is None:
-            continue
+    for (lat, lon), group in _group_by_location(records).items():
+        if len(group) > 1:
+            names = ", ".join(str(r.get("company") or "") for r in group)
+            tooltip = f"{len(group)} companies: {names}"
+        else:
+            tooltip = str(group[0].get("company") or "")
         folium.Marker(
             location=[lat, lon],
-            popup=folium.Popup(_popup_html(record), max_width=260),
-            tooltip=str(record.get("company") or ""),
+            popup=folium.Popup(_popup_html(group), max_width=260),
+            tooltip=tooltip,
         ).add_to(fmap)
 
     if not records:

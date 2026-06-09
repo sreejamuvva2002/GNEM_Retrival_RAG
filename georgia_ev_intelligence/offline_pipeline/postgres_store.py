@@ -19,6 +19,7 @@ CREATE TABLE IF NOT EXISTS parent_chunks (
     source_type                  TEXT,
     company                      TEXT,
     category                     TEXT,
+    state                        TEXT,
     industry_group               TEXT,
     updated_location             TEXT,
     address                      TEXT,
@@ -43,7 +44,7 @@ CREATE TABLE IF NOT EXISTS parent_chunks (
 _UPSERT_SQL = """
 INSERT INTO parent_chunks (
     record_id, source_row_id, source_type,
-    company, category, industry_group, updated_location,
+    company, category, state, industry_group, updated_location,
     address, latitude, longitude, primary_facility_type,
     ev_supply_chain_role, primary_oems, supplier_or_affiliation_type,
     employment, product_service, ev_battery_relevant,
@@ -55,6 +56,7 @@ ON CONFLICT (record_id) DO UPDATE SET
     source_type                  = EXCLUDED.source_type,
     company                      = EXCLUDED.company,
     category                     = EXCLUDED.category,
+    state                        = EXCLUDED.state,
     industry_group               = EXCLUDED.industry_group,
     updated_location             = EXCLUDED.updated_location,
     address                      = EXCLUDED.address,
@@ -89,6 +91,7 @@ def _get_connection() -> "psycopg2.extensions.connection":
 def _create_parent_chunks_table(conn: "psycopg2.extensions.connection") -> None:
     with conn.cursor() as cur:
         cur.execute(_CREATE_TABLE_SQL)
+        cur.execute("ALTER TABLE parent_chunks ADD COLUMN IF NOT EXISTS state TEXT;")
 
 
 def _upsert_parent_chunks(
@@ -104,6 +107,7 @@ def _upsert_parent_chunks(
             p.source_type,
             p.company,
             p.category,
+            p.state,
             p.industry_group,
             p.updated_location,
             p.address,

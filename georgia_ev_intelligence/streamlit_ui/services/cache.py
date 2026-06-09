@@ -13,33 +13,31 @@ from typing import Any, Dict
 import pandas as pd
 import streamlit as st
 
-from georgia_ev_intelligence.runtime_pipeline.hybrid_retrieval.factory import (
-    build_default_pipeline,
+from georgia_ev_intelligence.route_generation.route_service import (
+    build_default_route_service,
 )
 
 from ..bootstrap.build_companies_db import (
-    DEFAULT_DB_PATH,
     DEFAULT_EXCEL_PATH,
     DEFAULT_GEOJSON_PATH,
-    ensure_companies_db,
 )
+from ..spatial.postgis_spatial_engine import PostGISSpatialEngine
 from ..spatial.query_planner import QueryPlanner
-from ..spatial.spatial_engine import SpatialEngine
-from .chat_service import ChatService
-from .interfaces import DispatchResult
+from .interfaces import DispatchResult, IChatService
 from .map_service import MapService
 from .query_dispatcher import QueryDispatcher
+from .route_chat_service import RouteChatService
 
 
-@st.cache_resource(show_spinner="Loading hybrid retrieval pipeline...")
-def get_chat_service() -> ChatService:
-    return ChatService(retrieval_pipeline_factory=build_default_pipeline)
+@st.cache_resource(show_spinner="Loading routing pipeline...")
+def get_chat_service() -> IChatService:
+    """Route-aware chat: router + validator + safe per-route executor (+ Ollama)."""
+    return RouteChatService(route_service_factory=build_default_route_service, use_llm=True)
 
 
 @st.cache_resource(show_spinner="Loading spatial engine...")
 def get_map_service() -> MapService:
-    db_path = ensure_companies_db()
-    engine = SpatialEngine(db_path=db_path, geojson_path=DEFAULT_GEOJSON_PATH)
+    engine = PostGISSpatialEngine()
     planner = QueryPlanner(
         company_names=engine.list_company_names(),
         county_names=engine.county_names,
@@ -131,7 +129,9 @@ def get_county_geojson() -> dict:
         return json.load(fh)
 
 
-def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
+def dispatch_query_cached(
+    query: str, history: tuple[tuple[str, str], ...] | None = None, _on_step=None
+) -> DispatchResult:
     """Run dispatch for one query, emitting live step events via `_on_step`.
 
     NOT cached: `_on_step` writes to a Streamlit layout block (the loading-card
@@ -143,7 +143,8 @@ def dispatch_query_cached(query: str, _on_step=None) -> DispatchResult:
     calls this exactly once per question, so nothing is recomputed on rerun.
     """
     dispatcher = get_query_dispatcher()
-    return dispatcher.dispatch(query, on_step=_on_step)
+    history_list = list(history) if history else None
+    return dispatcher.dispatch(query, history=history_list, on_step=_on_step)
 
 
 #: Markers shown on the baseline (no-query) map. Kept small so the first map
@@ -161,3 +162,31 @@ def baseline_map_payload() -> tuple:
 @lru_cache(maxsize=1)
 def project_data_dir() -> Path:
     return DEFAULT_GEOJSON_PATH.parent
+
+
+#: The human-validated question set, used to offer quick-pick prompts in the UI.
+_QUESTIONS_CSV = Path(__file__).resolve().parents[3] / "data" / "questions_50.csv"
+
+
+@st.cache_data(show_spinner=False)
+def get_example_questions() -> list[tuple[str, str]]:
+    """Return ``[(question_id, question), ...]`` from ``data/questions_50.csv``.
+
+    Empty list when the file is absent so the empty state degrades gracefully.
+    """
+    if not _QUESTIONS_CSV.exists():
+        return []
+    df = pd.read_csv(_QUESTIONS_CSV)
+    cols = {c.lower(): c for c in df.columns}
+    qid_col = cols.get("question_id")
+    q_col = cols.get("question")
+    if q_col is None:
+        return []
+    out: list[tuple[str, str]] = []
+    for _, row in df.iterrows():
+        question = str(row[q_col]).strip()
+        if not question or question.lower() == "nan":
+            continue
+        qid = str(row[qid_col]).strip() if qid_col else f"q{len(out) + 1:03d}"
+        out.append((qid, question))
+    return out

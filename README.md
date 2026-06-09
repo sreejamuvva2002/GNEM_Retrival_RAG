@@ -161,9 +161,6 @@ pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-<<<<<<< HEAD
-### 2. Configure `.env`
-=======
 If you use Conda instead, activate your Conda environment and then run:
 
 ```bash
@@ -183,7 +180,6 @@ To extract text from images, the `pytesseract` library requires the Tesseract OC
 Create `.env` in the repository root. The app loads it automatically.
 
 Required variables used by the current code:
->>>>>>> 5a88f5f6bdfd168cbdcd403e194d87cb8cadf6a4
 
 ```bash
 # Neon PostgreSQL

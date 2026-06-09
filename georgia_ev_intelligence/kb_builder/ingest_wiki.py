@@ -50,7 +50,7 @@ def ingest(source_file: str, limit: int = 0, wiki_dir: str = "kb/wiki"):
         try:
             updated = wiki.ingest_document(doc_id, doc)
             page_updates += len(updated)
-            print(f"      → Updated {len(updated)} pages: {', '.join(updated)}")
+            print(f"      -> Updated {len(updated)} pages: {', '.join(updated)}")
         except Exception as e:
             print(f"      ERROR: {e}", file=sys.stderr)
 
