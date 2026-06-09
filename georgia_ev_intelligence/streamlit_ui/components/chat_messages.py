@@ -12,6 +12,7 @@ import streamlit.components.v1 as components
 from ..models.chat import Message
 from ..models.source import Provenance
 from ..state import ui_state
+from . import sources_panel
 from ._markdown import render_assistant_markdown
 
 
@@ -117,7 +118,8 @@ def render(messages: List[Message], provenance: Provenance) -> None:
             st.markdown(_assistant_row(message), unsafe_allow_html=True)
             _copy_control(message.content, align="left")
 
-    # Sources button under the last assistant message (reveals the side panel).
+    # Sources button and expanded provenance live directly below the latest
+    # assistant answer inside the scrollable conversation.
     last = messages[-1]
     if last.role == "assistant" and provenance.has_content():
         open_now = ui_state.sources_panel_open()
@@ -130,6 +132,8 @@ def render(messages: List[Message], provenance: Provenance) -> None:
         if st.button(label, key="chat_sources_toggle"):
             ui_state.toggle_sources_panel()
             st.rerun()
+        if open_now:
+            sources_panel.render(provenance)
 
     # Streamlit strips inline <script> from st.markdown, so the auto-scroll runs
     # inside an iframe; window.parent.document reaches the main Streamlit DOM.

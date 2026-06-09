@@ -1,5 +1,5 @@
 ---
-{"title": "Duckyang", "entity_type": "company", "last_updated": "2026-06-07T20:43:11.796339", "sources": ["sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1", "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14", "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a", "sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff", "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95", "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c", "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8", "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349", "sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b", "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06", "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b", "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218", "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a", "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f"], "related_entities": ["El Corte Ingles", "Braselton", "Kia", "Qingdao Handuck Apparel Inc.", "Seoul", "MYANMAR - UNIVERSAL", "Georgia", "Gangseo-gu", "Hyundai", "Seho BLDG (Deungchon-dong)", "Deungchon-dong", "SK Innovation", "Braselton, Georgia", "Amazon", "Bangladesh", "BANGLADESH - INTERFAB", "Korea(07591)", "Vietnam", "Tucci homeware", "Seho BLDG", "Universal Apparel Co., Ltd.", "Visteon International Holdings, Inc"], "fact_sources": {"$10,000,000 investment to build out 230,000 square feet of new space in Braselton, Georgia": ["sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b"], "Founded on July 1977 at Ulsan, South Korea (cradle of the country's automobile industry)": ["sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b"], "$10,000,000.00 investment in Braselton Georgia": ["sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06"], "230,000 square feet occupation in Braselton": ["sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06"]}}
+{"title": "Duckyang", "entity_type": "company", "last_updated": "2026-06-08T23:05:27.071476", "sources": ["sha256:cd90acd7fe1e8bf8fae3116256b47e4096889dcf59064274e428597e4ce6f740", "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218", "sha256:02a0cce0f4b7231b2495d9358e2aa00b656b260dd619158be116645691069fba", "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06", "sha256:99a7d458e19774a22b242185fda6e2ce06063b167eaa922939c64fe12e435d0b", "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14", "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c", "sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff", "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95", "sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126", "sha256:0d859b4a45f1ba810894bfb81b948885ca75c7742d8c52544f81ad227bbee210", "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8", "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a", "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b", "sha256:ea4422c5f05741a96b145a4e25c5570f53ffd12ec6f1bb38f79545912284c988", "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a", "sha256:a39b9abaa96f1522921d5154fae27230fede1aa35fc796a22c1899354f6cc81f", "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349", "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f", "sha256:f4dcf12e562d83c2005d9ecc3edfe9d45fc05f94b6d0cbeaa07631b6fa15e742", "sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b", "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1", "sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1"], "related_entities": ["Korea", "Visteon International Holdings, Inc", "SK Innovation", "Gov. Kemp", "Tucci homeware", "Seho BLDG (Deungchon-dong)", "Braselton Auto Parts", "Jackson County", "Braselton, Georgia", "Universal Apparel Co., Ltd.", "Jackson County, Georgia", "Kia", "Universal Factory", "El Corte Ingles", "Braselton Georgia", "Seoul", "Braselton", "Hyundai", "Bangladesh", "Amazon", "New Jersey Department of Environmental Protection", "INTERFAB", "Myanmar", "Vietnam", "Georgia"], "fact_sources": {"Located in Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591)": ["sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14"], "Telephone number is 82-2-704-5161-3": ["sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14"], "Plans to invest $10,000,000.00 in Braselton, Georgia.": ["sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b"], "Plans to occupy 230,000 square feet of new space.": ["sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b"], "Duckyang will create 285 jobs in Georgia with a capital investment of $10 million.": ["sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349"], "Duckyang is manufacturing cockpit modules and electric vehicle parts.": ["sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349"], "Invested $10 million to build a new plant in Braselton, Georgia for battery modules and energy storage systems.": ["sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c"], "Will hire 285 people at the new facility.": ["sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c"], "Offers production of shirts and pajamas.": ["sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a"], "Operates in Myanmar and Bangladesh.": ["sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a"], "Duckyang is a Korean automotive manufacturer.": ["sha256:f4dcf12e562d83c2005d9ecc3edfe9d45fc05f94b6d0cbeaa07631b6fa15e742"], "Duckyang plans to open its first U.S. facility in Jackson County, Georgia.": ["sha256:f4dcf12e562d83c2005d9ecc3edfe9d45fc05f94b6d0cbeaa07631b6fa15e742"], "Founded in 1990 in Seoul, South Korea.": ["sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95"], "Specializes in the production of Non-Iron Shirts with full taping.": ["sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95"], "Launched domestic shirts brand named as \u201cURBANT\u201d brand.": ["sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff"], "Starting to operate Qingdao Handuck Apparel Inc.": ["sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff"], "Located in Seho BLDG (Deungchon-dong) 56Gil Gangseoro Gangseo-gu, Seoul, Korea": ["sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218"], "Copyright holder of the website content": ["sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218"], "Located at Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591)": ["sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1"], "Contact number is TEL: 82-2-704-5161-3 and FAX: 82-2-704-5164": ["sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1"], "Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591) is the location of Duckyang Co.,Ltd.": ["sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8"], "TEL : 82-2-704-5161-3 and FAX : 82-2-704-5164 are contact numbers for Duckyang Co.,Ltd.": ["sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8"], "Duckyang's pajamas are sold in El Corte Ingles department store in Spain": ["sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a"], "Headquarters address is Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea": ["sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a"], "Founded in August 2010": ["sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1"], "Located at No.24, Plot No.6, Thaung Gyi North, Ngwe Pin Lae Industrial zone Hlaing Township, Yangon, Myanmar": ["sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1"], "Located in Seho BLDG, Deungchon-dong, Gangseo-gu, Seoul, Korea (postal code 07591)": ["sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f"], "Contact number is TEL : 82-2-704-5161-3 and FAX : 82-2-704-5164": ["sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f"], "Duckyang USA to spend $10,000,000.00 on a property in Braselton Georgia.": ["sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126"], "Duckyang USA will occupy 230,000 square feet of space.": ["sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126"], "Duckyang USA plans to invest $10,000,000.00 in Braselton, Georgia.": ["sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b", "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06"], "The company will occupy 230,000 square feet of new space at 984 Broadway Avenue.": ["sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b"], "The company plans to occupy 230,000 square feet of new space.": ["sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06"], "Invests $10M in a new EV battery storage plant in Georgia": ["sha256:ea4422c5f05741a96b145a4e25c5570f53ffd12ec6f1bb38f79545912284c988"], "New facility is for EV battery storage": ["sha256:ea4422c5f05741a96b145a4e25c5570f53ffd12ec6f1bb38f79545912284c988"], "invests $10 million in a new plant in Braselton, Georgia": ["sha256:cd90acd7fe1e8bf8fae3116256b47e4096889dcf59064274e428597e4ce6f740"], "the new plant will make battery modules": ["sha256:cd90acd7fe1e8bf8fae3116256b47e4096889dcf59064274e428597e4ce6f740"], "Duckyang Industrial invested $10M in a new EV Battery Storage Plant in Georgia.": ["sha256:02a0cce0f4b7231b2495d9358e2aa00b656b260dd619158be116645691069fba"], "The investment is related to news content about New Jersey's 'Advanced Clean Truck' proposal.": ["sha256:02a0cce0f4b7231b2495d9358e2aa00b656b260dd619158be116645691069fba"], "The purpose of the Terms of Use is to set forth terms and conditions for use and operation of services on Duckyang's Website.": ["sha256:0d859b4a45f1ba810894bfb81b948885ca75c7742d8c52544f81ad227bbee210"], "Operators have the authority to separately announce and provide guidance on operational policies.": ["sha256:0d859b4a45f1ba810894bfb81b948885ca75c7742d8c52544f81ad227bbee210"], "Duckyang has opened a manufacturing plant in Braselton, Georgia.": ["sha256:99a7d458e19774a22b242185fda6e2ce06063b167eaa922939c64fe12e435d0b"], "The company is based in Korea.": ["sha256:99a7d458e19774a22b242185fda6e2ce06063b167eaa922939c64fe12e435d0b"], "investing $10 million to open its first U.S. manufacturing facility in Jackson County": ["sha256:a39b9abaa96f1522921d5154fae27230fede1aa35fc796a22c1899354f6cc81f"], "the facility will create 285 jobs": ["sha256:a39b9abaa96f1522921d5154fae27230fede1aa35fc796a22c1899354f6cc81f"]}}
 ---
 
 # Duckyang
@@ -8,34 +8,48 @@
 
 ## Key Facts
 
-- $10,000,000.00 investment in Braselton Georgia
-- 230,000 square feet occupation in Braselton
-- $10,000,000 investment to build out 230,000 square feet of new space in Braselton, Georgia
-- Founded on July 1977 at Ulsan, South Korea (cradle of the country's automobile industry)
-- Address: Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591)
-- Contact: TEL : 82-2-704-5161-3 FAX : 82-2-704-5164
-- Duckyang's pajamas are sold at El Corte Ingles in Spain.
-- Duckyang has a location at Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591)
-- Located at Seho BLDG (Deungchon-dong) 100, Gangseo-gu, Seoul, Korea(07591)
-- TEL: 82-2-704-5161
-- Contact number: TEL : 82-2-704-5161-3 FAX : 82-2-704-5164
+- investing $10 million to open its first U.S. manufacturing facility in Jackson County
+- the facility will create 285 jobs
+- Duckyang has opened a manufacturing plant in Braselton, Georgia.
+- The company is based in Korea.
+- The purpose of the Terms of Use is to set forth terms and conditions for use and operation of services on Duckyang's Website.
+- Operators have the authority to separately announce and provide guidance on operational policies.
+- Duckyang Industrial invested $10M in a new EV Battery Storage Plant in Georgia.
+- The investment is related to news content about New Jersey's 'Advanced Clean Truck' proposal.
+- invests $10 million in a new plant in Braselton, Georgia
+- the new plant will make battery modules
+- Invests $10M in a new EV battery storage plant in Georgia
+- New facility is for EV battery storage
+- Duckyang USA plans to invest $10,000,000.00 in Braselton, Georgia.
+- The company plans to occupy 230,000 square feet of new space.
+- The company will occupy 230,000 square feet of new space at 984 Broadway Avenue.
+- Duckyang USA to spend $10,000,000.00 on a property in Braselton Georgia.
+- Duckyang USA will occupy 230,000 square feet of space.
+- Located in Seho BLDG, Deungchon-dong, Gangseo-gu, Seoul, Korea (postal code 07591)
+- Contact number is TEL : 82-2-704-5161-3 and FAX : 82-2-704-5164
+- Founded in August 2010
+- Located at No.24, Plot No.6, Thaung Gyi North, Ngwe Pin Lae Industrial zone Hlaing Township, Yangon, Myanmar
+- Duckyang's pajamas are sold in El Corte Ingles department store in Spain
+- Headquarters address is Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea
+- Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591) is the location of Duckyang Co.,Ltd.
+- TEL : 82-2-704-5161-3 and FAX : 82-2-704-5164 are contact numbers for Duckyang Co.,Ltd.
 - Located at Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591)
-- Started production in a cooperative factory in Bangladesh.
-- Operates Universal Apparel Co., Ltd. and Qingdao Handuck Apparel Inc.
-- Founded in 1990 in Seoul, South Korea
-- Specialized in the production of Non-Iron Shirts with full taping
-- Production of SHIRTS and PAJAMAS
-- Operates in MYANMAR - UNIVERSAL and BANGLADESH - INTERFAB
-- Investing $10 million in a new plant in Braselton, Georgia
-- Producing battery modules and energy storage systems
-- Hiring 285 people to make parts for electric vehicle batteries
-- Collaborating with SK Innovation on EV battery production nearby
-- Supplies cockpit modules including dashboard assemblies to automakers like Kia and Hyundai
-- Manufacturing company
-- Reshoring category: Foreign Direct Investment
-- Total number of jobs (added or to be added): 285
-- Year reshoring announced: 2021
-- Country(ies) from which reshored: Korea, Republic of
-- $10,000,000.00 investment in 230,000 square feet of space in Braselton, Georgia
-- Founded on July 1977 at Ulsan, South Korea
-- Contact number: 82-2-704-5161
+- Contact number is TEL: 82-2-704-5161-3 and FAX: 82-2-704-5164
+- Located in Seho BLDG (Deungchon-dong) 56Gil Gangseoro Gangseo-gu, Seoul, Korea
+- Copyright holder of the website content
+- Launched domestic shirts brand named as “URBANT” brand.
+- Starting to operate Qingdao Handuck Apparel Inc.
+- Founded in 1990 in Seoul, South Korea.
+- Specializes in the production of Non-Iron Shirts with full taping.
+- Duckyang is a Korean automotive manufacturer.
+- Duckyang plans to open its first U.S. facility in Jackson County, Georgia.
+- Offers production of shirts and pajamas.
+- Operates in Myanmar and Bangladesh.
+- Invested $10 million to build a new plant in Braselton, Georgia for battery modules and energy storage systems.
+- Will hire 285 people at the new facility.
+- Duckyang will create 285 jobs in Georgia with a capital investment of $10 million.
+- Duckyang is manufacturing cockpit modules and electric vehicle parts.
+- Plans to invest $10,000,000.00 in Braselton, Georgia.
+- Plans to occupy 230,000 square feet of new space.
+- Located in Seho BLDG (Deungchon-dong) 100, 56Gil Gangseoro Gangseo-gu, Seoul, Korea(07591)
+- Telephone number is 82-2-704-5161-3

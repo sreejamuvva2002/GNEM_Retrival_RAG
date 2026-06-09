@@ -227,7 +227,7 @@ class QueryPlanner:
     @staticmethod
     def _extract_city(text: str) -> Optional[str]:
         patterns = [
-            r"\bnear\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
+            r"\bnear(?:\s+to)?\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
             r"\baround\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
             r"\bclosest\s+to\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",
             r"\bwithin\s+\d+(?:\.\d+)?\s*(?:km|miles?|mi)\s+of\s+([A-Za-z][A-Za-z\s\-']+?)(?:[?.!,]|$)",

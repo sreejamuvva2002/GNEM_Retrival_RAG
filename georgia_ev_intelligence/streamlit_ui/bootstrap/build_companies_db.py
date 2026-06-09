@@ -15,6 +15,7 @@ import duckdb
 import numpy as np
 import pandas as pd
 
+from ..company_data_corrections import apply_company_data_corrections
 from ..spatial.county_geo import (
     infer_county_from_point,
     load_county_centroids,
@@ -207,9 +208,11 @@ def _prepare_companies_dataframe(excel_path: Path, geojson_path: Path) -> pd.Dat
         )
         df["employment"] = pd.to_numeric(df["employment"], errors="coerce")
 
+    df = apply_company_data_corrections(df)
     county_centroids = load_county_centroids(geojson_path)
     county_geometries = load_county_geometries(geojson_path)
     df = _attach_coordinates(df, county_centroids=county_centroids, county_geometries=county_geometries)
+    df = apply_company_data_corrections(df)
 
     for col in COMPANIES_TABLE_COLUMNS:
         if col not in df.columns:

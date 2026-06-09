@@ -26,7 +26,6 @@ from georgia_ev_intelligence.streamlit_ui.components import (
     loading_card,
     map_view,
     resizable_split,
-    sources_panel,
 )
 from georgia_ev_intelligence.streamlit_ui.models.source import Provenance, SourceViewModel
 from georgia_ev_intelligence.streamlit_ui.services.cache import (
@@ -195,15 +194,13 @@ def main() -> None:
     )
 
     _bootstrap_state()
-    s = settings_state.settings()
     inject_styles(is_dark=False, compact=False)
 
     provenance = _build_provenance()
-    show_sources = ui_state.sources_panel_open() and provenance.has_content()
     pending = ui_state.pending_query()
 
-    # 50/50 split: chat left, map (+ stacked sources) right — matches React.
-    # Heights (full-viewport columns, scrollable messages, full/50-50 map) are
+    # 50/50 split: chat with inline sources left, full-height map right.
+    # Heights (full-viewport columns, scrollable messages, full-height map) are
     # applied client-side by resizable_split.render().
     chat_col, map_col = st.columns([0.5, 0.5])
 
@@ -223,9 +220,6 @@ def main() -> None:
         submitted = st.chat_input("Ask about EV companies in Georgia...", key="chat_input")
     with map_col:
         _render_map_pane(is_dark=False)  # map wraps itself in st.container(key="gnem_map")
-        if show_sources:
-            with st.container(key="gnem_sources"):
-                sources_panel.render(provenance, s)
 
     # Draggable divider + full-height flex layout — all client-side (no rerun).
     resizable_split.render()

@@ -585,7 +585,7 @@ def inject_styles(is_dark: bool = False, compact: bool = False) -> None:
             border: 1px solid var(--glass-border) !important;
         }}
 
-        /* "View Sources (n)" — React outline button under the assistant bubble */
+        /* "View Sources (n)" — outline button under the assistant answer */
         [class*="st-key-chat_sources_toggle"] button {{
             width: auto !important;
             background: #f8fafc !important;

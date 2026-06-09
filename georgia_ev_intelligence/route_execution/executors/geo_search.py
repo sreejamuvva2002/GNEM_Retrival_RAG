@@ -636,7 +636,6 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
     proximity = bool(coordinates or _PROXIMITY_RE.search(question))
     closest = bool(_CLOSEST_RE.search(question))
     explicit_radius = bool(_RADIUS_RE.search(question))
-    county = _county_anchor(final_route)
 
     if operation in {"distance_search", "nearby_search"} and entities and context_entities:
         center = _resolve_company_name(entities[-1])
@@ -676,6 +675,8 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
                     ],
                 },
             )
+
+    county = _county_anchor(final_route)
 
     if coordinates:
         lat, lon = coordinates

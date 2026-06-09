@@ -1,19 +1,19 @@
 """Draggable divider + full-height flex layout (React parity).
 
 React's layout is a full-height flex row: a left chat panel (input pinned at its
-bottom, messages scrolling above) + a `w-1` divider + a right panel (map, or
-map+sources stacked 50/50). Streamlit can't do resizable, full-height columns,
+bottom, messages and inline sources scrolling above) + a `w-1` divider + a
+right map panel. Streamlit can't do resizable, full-height columns,
 so one injected script (runs on load / window-resize / drag, holding refs to the
 two columns) does it all:
 
   * a fixed, full-height divider bar centered in the inter-column gap, draggable
-    to resize the two `stColumn` flex widths live (client-side, no rerun);
+    to resize the two `stColumn` flex widths live (client-side, no rerun), with
+    a temporary drag shield so the map iframe cannot swallow mouse events;
   * `layoutHeights()` makes the columns row fill the viewport, the chat messages
     container scroll (`.st-key-chat_scroll`) with the inline input pinned below,
     and the map iframe fill its column — sized in px on the iframe + its ancestor
     chain (anchored by the dependable `.st-key-gnem_map` class). Resizing the
     iframe element natively fires `resize` inside it, so Leaflet re-tiles.
-    When `.st-key-gnem_sources` is present, map + sources split the column 50/50.
 
 State lives on `document` so the latest rerun's script always controls the
 persistent divider element; the split ratio is persisted in localStorage.
@@ -72,6 +72,17 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                 return d;
             }}
             function bar() {{ return divider().querySelector('.gnem-divider-bar'); }}
+            function dragShield() {{
+                let shield = doc.getElementById('gnem-drag-shield');
+                if (!shield) {{
+                    shield = doc.createElement('div');
+                    shield.id = 'gnem-drag-shield';
+                    shield.style.cssText = 'position:fixed;inset:0;display:none;'
+                        + 'cursor:col-resize;z-index:999;background:transparent;';
+                    doc.body.appendChild(shield);
+                }}
+                return shield;
+            }}
 
             function applyWidths(cols, p) {{
                 cols[0].style.flex = '0 0 calc(' + p + '% - 0.5rem)';
@@ -90,7 +101,7 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
             }}
 
             // Full-height flex layout: columns fill the viewport, chat messages
-            // scroll with the input pinned below, map fills (or 50/50 w/ sources).
+            // scroll with the input pinned below, map fills its column.
             function layoutHeights() {{
                 const stt = doc.__gnemSplitState;
                 if (!stt) return;
@@ -114,7 +125,18 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                 // Chat: messages scroll, input pinned at the bottom of the column.
                 const scroll = doc.querySelector('.st-key-chat_scroll');
                 if (scroll) {{
+                    // Streamlit wraps keyed containers in an stLayoutWrapper.
+                    // That wrapper must grow too, otherwise the scroll area
+                    // collapses to its content and leaves the input mid-column.
+                    const scrollHost = scroll.parentElement;
+                    if (scrollHost) {{
+                        scrollHost.style.setProperty('display', 'flex', 'important');
+                        scrollHost.style.setProperty('flex', '1 1 auto', 'important');
+                        scrollHost.style.setProperty('min-height', '0', 'important');
+                        scrollHost.style.setProperty('overflow', 'hidden', 'important');
+                    }}
                     scroll.style.setProperty('flex', '1 1 auto', 'important');
+                    scroll.style.setProperty('height', '100%', 'important');
                     scroll.style.setProperty('min-height', '0', 'important');
                     scroll.style.setProperty('overflow-y', 'auto', 'important');
                     scroll.style.setProperty('overflow-x', 'hidden', 'important');
@@ -122,13 +144,12 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
 
                 // Map: size the iframe + its ancestor chain (up to .st-key-gnem_map).
                 const mapWrap = doc.querySelector('.st-key-gnem_map');
-                const srcWrap = doc.querySelector('.st-key-gnem_sources');
                 if (mapWrap) {{
                     const iframe = mapWrap.querySelector('iframe');
                     if (iframe) {{
                         const mTop = iframe.getBoundingClientRect().top;
                         const avail = Math.max(240, win.innerHeight - mTop - GAP);
-                        const mapH = srcWrap ? (Math.floor(avail / 2) - 6) : avail;
+                        const mapH = avail;
                         let n = iframe;
                         while (n) {{
                             setPx(n, mapH);
@@ -137,15 +158,6 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                             n = n.parentElement;
                         }}
                     }}
-                }}
-                // Sources: the remaining ~50% under the map.
-                if (srcWrap) {{
-                    const sTop = srcWrap.getBoundingClientRect().top;
-                    const sAvail = Math.max(160, win.innerHeight - sTop - GAP);
-                    setPx(srcWrap, sAvail);
-                    const inner = srcWrap.querySelector(
-                        '[data-testid="stVerticalBlockBorderWrapper"][style*="height"]');
-                    if (inner) setPx(inner, Math.max(120, sAvail - 70));
                 }}
             }}
 
@@ -166,6 +178,7 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                 doc.__gnemDragging = false;
                 doc.body.style.cursor = '';
                 doc.body.style.userSelect = '';
+                dragShield().style.display = 'none';
                 bar().style.background = '#e2e8f0';
                 if (doc.__gnemSplitState) localStorage.setItem(STORE, doc.__gnemSplitState.p);
             }}
@@ -192,6 +205,7 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                     doc.__gnemDragging = true;
                     doc.body.style.cursor = 'col-resize';
                     doc.body.style.userSelect = 'none';
+                    dragShield().style.display = 'block';
                     b.style.background = '#64748b';
                     e.preventDefault();
                 }};
@@ -199,12 +213,15 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                 if (doc.__gnemMove) doc.removeEventListener('mousemove', doc.__gnemMove);
                 if (doc.__gnemUp) doc.removeEventListener('mouseup', doc.__gnemUp);
                 if (doc.__gnemResize) win.removeEventListener('resize', doc.__gnemResize);
+                if (doc.__gnemBlur) win.removeEventListener('blur', doc.__gnemBlur);
                 doc.__gnemMove = onMove;
                 doc.__gnemUp = onUp;
                 doc.__gnemResize = relayout;
+                doc.__gnemBlur = onUp;
                 doc.addEventListener('mousemove', onMove);
                 doc.addEventListener('mouseup', onUp);
                 win.addEventListener('resize', relayout);
+                win.addEventListener('blur', onUp);
 
                 relayout();
                 return true;
