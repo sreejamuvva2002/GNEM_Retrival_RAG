@@ -133,13 +133,6 @@
         "sha256:ff64857820f2efedac45930c65d80928cb29135f58cea4ed8f087a87c5e7fd6f"
       ]
     },
-    "Dominos": {
-      "entity_type": "company",
-      "last_updated": "2026-06-07T20:43:26.202149",
-      "sources": [
-        "sha256:9d825c931aff5f923166fc3d2956923b36a2a4e39a3f95cd3a0ecadee9ab639c"
-      ]
-    },
     "Avoca": {
       "entity_type": "company",
       "last_updated": "2026-06-07T20:43:30.674729",
@@ -347,12 +340,6 @@
     ],
     "Rochester": [
       "Metalmite Corporation"
-    ],
-    "Merrillville Indiana": [
-      "Dominos"
-    ],
-    "Ameriplex": [
-      "Dominos"
     ],
     "Wesley Chapel, North Carolina": [
       "Heartland Dental"

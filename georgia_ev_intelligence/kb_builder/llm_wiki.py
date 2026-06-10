@@ -258,6 +258,7 @@ Content:
 {body_text[:1500]}
 
 Rules:
+- "is_ev_related": true if the document relates to electric vehicles (EV), batteries, automotive supply chain, clean energy, or related manufacturing. False if it is unrelated (e.g., fast food, pizza, unrelated retail).
 - "main_entity" = the company or organization this document is PRIMARILY about (based on the content, not the hint).
   - If the document is about a magazine, publisher, or directory (not a company), set main_entity to "Unknown".
   - Use the SHORT canonical name (e.g. "Duckyang", not "Duckyang Co.,Ltd.").
@@ -268,7 +269,7 @@ Rules:
 - "related_entities" = other real company or place names mentioned (not emails, URLs, or website sections).
 
 Extract and respond as valid JSON with these exact keys:
-{{"main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2"], "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
+{{"is_ev_related": true, "main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2"], "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
 
         try:
             response_text = self._call_ollama(prompt)
@@ -282,6 +283,13 @@ Extract and respond as valid JSON with these exact keys:
             return []
 
         updated_pages = []
+
+        # Guard: check if relevant to EV domain
+        if not extraction.get("is_ev_related", True):
+            print(f"[wiki] Skipping non-EV related document: {title[:60]}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
 
         # Guard: skip if LLM couldn't identify a real entity or had no substance
         main_entity = extraction.get("main_entity", "Unknown")
