@@ -66,8 +66,8 @@ def make_fixture_index() -> dict[str, ColumnMetaView]:
             is_filterable=True, unique_values=[],
         ),
         "classification_method": ColumnMetaView(
-            field="classification_method", match_type="exact", is_filterable=False,
-            unique_values=["llm", "rule"],
+            field="classification_method", match_type="exact", is_filterable=True,
+            unique_values=["Direct Manufacturer", "Supplier"],
         ),
     }
 

@@ -5,6 +5,26 @@ from georgia_ev_intelligence.route_execution import executor as route_executor
 from georgia_ev_intelligence.route_execution.schemas import ExecutionResult, STATUS_SUCCESS
 
 
+def test_structured_rows_use_clear_company_sections_and_deduplicate_display_rows():
+    answer = answer_formatter.format_structured_rows(
+        [
+            {"company": "Novelis Inc.", "updated_location": "Atlanta"},
+            {"company": "Novelis Inc.", "updated_location": "Atlanta"},
+        ],
+        ["company", "updated_location"],
+    )
+
+    assert "2 matching records representing 1 unique displayed result" in answer
+    assert "**1. Novelis Inc.**" in answer
+    assert "- **Updated Location:** Atlanta" in answer
+    assert "\n1. " not in answer
+
+
+def test_humanize_uses_domain_labels():
+    assert answer_formatter._humanize("ev_supply_chain_role") == "EV Supply Chain Role"
+    assert answer_formatter._humanize("product_service") == "Product / Service"
+
+
 def test_grounded_evidence_keeps_rows_and_excludes_sql_debug_fields():
     evidence = {
         "type": "structured_rows",

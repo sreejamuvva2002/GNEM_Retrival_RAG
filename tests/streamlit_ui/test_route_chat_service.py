@@ -3,9 +3,12 @@ from georgia_ev_intelligence.streamlit_ui.services.route_chat_service import (
     RouteChatService,
     _context_center_for_geo,
     _context_entities_for_distance,
+    _query_center_for_geo,
     _map_records_from_evidence,
     _provenance_rows_from_evidence,
     _sql_queries_from_evidence,
+    _with_map_coverage,
+    _with_scope_explanation,
 )
 
 
@@ -38,6 +41,16 @@ PLAIN_LIST_HISTORY = [
         "4. immi\n",
     ),
 ]
+BOLD_LIST_HISTORY = [
+    (
+        "assistant",
+        "Found 2 matching records.\n\n"
+        "**1. f&p georgia manufacturing**\n"
+        "- **Category:** Tier 1/2\n\n"
+        "**2. immi**\n"
+        "- **Category:** Tier 1/2\n",
+    ),
+]
 
 
 def test_extracts_numbered_companies_for_distance_follow_up():
@@ -66,6 +79,13 @@ def test_extracts_plain_numbered_companies_for_nearby_follow_up():
     ]
 
 
+def test_extracts_bold_numbered_companies_for_nearby_follow_up():
+    assert _context_entities_for_distance(
+        "Which of these companies are near to Atlanta?",
+        BOLD_LIST_HISTORY,
+    ) == ["f&p georgia manufacturing", "immi"]
+
+
 def test_extracts_colon_formatted_companies_for_nearest_follow_up():
     assert _context_entities_for_distance(
         "Which of these companies is nearest?",
@@ -75,6 +95,11 @@ def test_extracts_colon_formatted_companies_for_nearest_follow_up():
 
 def test_extracts_center_from_prior_distance_answer():
     assert _context_center_for_geo(DISTANCE_HISTORY) == "Kia Georgia Inc."
+
+
+def test_extracts_named_center_from_geo_follow_up():
+    assert _query_center_for_geo("Which of these companies is near to Atlanta?") == "Atlanta"
+    assert _query_center_for_geo("Distance of these companies to Kia Georgia") == "Kia Georgia"
 
 
 def test_route_chat_service_passes_context_entities_to_executor():
@@ -168,6 +193,46 @@ def test_map_records_skips_rows_without_usable_coordinates():
 def test_map_records_empty_for_non_geo_evidence():
     assert _map_records_from_evidence(None) == []
     assert _map_records_from_evidence({"type": "count", "count": 5}) == []
+
+
+def test_map_coverage_explains_overlapping_and_missing_markers():
+    overlap = _with_map_coverage(
+        "Answer.",
+        {"type": "structured_rows", "rows": [{"company": "A"}, {"company": "B"}]},
+        [
+            {"company": "A", "latitude": 33.0, "longitude": -84.0},
+            {"company": "B", "latitude": 33.0001, "longitude": -84.0001},
+        ],
+    )
+    missing = _with_map_coverage(
+        "Answer.",
+        {"type": "structured_rows", "rows": [{"company": "A"}, {"company": "B"}]},
+        [{"company": "A", "latitude": 33.0, "longitude": -84.0}],
+    )
+
+    assert "All 2 matching records are plotted across 1 map location" in overlap
+    assert "clustered markers can be expanded" in overlap
+    assert "1 of 2 matching records can be plotted" in missing
+
+
+def test_scope_explanation_names_the_filters_that_matched():
+    answer = _with_scope_explanation(
+        "Found 2 matching records.\n\n**A**",
+        {
+            "resolved_filters": {
+                "category": {"operator": "EQUALS", "value": "Tier 1/2"},
+                "ev_supply_chain_role": {
+                    "operator": "OR_CONTAINS",
+                    "value": ["Battery Cell", "Battery Pack"],
+                },
+            }
+        },
+        {"type": "structured_rows", "rows": [{"company": "A"}, {"company": "B"}]},
+    )
+
+    assert answer.startswith("I found 2 matching records that satisfy the requested criteria")
+    assert "Category: Tier 1/2" in answer
+    assert "EV Supply Chain Role: Battery Cell or Battery Pack" in answer
 
 
 def test_answer_attaches_map_records_from_evidence():

@@ -17,6 +17,7 @@ from typing import Any, Dict, List
 import folium
 import streamlit as st
 import streamlit.components.v1 as components
+from folium.plugins import MarkerCluster
 
 # Georgia center + zoom, matching map-panel.tsx (georgiaCenter / zoom={7}).
 GEORGIA_CENTER = [33.2, -84.3]
@@ -197,6 +198,14 @@ def _build_map(
     ).add_to(fmap)
     _add_boundaries(fmap, map_context or {})
 
+    marker_layer = MarkerCluster(
+        name="Matching companies",
+        options={
+            "showCoverageOnHover": False,
+            "spiderfyOnMaxZoom": True,
+            "disableClusteringAtZoom": 15,
+        },
+    ).add_to(fmap)
     for (lat, lon), group in _group_by_location(records).items():
         if len(group) > 1:
             names = ", ".join(str(r.get("company") or "") for r in group)
@@ -207,7 +216,7 @@ def _build_map(
             location=[lat, lon],
             popup=folium.Popup(_popup_html(group), max_width=260),
             tooltip=tooltip,
-        ).add_to(fmap)
+        ).add_to(marker_layer)
 
     folium.LayerControl(position="topright", collapsed=True).add_to(fmap)
 

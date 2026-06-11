@@ -115,6 +115,24 @@ def test_nearby_targets_query_uses_postgis_radius_for_explicit_targets():
     assert params[-1] == 50.0 * geo_search._METERS_PER_MILE
 
 
+def test_nearby_targets_to_place_query_uses_postgis_and_prior_companies():
+    sql, params = geo_search._nearby_targets_to_place_query(
+        "Atlanta",
+        ["f&p georgia manufacturing", "immi"],
+        50.0,
+        20,
+    )
+
+    assert "updated_location ILIKE %s" in sql
+    assert "lower(company) = ANY(%s)" in sql
+    assert "ST_DWithin(t.geo, center.geo, %s)" in sql
+    assert params[:3] == [
+        "%Atlanta%",
+        ["f&p georgia manufacturing", "immi"],
+        "Atlanta",
+    ]
+
+
 def test_execute_contextual_nearby_search(monkeypatch):
     monkeypatch.setattr(
         geo_search,
@@ -169,6 +187,36 @@ def test_contextual_nearby_no_results_mentions_listed_companies(monkeypatch):
 
     assert result.status == "success"
     assert "None of the listed companies are within 50 miles" in result.answer
+
+
+def test_execute_contextual_nearby_search_around_place(monkeypatch):
+    monkeypatch.setattr(geo_search, "_resolve_company_name", lambda name: None)
+    monkeypatch.setattr(
+        geo_search,
+        "_fetch",
+        lambda sql, params, limit=None: [
+            {
+                "company": "immi",
+                "updated_location": "Atlanta, Fulton County",
+                "distance_miles": 2.0,
+            }
+        ],
+    )
+
+    result = geo_search.execute_geo_search(
+        {
+            "question": "Which of these companies are near to Atlanta?",
+            "route": "geo_search",
+            "operation": "nearby_search",
+            "entities": ["Atlanta"],
+            "context_entities": ["f&p georgia manufacturing", "immi"],
+        }
+    )
+
+    assert result.status == "success"
+    assert result.evidence["spatial_operation"] == "ST_DWithin_place_targets"
+    assert result.evidence["center"] == {"kind": "place", "name": "Atlanta"}
+    assert "immi" in result.answer
 
 
 def test_execute_contextual_distance_search(monkeypatch):

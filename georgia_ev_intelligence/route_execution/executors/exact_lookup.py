@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 
 TABLE = "parent_chunks"
 _MAX_ROWS = 50
+_MAP_COLUMNS = ("latitude", "longitude")
 
 
 def _output_columns(final_route: dict[str, Any]) -> list[str]:
@@ -93,7 +94,8 @@ def execute_exact_lookup(final_route: dict[str, Any]) -> ExecutionResult:
         )
 
     columns = _output_columns(final_route)
-    records, sql_commands = _resolve_rows(name, columns)
+    select_columns = list(dict.fromkeys([*columns, *_MAP_COLUMNS]))
+    records, sql_commands = _resolve_rows(name, select_columns)
 
     if not records:
         return ExecutionResult(

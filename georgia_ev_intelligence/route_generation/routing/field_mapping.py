@@ -30,6 +30,7 @@ SCHEMA_FIELDS: dict[str, str] = {
     "state": "state field",
     "primary_facility_type": "facility type",
     "industry_group": "industry or sector grouping",
+    "classification_method": "method used to classify the company record",
 }
 
 # Field NAMES (not KB values) to try, in order, for a value that reads like a
@@ -454,6 +455,10 @@ _ROLE_RE = re.compile(
     r"\b(role[s]?|capab\w*|supplier\w*|supplies|services?|managing|management)\b",
     re.IGNORECASE,
 )
+_CLASSIFICATION_RE = re.compile(
+    r"\b(classified|classification|classify)\b",
+    re.IGNORECASE,
+)
 
 
 def looks_like_category(value: str) -> bool:
@@ -485,6 +490,8 @@ def rescue_text_field(value, lower: str) -> str:
     unresolved value is preserved as a CONTAINS filter rather than clarified.
     """
     blob = f"{lower} {str(value or '').lower()}"
+    if _CLASSIFICATION_RE.search(lower):
+        return "classification_method"
     if _LOCATION_RE.search(blob):
         return "updated_location"
     if _INDUSTRY_RE.search(blob):

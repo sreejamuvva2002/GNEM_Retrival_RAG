@@ -655,6 +655,15 @@ def inject_styles(is_dark: bool = False, compact: bool = False) -> None:
             border-top: 1px solid var(--border);
             padding-top: 0.75rem;
             margin-top: 0.25rem;
+            flex: 0 0 auto !important;
+        }}
+        .st-key-chat_scroll {{
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            overscroll-behavior: contain;
+            scrollbar-gutter: stable;
+            touch-action: pan-y;
         }}
         [data-testid="stChatInput"] {{
             max-width: 100%;

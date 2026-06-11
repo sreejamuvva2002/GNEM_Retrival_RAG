@@ -1,4 +1,5 @@
 """Tests for the router prompt contract."""
+from georgia_ev_intelligence.route_generation.schemas import RawRoute
 from georgia_ev_intelligence.route_generation.routing.field_mapping import SCHEMA_FIELDS
 from georgia_ev_intelligence.route_generation.routing.prompts import SYSTEM_PROMPT
 
@@ -24,3 +25,9 @@ def test_system_prompt_contains_no_kb_data_values() -> None:
     for kb_value in ("tier 1", "tier 1/2", "oem footprint", "battery cell",
                      "thermal management", "hyundai", "rivian"):
         assert kb_value not in lowered
+
+
+def test_raw_route_accepts_null_reason_from_small_json_models() -> None:
+    route = RawRoute.model_validate({"route": "structured_sql", "reason": None})
+
+    assert route.reason == ""

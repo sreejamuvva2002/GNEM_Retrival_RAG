@@ -200,6 +200,7 @@ class Provenance:
 
     sources: List["SourceViewModel"] = field(default_factory=list)
     group_rows: List[Dict[str, Any]] = field(default_factory=list)
+    # Retained for internal diagnostics/export, but never rendered to end users.
     sql_queries: List[Dict[str, str]] = field(default_factory=list)
     kind: str = ""
 
@@ -209,4 +210,4 @@ class Provenance:
         return len(self.sources) or len(self.group_rows)
 
     def has_content(self) -> bool:
-        return bool(self.sources or self.group_rows or self.sql_queries)
+        return bool(self.sources or self.group_rows)

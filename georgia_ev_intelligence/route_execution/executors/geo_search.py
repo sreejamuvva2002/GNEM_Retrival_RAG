@@ -35,7 +35,7 @@ _PROXIMITY_RE = re.compile(
     re.IGNORECASE,
 )
 _PROXIMITY_PLACE_RE = re.compile(
-    r"(?:\bnear\b|\baround\b|\bclosest\s+to\b|"
+    r"(?:\bnear(?:\s+to)?\b|\baround\b|\bclosest\s+to\b|"
     r"\bwithin\s+\d+(?:\.\d+)?\s*(?:km|kilometers?|miles?|mi)\s+of\b)"
     r"\s+([A-Za-z][A-Za-z .'-]+?)(?:[?.!,]|$)",
     re.IGNORECASE,
@@ -424,6 +424,45 @@ LIMIT {limit};
     ]
 
 
+def _nearby_targets_to_place_query(
+    place: str,
+    target_companies: list[str],
+    radius_miles: float,
+    limit: int,
+) -> tuple[str, list[Any]]:
+    """Return prior-result companies within a PostGIS radius of a named place."""
+    sql = f"""
+WITH center AS (
+    SELECT ST_Centroid(ST_Collect(geom))::geography AS geo
+    FROM parent_chunks
+    WHERE geo IS NOT NULL AND updated_location ILIKE %s
+), targets AS (
+    SELECT DISTINCT ON (company)
+           company, updated_location, ev_supply_chain_role, category,
+           product_service, primary_oems, latitude, longitude, geo
+    FROM parent_chunks
+    WHERE geo IS NOT NULL
+      AND lower(company) = ANY(%s)
+    ORDER BY company
+)
+SELECT t.company, t.updated_location, t.ev_supply_chain_role, t.category,
+       t.product_service, t.primary_oems, t.latitude, t.longitude,
+       %s AS distance_to,
+       ST_Distance(t.geo, center.geo) / {_METERS_PER_MILE} AS distance_miles
+FROM targets t
+JOIN center ON center.geo IS NOT NULL
+WHERE ST_DWithin(t.geo, center.geo, %s)
+ORDER BY distance_miles, t.company
+LIMIT {limit};
+"""
+    return sql, [
+        f"%{place}%",
+        [name.casefold() for name in target_companies],
+        place,
+        radius_miles * _METERS_PER_MILE,
+    ]
+
+
 def _county_radius_query(
     county: str,
     radius_miles: float,
@@ -672,6 +711,31 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
                     "rows": rows,
                     "sql_commands": [
                         _sql_command(sql_label, sql, params)
+                    ],
+                },
+            )
+        if operation == "nearby_search":
+            place = entities[-1]
+            sql, params = _nearby_targets_to_place_query(
+                place,
+                context_entities,
+                radius,
+                limit,
+            )
+            rows = _fetch(sql, params)
+            return ExecutionResult(
+                route="geo_search",
+                status=STATUS_SUCCESS,
+                answer=_format_context_nearby(place, rows, radius),
+                evidence={
+                    "type": "geo_results",
+                    "spatial_backend": "PostGIS",
+                    "spatial_operation": "ST_DWithin_place_targets",
+                    "center": {"kind": "place", "name": place},
+                    "radius_miles": radius,
+                    "rows": rows,
+                    "sql_commands": [
+                        _sql_command("nearby_context_companies_by_place", sql, params)
                     ],
                 },
             )

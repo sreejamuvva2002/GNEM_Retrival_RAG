@@ -131,12 +131,22 @@ def render(min_pct: int = 20, max_pct: int = 80) -> None:
                     const scrollHost = scroll.parentElement;
                     if (scrollHost) {{
                         scrollHost.style.setProperty('display', 'flex', 'important');
-                        scrollHost.style.setProperty('flex', '1 1 auto', 'important');
+                        scrollHost.style.setProperty('flex', '1 1 0', 'important');
                         scrollHost.style.setProperty('min-height', '0', 'important');
                         scrollHost.style.setProperty('overflow', 'hidden', 'important');
                     }}
-                    scroll.style.setProperty('flex', '1 1 auto', 'important');
-                    scroll.style.setProperty('height', '100%', 'important');
+                    const input = doc.querySelector('.st-key-chat_input');
+                    const colRect = stt.cols[0].getBoundingClientRect();
+                    const scrollTop = scroll.getBoundingClientRect().top;
+                    const inputH = input ? input.getBoundingClientRect().height : 64;
+                    const avail = Math.max(160, colRect.bottom - scrollTop - inputH - GAP);
+                    if (scrollHost) {{
+                        scrollHost.style.setProperty('height', avail + 'px', 'important');
+                        scrollHost.style.setProperty('max-height', avail + 'px', 'important');
+                    }}
+                    scroll.style.setProperty('flex', '1 1 0', 'important');
+                    scroll.style.setProperty('height', avail + 'px', 'important');
+                    scroll.style.setProperty('max-height', avail + 'px', 'important');
                     scroll.style.setProperty('min-height', '0', 'important');
                     scroll.style.setProperty('overflow-y', 'auto', 'important');
                     scroll.style.setProperty('overflow-x', 'hidden', 'important');

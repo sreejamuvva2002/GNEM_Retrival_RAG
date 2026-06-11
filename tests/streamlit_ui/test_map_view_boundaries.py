@@ -23,3 +23,4 @@ def test_map_renders_boundary_layers_and_attribution() -> None:
     assert "U.S. Census TIGERweb" in rendered
     assert "OpenStreetMap" in rendered
     assert "NAMELSAD10" in rendered
+    assert "markerCluster" in rendered

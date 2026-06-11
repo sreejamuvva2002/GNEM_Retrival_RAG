@@ -90,7 +90,7 @@ _HYBRID_UPGRADABLE = {
 }
 _COORD_RE = re.compile(r"-?\d{1,2}\.\d+\s*,\s*-?\d{1,3}\.\d+")
 _PROXIMITY_PLACE_RE = re.compile(
-    r"(?:\bnear\b|\baround\b|\bclosest\s+to\b|"
+    r"(?:\bnear(?:\s+to)?\b|\baround\b|\bclosest\s+to\b|"
     r"\bwithin\s+\d+(?:\.\d+)?\s*(?:km|kilometers?|miles?|mi)\s+of\b)"
     r"\s+[a-z][a-z .'-]+(?:[?.!,]|$)",
     re.IGNORECASE,

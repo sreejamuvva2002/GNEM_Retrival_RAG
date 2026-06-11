@@ -213,16 +213,17 @@ class TestGeoRouting:
 
 
 class TestFieldRejection:
-    def test_non_filterable_field_dropped(self, fixture_metadata):
+    def test_classification_method_is_filterable(self, fixture_metadata):
         raw = RawRoute(
             route=RouteName.structured_sql, confidence=0.9, operation="list",
-            raw_filters=[RawFilter(field_hint="classification_method", raw_value="llm")],
+            raw_filters=[RawFilter(field_hint="classification_method", raw_value="Direct Manufacturer")],
             reason="x",
         )
         final = _validate(fixture_metadata, raw, "list records")
-        # classification_method is not filterable -> dropped from filters.
-        assert "classification_method" not in final.resolved_filters
-        # "list" is a valid structured intent (list all) -> no clarification.
+        assert final.resolved_filters["classification_method"] == {
+            "operator": "CONTAINS",
+            "value": "Direct Manufacturer",
+        }
         assert final.validation_status == "valid"
         assert final.route == RouteName.structured_sql
 
@@ -230,7 +231,7 @@ class TestFieldRejection:
         # No filter, no list/aggregate/sort/column intent -> genuinely missing.
         raw = RawRoute(
             route=RouteName.structured_sql, confidence=0.9, operation="list",
-            raw_filters=[RawFilter(field_hint="classification_method", raw_value="llm")],
+            raw_filters=[],
             reason="x",
         )
         final = _validate(fixture_metadata, raw, "tell me about these records")
@@ -583,16 +584,18 @@ class TestSearchFilterFallback:
         assert any(sf.raw_value == "Thermal Management" for sf in final.search_filters)
         assert any("created search_filter" in a for a in final.validation_actions)
 
-    def test_non_filterable_mapped_hint_dropped_without_search_filter(self, fixture_metadata):
-        # classification_method is a real but non-filterable column -> dropped, and
-        # NOT turned into a search_filter (it is a known, deliberately excluded field).
+    def test_classification_wording_rescues_value_to_classification_method(self, fixture_metadata):
         raw = RawRoute(
             route=RouteName.structured_sql, confidence=0.9, operation="list",
-            raw_filters=[RawFilter(field_hint="classification_method", raw_value="llm")],
+            raw_filters=[RawFilter(field_hint="category", raw_value="Direct Manufacturer")],
             reason="x",
         )
-        final = _validate(fixture_metadata, raw, "list records")
-        assert "classification_method" not in final.resolved_filters
+        final = _validate(
+            fixture_metadata,
+            raw,
+            "Which companies are classified as Direct Manufacturer?",
+        )
+        assert final.resolved_filters["classification_method"]["value"] == "Direct Manufacturer"
         assert final.search_filters == []
 
 

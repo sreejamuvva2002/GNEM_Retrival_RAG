@@ -60,18 +60,6 @@ def _subtitle(provenance: Provenance) -> str:
     return f"{n} source{'' if n == 1 else 's'} found"
 
 
-def _render_query(provenance: Provenance) -> None:
-    """The executed SQL — *how* the records were retrieved, not a source itself."""
-    if not provenance.sql_queries:
-        return
-    with st.expander("Query — how this answer was retrieved"):
-        for item in provenance.sql_queries:
-            label = item.get("label") or "Query"
-            sql = item.get("sql") or ""
-            st.caption(label)
-            st.code(sql, language="sql")
-
-
 def _render_group_rows(provenance: Provenance) -> None:
     """Aggregate/count answers have no per-company record; show the rows behind
     the number as their provenance."""
@@ -102,8 +90,6 @@ def render(provenance: Provenance) -> None:
 
     # Keep long provenance compact inside the scrollable conversation.
     with st.container(height=280):
-        # Method first (the query), then the evidence it returned.
-        _render_query(provenance)
         if provenance.sources:
             for source in provenance.sources:
                 name = source.title or source.record_id or "Source"

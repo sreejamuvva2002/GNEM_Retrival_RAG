@@ -16,7 +16,7 @@ class TestIndexBackedProvider:
     def test_allowed_fields_exclude_non_filterable(self, fixture_metadata):
         allowed = fixture_metadata.get_allowed_fields()
         assert "category" in allowed
-        assert "classification_method" not in allowed  # is_filterable=False
+        assert "classification_method" in allowed
 
     def test_distinct_values(self, fixture_metadata):
         assert "Tier 2/3" in fixture_metadata.get_distinct_values("category")
@@ -86,4 +86,4 @@ def test_live_snapshot_file_roundtrip(tmp_path):
 
     # Sanity: the known facts survive the round-trip.
     assert "Tier 2/3" in filep.get_distinct_values("category")
-    assert filep.get_field_meta("classification_method").is_filterable is False
+    assert filep.get_field_meta("classification_method").is_filterable is True

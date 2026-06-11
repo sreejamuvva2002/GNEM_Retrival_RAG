@@ -33,7 +33,8 @@ _CONTEXT_GEO_RE = re.compile(
     re.IGNORECASE,
 )
 _NUMBERED_COMPANY_RE = re.compile(
-    r"^\s*\d+\.\s+(.+?)(?=\s+-\s+|\s*:\s+\d+(?:\.\d+)?\s+(?:mi|mile)|\s*$)",
+    r"^\s*(?:\*\*)?\d+\.\s+(.+?)(?=(?:\*\*)?\s+-\s+|"
+    r"(?:\*\*)?\s*:\s+\d+(?:\.\d+)?\s+(?:mi|mile)|(?:\*\*)?\s*$)",
     re.MULTILINE | re.IGNORECASE,
 )
 _DISTANCE_RE = re.compile(r"\bdistance\b", re.IGNORECASE)
@@ -41,6 +42,15 @@ _NEAREST_RE = re.compile(r"\b(nearest|closest)\b", re.IGNORECASE)
 _CENTER_HEADING_RE = re.compile(
     r"^(?:Distances\s+to|Companies\s+within\s+\d+(?:\.\d+)?\s+miles\s+of)\s+(.+?):\s*$",
     re.MULTILINE | re.IGNORECASE,
+)
+_QUERY_CENTER_RE = re.compile(
+    r"\b(?:near(?:by)?(?:\s+to)?|closest(?:\s+to)?|nearest(?:\s+to)?|around)\s+"
+    r"([A-Za-z0-9][A-Za-z0-9 .&'()-]*?)(?:[?.!,]|$)",
+    re.IGNORECASE,
+)
+_DISTANCE_CENTER_RE = re.compile(
+    r"\bdistance\b.*?\bto\s+([A-Za-z0-9][A-Za-z0-9 .&'()-]*?)(?:[?.!,]|$)",
+    re.IGNORECASE,
 )
 
 
@@ -87,7 +97,15 @@ class RouteChatService(IChatService):
                 for entity in (route_dict.get("entities") or [])
                 if str(entity).strip()
             ]
-            center = route_entities[-1] if route_entities else context_center
+            context_names = {name.casefold() for name in context_entities}
+            center_candidates = [
+                entity for entity in route_entities if entity.casefold() not in context_names
+            ]
+            center = (
+                _query_center_for_geo(query)
+                or (center_candidates[-1] if center_candidates else None)
+                or context_center
+            )
             if context_entities and center:
                 route_dict["route"] = "geo_search"
                 route_dict["validation_status"] = "valid"
@@ -143,11 +161,13 @@ class RouteChatService(IChatService):
 
         evidence = getattr(result, "evidence", None)
         evidence_kind, evidence_rows = _provenance_rows_from_evidence(evidence)
+        map_records = _map_records_from_evidence(evidence)
+        answer = _with_scope_explanation(result.answer or "(no answer returned)", route_dict, evidence)
         return ChatResult(
-            answer=result.answer or "(no answer returned)",
+            answer=_with_map_coverage(answer, evidence, map_records),
             parent_contexts=[],
             trace=trace,
-            map_records=_map_records_from_evidence(evidence),
+            map_records=map_records,
             evidence_kind=evidence_kind,
             evidence_rows=evidence_rows,
             sql_queries=_sql_queries_from_evidence(evidence),
@@ -195,6 +215,83 @@ def _map_records_from_evidence(evidence: Any) -> list[dict[str, Any]]:
             }
         )
     return records
+
+
+def _with_map_coverage(
+    answer: str,
+    evidence: Any,
+    map_records: list[dict[str, Any]],
+) -> str:
+    """Explain how answer rows translate to visible map markers."""
+    if not isinstance(evidence, dict) or evidence.get("type") not in {
+        "structured_rows",
+        "geo_results",
+    }:
+        return answer
+    rows = [row for row in (evidence.get("rows") or []) if isinstance(row, dict)]
+    if not rows:
+        return answer
+
+    mapped = len(map_records)
+    total = len(rows)
+    distinct_points = len(
+        {
+            (round(float(record["latitude"]), 3), round(float(record["longitude"]), 3))
+            for record in map_records
+        }
+    )
+    if mapped == 0:
+        note = (
+            f"**Map coverage:** None of the {total} matching records has usable "
+            "coordinates, so they cannot be plotted."
+        )
+    elif mapped < total:
+        note = (
+            f"**Map coverage:** {mapped} of {total} matching records can be plotted. "
+            f"The remaining {total - mapped} lack usable coordinates."
+        )
+    elif distinct_points < mapped:
+        location_label = "map location" if distinct_points == 1 else "map locations"
+        note = (
+            f"**Map coverage:** All {mapped} matching records are plotted across "
+            f"{distinct_points} {location_label}. Some markers overlap because records "
+            "share the same or nearby coordinates; clustered markers can be expanded."
+        )
+    else:
+        note = f"**Map coverage:** All {mapped} matching records are plotted on the map."
+    return f"{answer.rstrip()}\n\n{note}"
+
+
+def _with_scope_explanation(answer: str, route_dict: dict[str, Any], evidence: Any) -> str:
+    """Replace a generic row-count opener with the criteria that produced it."""
+    if not isinstance(evidence, dict) or evidence.get("type") not in {
+        "structured_rows",
+        "geo_results",
+    }:
+        return answer
+    rows = [row for row in (evidence.get("rows") or []) if isinstance(row, dict)]
+    filters = route_dict.get("resolved_filters") or {}
+    if not rows or not filters:
+        return answer
+
+    criteria: list[str] = []
+    for field, spec in filters.items():
+        if not isinstance(spec, dict):
+            continue
+        value = spec.get("value")
+        values = value if isinstance(value, (list, tuple)) else [value]
+        shown = " or ".join(str(item) for item in values if str(item or "").strip())
+        if shown:
+            label = field.replace("_", " ").strip().title().replace("Ev ", "EV ")
+            criteria.append(f"{label}: {shown}")
+    if not criteria:
+        return answer
+
+    intro = (
+        f"I found {len(rows)} matching records that satisfy the requested criteria "
+        f"({'; '.join(criteria)})."
+    )
+    return re.sub(r"^Found \d+ matching records\.", intro, answer, count=1)
 
 
 def _provenance_rows_from_evidence(evidence: Any) -> tuple[str, list[dict[str, Any]]]:
@@ -295,6 +392,16 @@ def _context_center_for_geo(
         if str(role).casefold() != "assistant":
             continue
         match = _CENTER_HEADING_RE.search(str(content or ""))
+        if match:
+            return match.group(1).strip()
+    return None
+
+
+def _query_center_for_geo(query: str) -> str | None:
+    """Extract an explicitly named spatial center from follow-up wording."""
+    text = str(query or "").strip()
+    for pattern in (_DISTANCE_CENTER_RE, _QUERY_CENTER_RE):
+        match = pattern.search(text)
         if match:
             return match.group(1).strip()
     return None

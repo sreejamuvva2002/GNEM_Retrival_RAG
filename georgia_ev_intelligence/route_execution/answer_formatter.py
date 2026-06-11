@@ -46,23 +46,40 @@ _EVIDENCE_FIELDS_BY_TYPE = {
 
 
 def format_structured_rows(rows: list[dict[str, Any]], columns: list[str]) -> str:
-    """Render structured rows as a numbered, human-readable list."""
+    """Render structured rows as clear Markdown sections grouped by company."""
     if not rows:
         return "Found 0 matching records."
 
-    lines = [f"Found {len(rows)} matching records."]
-    for idx, row in enumerate(rows[:_MAX_LISTED_ROWS], start=1):
+    display_rows: list[dict[str, Any]] = []
+    seen: set[tuple[str, ...]] = set()
+    for row in rows:
+        key = tuple(str(row.get(column) or "").strip() for column in columns)
+        if key in seen:
+            continue
+        seen.add(key)
+        display_rows.append(row)
+
+    if len(display_rows) == len(rows):
+        summary = f"Found {len(rows)} matching records."
+    else:
+        summary = (
+            f"Found {len(rows)} matching records representing "
+            f"{len(display_rows)} unique displayed result"
+            f"{'' if len(display_rows) == 1 else 's'}."
+        )
+    lines = [summary, "", "The requested details are grouped by company below."]
+    for idx, row in enumerate(display_rows[:_MAX_LISTED_ROWS], start=1):
         company = row.get("company") or "(unknown company)"
-        lines.append(f"\n{idx}. {company}")
+        lines.append(f"\n**{idx}. {company}**")
         for col in columns:
             if col == "company":
                 continue
             value = row.get(col)
             if value in (None, ""):
                 continue
-            lines.append(f"   {_humanize(col)}: {value}")
-    if len(rows) > _MAX_LISTED_ROWS:
-        lines.append(f"\n… and {len(rows) - _MAX_LISTED_ROWS} more.")
+            lines.append(f"- **{_humanize(col)}:** {value}")
+    if len(display_rows) > _MAX_LISTED_ROWS:
+        lines.append(f"\n... and {len(display_rows) - _MAX_LISTED_ROWS} more.")
     return "\n".join(lines)
 
 
@@ -114,7 +131,13 @@ def format_document_chunks(previews: list[dict[str, Any]]) -> str:
 
 
 def _humanize(column: str) -> str:
-    return column.replace("_", " ").strip().title()
+    labels = {
+        "ev_supply_chain_role": "EV Supply Chain Role",
+        "product_service": "Product / Service",
+        "primary_oems": "Primary OEMs",
+        "ev_battery_relevant": "EV / Battery Relevant",
+    }
+    return labels.get(column, column.replace("_", " ").strip().title())
 
 
 # ---------------------------------------------------------------------------
@@ -215,7 +238,11 @@ def _build_prompt(
         "never exclude or re-filter a row based on your own interpretation. "
         "For document retrieval, ground the answer in the full parent-context text. "
         "Do not mention internal route names, SQL, JSON, or retrieval mechanics. "
-        "If the evidence is insufficient, say so plainly.\n\n"
+        "If the evidence is insufficient, say so plainly. Begin with a direct "
+        "one- or two-sentence explanation of what matched and what the requested "
+        "fields show; do not merely repeat a generic record count. For company lists, use "
+        "one bold Markdown heading per company followed by bullet points for the "
+        "requested fields; do not emit a series of disconnected '1.' items.\n\n"
         f"Question:\n{question}\n\n"
         f"Validated route and filters JSON:\n{_json_text(route_context)}\n\n"
         f"Retrieved evidence JSON:\n{_json_text(grounded_evidence)}\n\n"

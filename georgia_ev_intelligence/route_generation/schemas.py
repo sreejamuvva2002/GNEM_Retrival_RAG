@@ -58,6 +58,8 @@ def _coerce_list_fields(data: Any) -> Any:
         value = data.get(key)
         if isinstance(value, str):
             data[key] = [value] if value.strip() else []
+    if data.get("reason") is None:
+        data["reason"] = ""
     return data
 
 

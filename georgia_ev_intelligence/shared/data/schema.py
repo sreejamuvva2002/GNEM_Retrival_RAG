@@ -4,7 +4,7 @@ import pandas as pd
 
 # Internal metadata columns that should not be used as query filters.
 # These are schema-level constants (column names), not data values.
-NON_FILTER_COLUMNS = {"classification_method", "supplier_or_affiliation_type"}
+NON_FILTER_COLUMNS = {"supplier_or_affiliation_type"}
 
 # Columns to skip entirely (not searchable)
 SKIP_COLUMNS = {"_row_id", "latitude", "longitude", "address"}

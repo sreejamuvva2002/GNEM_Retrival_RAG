@@ -68,3 +68,12 @@ def test_closed_sources_do_not_render_details(monkeypatch) -> None:
     chat_messages.render([_message()], Provenance(sources=[_source()], kind="records"))
 
     assert rendered_provenance == []
+
+
+def test_sql_only_provenance_is_not_user_facing() -> None:
+    provenance = Provenance(
+        sql_queries=[{"label": "SQL query", "sql": "SELECT secret_details;"}],
+        kind="count",
+    )
+
+    assert provenance.has_content() is False

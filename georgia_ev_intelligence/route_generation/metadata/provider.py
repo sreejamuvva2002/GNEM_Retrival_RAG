@@ -61,6 +61,10 @@ DEFAULT_FIELD_ALIASES: dict[str, str] = {
     "supplier tier": "category",
     "tier level": "category",
     "category": "category",
+    # classification method
+    "classification": "classification_method",
+    "classification method": "classification_method",
+    "classified as": "classification_method",
     # facility type
     "facility": "primary_facility_type",
     "facility type": "primary_facility_type",

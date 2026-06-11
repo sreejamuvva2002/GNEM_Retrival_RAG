@@ -142,7 +142,8 @@ def render(messages: List[Message], provenance: Provenance) -> None:
         """
         <script>
             const target = window.parent.document.getElementById('chat-bottom-anchor');
-            if (target) target.scrollIntoView({behavior: 'smooth', block: 'end'});
+            const scroll = target && target.closest('.st-key-chat_scroll');
+            if (scroll) scroll.scrollTo({top: scroll.scrollHeight, behavior: 'smooth'});
         </script>
         """,
         height=0,
