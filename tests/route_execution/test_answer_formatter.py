@@ -32,6 +32,26 @@ def test_grounded_evidence_keeps_rows_and_excludes_sql_debug_fields():
     assert "sql" not in grounded
 
 
+def test_grounded_evidence_strips_map_only_coordinates_from_rows():
+    """lat/lon are fetched for the map but must not reach the answer LLM."""
+    grounded = answer_formatter._grounded_evidence({
+        "type": "structured_rows",
+        "columns": ["company", "ev_supply_chain_role"],
+        "rows": [
+            {
+                "company": "SK Battery",
+                "ev_supply_chain_role": "Battery Cell",
+                "latitude": 33.5,
+                "longitude": -82.1,
+            },
+        ],
+    })
+
+    assert grounded["rows"] == [
+        {"company": "SK Battery", "ev_supply_chain_role": "Battery Cell"}
+    ]
+
+
 def test_grounded_evidence_keeps_full_document_parent_contexts():
     long_context = "battery context " * 100
     grounded = answer_formatter._grounded_evidence({
@@ -83,6 +103,18 @@ def test_build_prompt_contains_filters_rows_and_requested_columns_without_sql():
     assert '"Battery Co"' in prompt
     assert "Found 1 matching record." in prompt
     assert "SELECT" not in prompt
+
+
+def test_build_prompt_forbids_reinterpreting_returned_rows():
+    prompt = answer_formatter._build_prompt(
+        "Map Thermal Management suppliers.",
+        route_context={"route": "geo_search"},
+        grounded_evidence={"type": "geo_results", "rows": [{"company": "Example"}]},
+        deterministic_answer="Example",
+    )
+
+    assert "every returned row already satisfies the validated filters" in prompt
+    assert "never exclude or re-filter a row" in prompt
 
 
 def test_execute_route_passes_validated_route_and_evidence_to_answer_llm(monkeypatch):

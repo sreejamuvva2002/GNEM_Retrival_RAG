@@ -58,11 +58,18 @@ class RouteService:
             route_source = "pre_router_validated"
         else:
             try:
-                raw_route = self._get_llm_router().route(
-                    normalized["normalized"],
-                    self._provider.get_allowed_fields(),
-                    history=history,
-                )
+                router = self._get_llm_router()
+                if history:
+                    raw_route = router.route(
+                        normalized["normalized"],
+                        self._provider.get_allowed_fields(),
+                        history=history,
+                    )
+                else:
+                    raw_route = router.route(
+                        normalized["normalized"],
+                        self._provider.get_allowed_fields(),
+                    )
                 selected_router = "llm_router"
                 route_source = "llm_router_validated"
             except RouteParseError as exc:

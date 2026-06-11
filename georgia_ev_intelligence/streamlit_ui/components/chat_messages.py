@@ -10,7 +10,7 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 from ..models.chat import Message
-from ..models.source import SourceViewModel
+from ..models.source import Provenance
 from ..state import ui_state
 from ._markdown import render_assistant_markdown
 
@@ -105,7 +105,7 @@ def _copy_control(text: str, align: str) -> None:
     )
 
 
-def render(messages: List[Message], sources: List[SourceViewModel]) -> None:
+def render(messages: List[Message], provenance: Provenance) -> None:
     if not messages:
         return
 
@@ -119,10 +119,14 @@ def render(messages: List[Message], sources: List[SourceViewModel]) -> None:
 
     # Sources button under the last assistant message (reveals the side panel).
     last = messages[-1]
-    if last.role == "assistant" and sources:
-        count = len(sources)
+    if last.role == "assistant" and provenance.has_content():
         open_now = ui_state.sources_panel_open()
-        label = "Hide Sources" if open_now else f"View Sources ({count})"
+        if open_now:
+            label = "Hide Sources"
+        elif provenance.count:
+            label = f"View Sources ({provenance.count})"
+        else:
+            label = "View Sources"
         if st.button(label, key="chat_sources_toggle"):
             ui_state.toggle_sources_panel()
             st.rerun()

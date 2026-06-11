@@ -28,6 +28,22 @@ class ChatResult:
     trace: Dict[str, Any] = field(default_factory=dict)
     error: str = ""
     warn: str = ""
+    # Company rows the answer actually drew on, ready for the map (each carries
+    # company/latitude/longitude). Populated by route-backed services whose
+    # evidence rows already include coordinates; empty for services that rely on
+    # the separate map pipeline + cited-company filter.
+    map_records: List[Dict[str, Any]] = field(default_factory=list)
+    # Provenance for the answer ("sources"). For SQL-backed routes the records
+    # the answer is grounded in live here (one dict per KB row), and the executed
+    # query is recorded separately so the UI can show evidence (records) and
+    # method (SQL) as distinct things — see RouteChatService._provenance_*.
+    #   evidence_kind: "records" (per-company rows) | "groups" (aggregate rows)
+    #                  | "count" (a single number) | "" (none / document route).
+    #   evidence_rows: the records or group rows backing the answer.
+    #   sql_queries:   [{"label": ..., "sql": ...}] executed to retrieve them.
+    evidence_kind: str = ""
+    evidence_rows: List[Dict[str, Any]] = field(default_factory=list)
+    sql_queries: List[Dict[str, str]] = field(default_factory=list)
 
 
 @dataclass

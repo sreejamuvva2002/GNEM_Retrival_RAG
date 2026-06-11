@@ -28,6 +28,7 @@ _RADIUS_RE = re.compile(
     r"(\d+(?:\.\d+)?)\s*(km|kilometers?|miles?|mi)\b",
     re.IGNORECASE,
 )
+_CLOSEST_RE = re.compile(r"\b(closest|nearest)\b", re.IGNORECASE)
 _COUNTY_RE = re.compile(r"\b([A-Za-z][A-Za-z .'-]*?)\s+County\b", re.IGNORECASE)
 _PROXIMITY_RE = re.compile(
     r"\b(near|nearby|closest|within|radius|distance|around|close to|proximity)\b",
@@ -42,7 +43,7 @@ _PROXIMITY_PLACE_RE = re.compile(
 
 _SELECT_COLS = (
     "c.company, c.updated_location, c.ev_supply_chain_role, c.category, "
-    "c.product_service, c.latitude, c.longitude"
+    "c.product_service, c.primary_oems, c.latitude, c.longitude"
 )
 
 _NEARBY_BY_COMPANY_SQL = f"""
@@ -81,10 +82,16 @@ WHERE c.geo IS NOT NULL
 ORDER BY c.company, distance_miles ASC;
 """
 
-_COMPANY_HAS_GEO_SQL = (
-    "SELECT 1 FROM parent_chunks WHERE lower(company) = lower(%s) "
-    "AND geo IS NOT NULL LIMIT 1;"
-)
+_COMPANY_RESOLVE_SQL = """
+SELECT company
+FROM parent_chunks
+WHERE geo IS NOT NULL
+  AND (lower(company) = lower(%s) OR company ILIKE %s)
+ORDER BY CASE WHEN lower(company) = lower(%s) THEN 0 ELSE 1 END,
+         length(company),
+         company
+LIMIT 1;
+"""
 _COUNTY_EXISTS_SQL = (
     "SELECT 1 FROM georgia_counties WHERE county_name ILIKE %s LIMIT 1;"
 )
@@ -142,8 +149,19 @@ def _exists(sql: str, value: str) -> bool:
         conn.close()
 
 
+def _resolve_company_name(name: str) -> str | None:
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(_COMPANY_RESOLVE_SQL, (name, f"%{name}%", name))
+            row = cur.fetchone()
+            return str(row[0]) if row else None
+    finally:
+        conn.close()
+
+
 def _company_has_geo(name: str) -> bool:
-    return _exists(_COMPANY_HAS_GEO_SQL, name)
+    return _resolve_company_name(name) is not None
 
 
 def _county_exists(name: str) -> bool:
@@ -287,17 +305,123 @@ WITH center AS (
     LIMIT 1
 ), candidates AS (
     {candidates}
+), ranked AS (
+    SELECT DISTINCT ON (c.company)
+           {_SELECT_COLS},
+           ST_Distance(c.geo, center.geo) / {_METERS_PER_MILE} AS distance_miles
+    FROM candidates c
+    JOIN center ON TRUE
+    WHERE lower(c.company) <> lower(center.company)
+      AND ST_DWithin(c.geo, center.geo, %s)
+    ORDER BY c.company, distance_miles
+)
+SELECT *
+FROM ranked
+ORDER BY distance_miles, company
+LIMIT {limit};
+"""
+    return sql, [company, *filter_params, radius_miles * _METERS_PER_MILE]
+
+
+def _closest_to_company_query(
+    company: str,
+    filters: dict[str, Any],
+    limit: int,
+) -> tuple[str, list[Any]]:
+    candidates, filter_params = _candidate_cte(filters)
+    sql = f"""
+WITH center AS (
+    SELECT company, geo
+    FROM parent_chunks
+    WHERE lower(company) = lower(%s)
+      AND geo IS NOT NULL
+    LIMIT 1
+), candidates AS (
+    {candidates}
 )
 SELECT {_SELECT_COLS},
        ST_Distance(c.geo, center.geo) / {_METERS_PER_MILE} AS distance_miles
 FROM candidates c
 JOIN center ON TRUE
 WHERE lower(c.company) <> lower(center.company)
-  AND ST_DWithin(c.geo, center.geo, %s)
 ORDER BY distance_miles, c.company
 LIMIT {limit};
 """
-    return sql, [company, *filter_params, radius_miles * _METERS_PER_MILE]
+    return sql, [company, *filter_params]
+
+
+def _distance_to_company_query(
+    center_company: str,
+    target_companies: list[str],
+    limit: int,
+) -> tuple[str, list[Any]]:
+    sql = f"""
+WITH center AS (
+    SELECT company, geo
+    FROM parent_chunks
+    WHERE lower(company) = lower(%s)
+      AND geo IS NOT NULL
+    LIMIT 1
+), targets AS (
+    SELECT DISTINCT ON (company)
+           company, updated_location, ev_supply_chain_role, category,
+           product_service, primary_oems, latitude, longitude, geo
+    FROM parent_chunks
+    WHERE geo IS NOT NULL
+      AND lower(company) = ANY(%s)
+    ORDER BY company
+)
+SELECT t.company, t.updated_location, t.ev_supply_chain_role, t.category,
+       t.product_service, t.primary_oems, t.latitude, t.longitude,
+       center.company AS distance_to,
+       ST_Distance(t.geo, center.geo) / {_METERS_PER_MILE} AS distance_miles
+FROM targets t
+JOIN center ON TRUE
+WHERE lower(t.company) <> lower(center.company)
+ORDER BY distance_miles, t.company
+LIMIT {limit};
+"""
+    return sql, [center_company, [name.casefold() for name in target_companies]]
+
+
+def _nearby_targets_query(
+    center_company: str,
+    target_companies: list[str],
+    radius_miles: float,
+    limit: int,
+) -> tuple[str, list[Any]]:
+    sql = f"""
+WITH center AS (
+    SELECT company, geo
+    FROM parent_chunks
+    WHERE lower(company) = lower(%s)
+      AND geo IS NOT NULL
+    LIMIT 1
+), targets AS (
+    SELECT DISTINCT ON (company)
+           company, updated_location, ev_supply_chain_role, category,
+           product_service, primary_oems, latitude, longitude, geo
+    FROM parent_chunks
+    WHERE geo IS NOT NULL
+      AND lower(company) = ANY(%s)
+    ORDER BY company
+)
+SELECT t.company, t.updated_location, t.ev_supply_chain_role, t.category,
+       t.product_service, t.primary_oems, t.latitude, t.longitude,
+       center.company AS distance_to,
+       ST_Distance(t.geo, center.geo) / {_METERS_PER_MILE} AS distance_miles
+FROM targets t
+JOIN center ON TRUE
+WHERE lower(t.company) <> lower(center.company)
+  AND ST_DWithin(t.geo, center.geo, %s)
+ORDER BY distance_miles, t.company
+LIMIT {limit};
+"""
+    return sql, [
+        center_company,
+        [name.casefold() for name in target_companies],
+        radius_miles * _METERS_PER_MILE,
+    ]
 
 
 def _county_radius_query(
@@ -390,6 +514,19 @@ LIMIT {limit};
     return sql, params
 
 
+def _company_center_filters(final_route: dict[str, Any]) -> dict[str, Any]:
+    """Keep candidate filters while removing fields used only to identify the center."""
+    filters = _filters_without(final_route, {"company", "updated_location"})
+    question = str(final_route.get("question") or "").casefold()
+    relationship_wording = any(
+        token in question
+        for token in ("linked to", "supplies", "support", "customer", "primary oem", "oem")
+    )
+    if not relationship_wording:
+        filters.pop("primary_oems", None)
+    return filters
+
+
 def _format_rows(label: str, rows: list[dict[str, Any]], radius: float | None = None) -> str:
     if not rows:
         return f"No geocoded companies found for {label}."
@@ -402,11 +539,38 @@ def _format_rows(label: str, rows: list[dict[str, Any]], radius: float | None = 
     for index, row in enumerate(rows, start=1):
         distance = row.get("distance_miles")
         distance_text = f" ({distance:.1f} mi)" if distance is not None else ""
+        details = [str(row.get("updated_location") or "").strip()]
+        primary_oems = str(row.get("primary_oems") or "").strip()
+        if primary_oems:
+            details.append(f"Primary OEMs: {primary_oems}")
         lines.append(
             f"{index}. {row.get('company')}{distance_text} - "
+            f"{'; '.join(detail for detail in details if detail)}"
+        )
+    return "\n".join(lines)
+
+
+def _format_distances(center: str, rows: list[dict[str, Any]]) -> str:
+    if not rows:
+        return f"No geocoded target companies were found for distance to {center}."
+    lines = [f"Distances to {center}:"]
+    for index, row in enumerate(rows, start=1):
+        distance = row.get("distance_miles")
+        distance_text = f"{distance:.1f} miles" if distance is not None else "unknown"
+        lines.append(
+            f"{index}. {row.get('company')}: {distance_text} - "
             f"{row.get('updated_location') or ''}"
         )
     return "\n".join(lines)
+
+
+def _format_context_nearby(center: str, rows: list[dict[str, Any]], radius: float) -> str:
+    if not rows:
+        return (
+            f"None of the listed companies are within {radius:.0f} miles of "
+            f"{center.rstrip('.')}."
+        )
+    return _format_rows(center, rows, radius)
 
 
 def _sql_command(
@@ -462,9 +626,56 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
         for entity in (final_route.get("entities") or [])
         if str(entity).strip()
     ]
+    context_entities = [
+        str(entity).strip()
+        for entity in (final_route.get("context_entities") or [])
+        if str(entity).strip()
+    ]
+    operation = str(final_route.get("operation") or "").casefold()
     coordinates = _extract_coordinates(question)
     proximity = bool(coordinates or _PROXIMITY_RE.search(question))
+    closest = bool(_CLOSEST_RE.search(question))
+    explicit_radius = bool(_RADIUS_RE.search(question))
     county = _county_anchor(final_route)
+
+    if operation in {"distance_search", "nearby_search"} and entities and context_entities:
+        center = _resolve_company_name(entities[-1])
+        if center:
+            if operation == "distance_search":
+                sql, params = _distance_to_company_query(center, context_entities, limit)
+                spatial_operation = "ST_Distance_company_targets"
+                answer = None
+                sql_label = "distance_to_company"
+            else:
+                sql, params = _nearby_targets_query(
+                    center,
+                    context_entities,
+                    radius,
+                    limit,
+                )
+                spatial_operation = "ST_DWithin_company_targets"
+                sql_label = "nearby_context_companies"
+            rows = _fetch(sql, params)
+            if operation == "distance_search":
+                answer = _format_distances(center, rows)
+            else:
+                answer = _format_context_nearby(center, rows, radius)
+            return ExecutionResult(
+                route="geo_search",
+                status=STATUS_SUCCESS,
+                answer=answer,
+                evidence={
+                    "type": "geo_results",
+                    "spatial_backend": "PostGIS",
+                    "spatial_operation": spatial_operation,
+                    "center": {"kind": "company", "name": center},
+                    **({"radius_miles": radius} if operation == "nearby_search" else {}),
+                    "rows": rows,
+                    "sql_commands": [
+                        _sql_command(sql_label, sql, params)
+                    ],
+                },
+            )
 
     if coordinates:
         lat, lon = coordinates
@@ -489,23 +700,48 @@ def execute_geo_search(final_route: dict[str, Any]) -> ExecutionResult:
 
     if proximity:
         for name in entities:
-            if _company_has_geo(name):
+            resolved_name = _resolve_company_name(name)
+            if resolved_name:
+                candidate_filters = _company_center_filters(final_route)
+                if closest and not explicit_radius:
+                    closest_limit = limit if final_route.get("limit") else 10
+                    sql, params = _closest_to_company_query(
+                        resolved_name,
+                        candidate_filters,
+                        closest_limit,
+                    )
+                    rows = _fetch(sql, params)
+                    return ExecutionResult(
+                        route="geo_search",
+                        status=STATUS_SUCCESS,
+                        answer=_format_distances(resolved_name, rows),
+                        evidence={
+                            "type": "geo_results",
+                            "spatial_backend": "PostGIS",
+                            "spatial_operation": "ST_Distance_closest_company",
+                            "center": {"kind": "company", "name": resolved_name},
+                            "rows": rows,
+                            "sql_commands": [
+                                _sql_command("closest_to_company", sql, params)
+                            ],
+                        },
+                    )
                 sql, params = _company_query(
-                    name,
+                    resolved_name,
                     radius,
-                    _filters_without(final_route, {"company"}),
+                    candidate_filters,
                     limit,
                 )
                 rows = _fetch(sql, params)
                 return _success(
-                    label=name,
+                    label=resolved_name,
                     kind="ST_DWithin_company",
                     rows=rows,
                     sql_label="nearby_by_company",
                     sql=sql,
                     params=params,
                     radius=radius,
-                    center={"kind": "company", "name": name},
+                    center={"kind": "company", "name": resolved_name},
                 )
 
         if county:

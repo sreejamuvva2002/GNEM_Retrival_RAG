@@ -95,7 +95,9 @@ _PROXIMITY_PLACE_RE = re.compile(
     r"\s+[a-z][a-z .'-]+(?:[?.!,]|$)",
     re.IGNORECASE,
 )
-_GEO_ANCHOR_WORDS = {"near", "nearby", "closest", "county", "counties", "around", "in"}
+_GEO_ANCHOR_WORDS = {
+    "near", "nearby", "closest", "county", "counties", "around", "in", "distance",
+}
 _MAP_OR_SPATIAL_SIGNALS = {"map", "geospatial", "spatial", "county", "counties", "coordinates"}
 # The exact-classification field the LLM most often over-assigns; the only field
 # eligible for cross-field rescue.
@@ -104,6 +106,10 @@ _RESCUE_SOURCE_FIELD = "category"
 _EMPTY_VALUES = {"", "unknown", "none", "n/a", "na", "null"}
 _OR_SPLIT_RE = re.compile(r"\bor\b", re.IGNORECASE)
 _GENERIC_ROLE_VALUES = {"supplier", "suppliers"}
+_GENERIC_ENTITY_SUFFIX_RE = re.compile(
+    r"\s+(?:suppliers?|companies|firms|manufacturers?)(?:\s+only)?\s*$",
+    re.IGNORECASE,
+)
 _TOTAL_EMPLOYMENT_RE = re.compile(
     r"\b(total|sum)\b.{0,50}\bemploy\w*|\bemploy\w*.{0,50}\b(total|sum)\b",
     re.IGNORECASE,
@@ -151,6 +157,13 @@ class RouteValidator:
         # ``search_filters`` collects values whose target column is uncertain.
         requested_columns = self._requested_columns(raw_route, lower)
         resolved_filters, search_filters = self._resolve_filters(raw_route, lower, actions)
+        if route is RouteName.geo_search and raw_route.entities:
+            self._remove_geo_center_filters(
+                resolved_filters,
+                raw_route.entities,
+                lower,
+                actions,
+            )
 
         # numeric employment threshold (KB-free) overrides any CONTAINS guess
         employment = self._employment_filter(lower)
@@ -332,7 +345,17 @@ class RouteValidator:
                 search_filters.append(sf)
             if action:
                 actions.append(action)
-            grouped.setdefault(field, []).append(raw_filter.raw_value)
+            raw_value = raw_filter.raw_value
+            if field == "ev_supply_chain_role":
+                raw_value = self._strip_generic_entity_suffix(raw_value)
+                if raw_value != raw_filter.raw_value:
+                    actions.append(
+                        f"removed generic entity wording from role filter "
+                        f"'{raw_filter.raw_value}' -> '{raw_value}'"
+                    )
+                if raw_value in (None, "", []):
+                    continue
+            grouped.setdefault(field, []).append(raw_value)
 
         resolved: dict[str, dict] = {}
         for field, raw_values in grouped.items():
@@ -342,6 +365,57 @@ class RouteValidator:
             operator, value = combined
             resolved[field] = {"operator": operator, "value": value}
         return resolved, search_filters
+
+    def _remove_geo_center_filters(
+        self,
+        resolved_filters: dict[str, Any],
+        entities: list[str],
+        lower: str,
+        actions: list[str],
+    ) -> None:
+        """Do not reuse the named spatial center as a candidate-row filter."""
+        entity_values = {
+            re.sub(r"[^a-z0-9]+", " ", str(entity).casefold()).strip()
+            for entity in entities
+            if str(entity).strip()
+        }
+        explicit_relationship = any(
+            token in lower
+            for token in ("linked to", "supplies", "support", "customer", "primary oem", "oem")
+        )
+        for field in ("company", "updated_location", "primary_oems"):
+            if field == "primary_oems" and explicit_relationship:
+                continue
+            spec = resolved_filters.get(field)
+            if not isinstance(spec, dict):
+                continue
+            raw_values = spec.get("value")
+            values = raw_values if isinstance(raw_values, (list, tuple)) else [raw_values]
+            normalized = {
+                re.sub(r"[^a-z0-9]+", " ", str(value).casefold()).strip()
+                for value in values
+                if str(value or "").strip()
+            }
+            if normalized and normalized <= entity_values:
+                resolved_filters.pop(field, None)
+                actions.append(
+                    f"removed {field} filter because it identifies the geo center"
+                )
+
+    def _strip_generic_entity_suffix(self, value: Any) -> Any:
+        """Remove trailing entity nouns accidentally included in role values."""
+        if isinstance(value, list):
+            return [self._strip_generic_entity_suffix(item) for item in value]
+        if isinstance(value, tuple):
+            return tuple(self._strip_generic_entity_suffix(item) for item in value)
+        if not isinstance(value, str):
+            return value
+        cleaned = value.strip()
+        while True:
+            stripped = _GENERIC_ENTITY_SUFFIX_RE.sub("", cleaned).strip()
+            if stripped == cleaned:
+                return stripped
+            cleaned = stripped
 
     def _is_known_column(self, field_hint: str | None) -> bool:
         """True when a hint maps to a real KB column (even a non-filterable one)."""

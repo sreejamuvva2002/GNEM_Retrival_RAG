@@ -14,7 +14,7 @@ from decimal import Decimal
 from typing import Any
 
 from .. import answer_formatter as fmt
-from ..column_allowlist import DEFAULT_COLUMNS, NUMERIC_COLUMNS, ensure_allowed
+from ..column_allowlist import ALLOWED_COLUMNS, DEFAULT_COLUMNS, NUMERIC_COLUMNS, ensure_allowed
 from ..db import get_connection
 from ..filters import build_where
 from ..schemas import STATUS_SUCCESS, ExecutionResult
@@ -22,6 +22,9 @@ from ..schemas import STATUS_SUCCESS, ExecutionResult
 TABLE = "parent_chunks"
 DEFAULT_LIMIT = 100
 MAX_LIMIT = 1000
+# Coordinates fetched for every listed row so the UI can map it, but excluded
+# from the reported display columns (see build_query).
+MAP_COLUMNS = ("latitude", "longitude")
 
 # Operations that count rather than list.
 _COUNT_OPS = {"count_records"}
@@ -229,9 +232,29 @@ def build_query(final_route: dict[str, Any]) -> tuple[str, list[Any], list[str],
 
     # Default: list_records.
     requested = _validated_columns(final_route.get("requested_columns") or [])
-    columns = list(dict.fromkeys(["company", *requested])) if requested else list(DEFAULT_COLUMNS)
+    # Surface the columns we filtered on so each returned row is self-describing
+    # and the answer can cite *why* it matched (e.g. show ev_supply_chain_role
+    # when the question filters by Battery Cell / Battery Pack). Without this, a
+    # role filter paired with `requested_columns=['category']` selects only
+    # company+category, and the grounded answer can't tell the matched roles
+    # apart. Latitude/longitude are geo mechanics, not descriptive, so skip them.
+    filter_cols = [
+        col
+        for col in (resolved_filters or {})
+        if col in ALLOWED_COLUMNS and col not in {"latitude", "longitude"}
+    ]
+    if requested or filter_cols:
+        columns = list(dict.fromkeys(["company", *requested, *filter_cols]))
+    else:
+        columns = list(DEFAULT_COLUMNS)
 
-    select_cols = ", ".join(columns)
+    # Always fetch coordinates so the UI can place each returned company on the
+    # map, but keep them OUT of the reported `columns` so they are neither listed
+    # in the answer text nor fed to the grounding LLM (which would otherwise
+    # print raw lat/lon). The extra row keys are consumed only by the map / source
+    # cards. Skip the duplicate if the user explicitly requested coordinates.
+    select_columns = list(dict.fromkeys([*columns, *MAP_COLUMNS]))
+    select_cols = ", ".join(select_columns)
     order_terms = _order_terms(final_route.get("sort_by") or [])
     order_clause = f" ORDER BY {', '.join(order_terms)}" if order_terms else " ORDER BY company"
     limit = _resolve_limit(final_route.get("limit"))

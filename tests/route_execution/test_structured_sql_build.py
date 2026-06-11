@@ -22,14 +22,83 @@ def test_list_records_default_limit_and_company_column():
     sql, params, columns, mode = build_query(route)
 
     assert mode == "list"
-    assert columns == ["company", "ev_supply_chain_role", "product_service"]
+    # Requested columns come first, then the filtered columns are appended so
+    # each row is self-describing (the answer can cite why it matched).
+    assert columns == [
+        "company",
+        "ev_supply_chain_role",
+        "product_service",
+        "category",
+        "updated_location",
+    ]
+    # Coordinates are appended to the SELECT (for mapping) but not to `columns`.
     assert sql.startswith(
-        "SELECT company, ev_supply_chain_role, product_service FROM parent_chunks WHERE "
+        "SELECT company, ev_supply_chain_role, product_service, category, "
+        "updated_location, latitude, longitude FROM parent_chunks WHERE "
     )
     assert "category = %s" in sql
     assert "updated_location ILIKE %s" in sql
     assert sql.rstrip(";").endswith("LIMIT 100")
     assert params == ["Tier 1/2", "%Fulton County%"]
+
+
+def test_filtered_role_column_is_surfaced_in_output():
+    """A role filter must appear in the SELECT so the answer can cite the role.
+
+    Regression: 'companies under Battery Cell or Battery Pack roles, and what
+    tier' produced requested_columns=['category'] with the role only in the
+    filter — so the evidence held company+category and the answer could not
+    tell the matched roles apart.
+    """
+    route = {
+        "route": "structured_sql",
+        "operation": "list_records",
+        "requested_columns": ["category"],
+        "resolved_filters": {
+            "state": {"operator": "CONTAINS", "value": "Georgia"},
+            "ev_supply_chain_role": {
+                "operator": "OR_CONTAINS",
+                "value": ["Battery Cell", "Battery Pack"],
+            },
+        },
+    }
+    sql, _params, columns, _mode = build_query(route)
+
+    assert "ev_supply_chain_role" in columns
+    assert columns == ["company", "category", "state", "ev_supply_chain_role"]
+    # Coordinates are appended to the SELECT for mapping, but stay out of `columns`.
+    assert sql.startswith(
+        "SELECT company, category, state, ev_supply_chain_role, latitude, longitude "
+        "FROM parent_chunks"
+    )
+
+
+def test_coordinates_selected_for_mapping_but_not_reported_columns():
+    route = {
+        "route": "structured_sql",
+        "operation": "list_records",
+        "requested_columns": ["category"],
+        "resolved_filters": {"state": {"operator": "CONTAINS", "value": "Georgia"}},
+    }
+    sql, _params, columns, _mode = build_query(route)
+    # Fetched (so the UI can place markers) ...
+    assert "latitude, longitude FROM parent_chunks" in sql
+    # ... but never reported as display columns (kept out of answer text/grounding).
+    assert "latitude" not in columns and "longitude" not in columns
+
+
+def test_latitude_longitude_filters_are_not_added_to_output():
+    route = {
+        "route": "structured_sql",
+        "operation": "list_records",
+        "requested_columns": ["company"],
+        "resolved_filters": {
+            "latitude": {"operator": "GT", "value": 33.0},
+            "longitude": {"operator": "LT", "value": -84.0},
+        },
+    }
+    _sql, _params, columns, _mode = build_query(route)
+    assert columns == ["company"]
 
 
 def test_state_filter_builds_real_predicate():
