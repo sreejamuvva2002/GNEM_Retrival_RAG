@@ -29,6 +29,7 @@ class WikiPage:
     sources: list[str]  # source document IDs
     related_entities: list[str]  # cross-references
     fact_sources: dict  # fact_text -> [doc_ids] for provenance tracing
+    has_georgia_presence: bool = False
 
 
 class LLMWiki:
@@ -80,6 +81,7 @@ class LLMWiki:
             "facts": [],
             "related_entities": [],
             "category": "news",
+            "has_georgia_presence": False,
         }
 
     def _load_index(self) -> dict:
@@ -112,12 +114,17 @@ class LLMWiki:
     def _normalize_entity_name(self, name: str) -> str:
         """Strip common corporate suffixes and noise for comparison."""
         name = name.strip()
+        
+        normalized = name.lower()
+        
+        # Remove common prefixes like 'us '
+        normalized = re.sub(r"^us\s+", "", normalized).strip()
+        
         # Remove common suffixes
         suffixes = [
-            r",?\s*(co\.?,?\s*ltd\.?|ltd\.?|llc\.?|inc\.?|corp\.?|industrial co\.?|ind\.?|co\.?)",
+            r",?\s*(co\.?,?\s*ltd\.?|ltd\.?|llc\.?|inc\.?|corp\.?|corporation\.?|industrial co\.?|ind\.?|company\.?|group of america\.?|group\.?|usa\.?|north america\.?|co\.?)",
             r"@[^\s]+",  # email addresses
         ]
-        normalized = name.lower()
         for suffix in suffixes:
             normalized = re.sub(suffix, "", normalized, flags=re.IGNORECASE).strip()
         return normalized.strip(". ,")
@@ -179,6 +186,7 @@ class LLMWiki:
                     sources=frontmatter.get("sources", []),
                     related_entities=frontmatter.get("related_entities", []),
                     fact_sources=frontmatter.get("fact_sources", {}),
+                    has_georgia_presence=frontmatter.get("has_georgia_presence", False),
                 )
         return None
 
@@ -191,6 +199,7 @@ class LLMWiki:
             "sources": page.sources,
             "related_entities": page.related_entities,
             "fact_sources": page.fact_sources,
+            "has_georgia_presence": page.has_georgia_presence,
         }
 
         page_file = self.wiki_dir / f"{self._safe_filename(page.title)}.md"
@@ -205,6 +214,7 @@ class LLMWiki:
             "entity_type": page.entity_type,
             "last_updated": page.last_updated,
             "sources": page.sources,
+            "has_georgia_presence": page.has_georgia_presence,
         }
 
         for entity in page.related_entities:
@@ -262,14 +272,15 @@ Rules:
 - "main_entity" = the company or organization this document is PRIMARILY about (based on the content, not the hint).
   - If the document is about a magazine, publisher, or directory (not a company), set main_entity to "Unknown".
   - Use the SHORT canonical name (e.g. "Duckyang", not "Duckyang Co.,Ltd.").
-- "facts" = concrete, specific facts about main_entity extracted from the content (investments, locations, products, headcount, etc.)
+- "facts" = EXHAUSTIVELY extract ALL concrete, specific facts about main_entity from the content (investments, locations, products, headcount, etc.). Do not summarize or limit the number of facts if there are many.
   - Do NOT include generic website features, navigation links, or subscription offers as facts.
   - Include at least 2 specific facts or set main_entity to "Unknown".
+- "has_georgia_presence": true if the entity has operations, offices, facilities, or significant presence in the US state of Georgia. False otherwise.
 - Do NOT use email addresses, URLs, or job titles as entity names.
 - "related_entities" = other real company or place names mentioned (not emails, URLs, or website sections).
 
 Extract and respond as valid JSON with these exact keys:
-{{"is_ev_related": true, "main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2"], "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
+{{"is_ev_related": true, "main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2", "fact3"], "has_georgia_presence": false, "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
 
         try:
             response_text = self._call_ollama(prompt)
@@ -310,6 +321,7 @@ Extract and respond as valid JSON with these exact keys:
                 extraction,
                 doc_id,
                 existing_page,
+                has_georgia_presence=extraction.get("has_georgia_presence", False),
             )
         )
         main_entity = canonical  # use canonical name for related links
@@ -330,6 +342,7 @@ Extract and respond as valid JSON with these exact keys:
         doc_id: str,
         existing_page: Optional[WikiPage] = None,
         entity_type: Optional[str] = None,
+        has_georgia_presence: bool = False,
     ) -> str:
         """Update existing page or create new one."""
         entity_type = entity_type or extraction.get("entity_type", "concept")
@@ -343,6 +356,7 @@ Extract and respond as valid JSON with these exact keys:
             content = self._deduplicate_facts(content, fact_sources)
             related = list(set(existing_page.related_entities + extraction.get("related_entities", [])))
             sources = list(set(existing_page.sources + [doc_id]))
+            georgia_presence = existing_page.has_georgia_presence or has_georgia_presence
         else:
             # Create new page
             content, fact_sources = self._format_page_content(
@@ -350,6 +364,7 @@ Extract and respond as valid JSON with these exact keys:
             )
             related = extraction.get("related_entities", [])
             sources = [doc_id]
+            georgia_presence = has_georgia_presence
 
         page = WikiPage(
             title=entity_name,
@@ -359,6 +374,7 @@ Extract and respond as valid JSON with these exact keys:
             sources=sources,
             related_entities=related,
             fact_sources=fact_sources,
+            has_georgia_presence=georgia_presence,
         )
 
         self._save_page(page)
@@ -369,7 +385,7 @@ Extract and respond as valid JSON with these exact keys:
         content = f"# {entity_name}\n\n## Overview\n\n"
         content += "## Key Facts\n\n"
         fact_sources: dict[str, list[str]] = {}
-        for fact in facts[:10]:
+        for fact in facts:
             content += f"- {fact}\n"
             fact_sources[fact] = [doc_id]
         return content, fact_sources
@@ -392,9 +408,9 @@ Extract and respond as valid JSON with these exact keys:
 
         fact_sources = dict(existing_fact_sources)  # copy
         if fact_section_idx >= 0 and new_facts:
-            facts_content = "\n".join([f"- {fact}" for fact in new_facts[:5]])
+            facts_content = "\n".join([f"- {fact}" for fact in new_facts])
             lines.insert(fact_section_idx + 2, facts_content)
-            for fact in new_facts[:5]:
+            for fact in new_facts:
                 if fact in fact_sources:
                     if doc_id not in fact_sources[fact]:
                         fact_sources[fact].append(doc_id)
@@ -404,27 +420,113 @@ Extract and respond as valid JSON with these exact keys:
         return "\n".join(lines), fact_sources
 
     def _deduplicate_facts(self, content: str, fact_sources: dict) -> str:
-        """Remove duplicate bullet point facts from page content.
+        """Remove duplicate bullet point facts from page content using LLM.
         Merges provenance of dropped duplicates into the kept fact.
         """
         lines = content.split("\n")
-        seen: dict[str, str] = {}  # normalized_fact -> original fact text
-        result = []
+        
+        # Extract facts to deduplicate
+        fact_lines = []
+        non_fact_lines = []
+        
         for line in lines:
-            stripped = line.strip().lstrip("- ").lower()
-            original_fact = line.strip().lstrip("- ")
-            if line.startswith("- ") and stripped in seen:
-                # Merge provenance: keep all sources from the duplicate
-                kept_fact = seen[stripped]
-                if original_fact in fact_sources and kept_fact in fact_sources:
-                    for src in fact_sources[original_fact]:
-                        if src not in fact_sources[kept_fact]:
-                            fact_sources[kept_fact].append(src)
-                continue  # skip the duplicate line
             if line.startswith("- "):
-                seen[stripped] = original_fact
-            result.append(line)
-        return "\n".join(result)
+                fact_lines.append(line.strip().lstrip("- "))
+            elif line.strip() or line == "":
+                non_fact_lines.append(line)
+                
+        if not fact_lines:
+            return content
+
+        # Deduplicate facts using LLM
+        prompt = f"""You are a knowledge graph editor. I will provide a list of facts about an entity.
+Some facts might be semantically identical or one might completely subsume the other.
+Your task is to identify the unique facts. If multiple facts convey the same information, keep the most detailed and comprehensive version, and map the duplicate facts to the one you kept.
+If a fact is distinct, keep it and map it to itself.
+
+Respond ONLY with valid JSON in this format:
+{{
+  "deduplicated_facts": [
+    "Most detailed version of Fact A",
+    "Fact B",
+    "Fact C"
+  ],
+  "mappings": {{
+    "Original Fact A variant 1": "Most detailed version of Fact A",
+    "Original Fact A variant 2": "Most detailed version of Fact A",
+    "Fact B": "Fact B",
+    "Fact C": "Fact C"
+  }}
+}}
+
+Here are the facts:
+{json.dumps(fact_lines)}
+"""
+        
+        try:
+            response_text = self._call_ollama(prompt)
+            result = self._extract_json_from_response(response_text)
+            
+            dedup_facts = result.get("deduplicated_facts", fact_lines)
+            mappings = result.get("mappings", {})
+            
+            # If the LLM failed to return a proper structure, fallback to exact match deduplication
+            if not isinstance(dedup_facts, list) or not isinstance(mappings, dict) or len(dedup_facts) == 0:
+                raise ValueError("Invalid LLM response structure for deduplication")
+                
+            # Merge provenance based on LLM mappings
+            new_fact_sources = {}
+            for original_fact in fact_lines:
+                canonical = mappings.get(original_fact, original_fact)
+                
+                # Make sure the canonical fact is in the sources dict
+                if canonical not in new_fact_sources:
+                    new_fact_sources[canonical] = []
+                    
+                # Add sources from original fact to canonical fact
+                if original_fact in fact_sources:
+                    for src in fact_sources[original_fact]:
+                        if src not in new_fact_sources[canonical]:
+                            new_fact_sources[canonical].append(src)
+            
+            # Update the class fact_sources with the new mapped sources
+            # We must modify fact_sources in place because Python passes the dict by reference
+            keys_to_delete = [k for k in fact_sources.keys()]
+            for k in keys_to_delete:
+                del fact_sources[k]
+            for k, v in new_fact_sources.items():
+                fact_sources[k] = v
+                
+            # Reconstruct content
+            reconstructed = []
+            for line in non_fact_lines:
+                reconstructed.append(line)
+                if line == "## Key Facts":
+                    reconstructed.append("")
+                    for f in dedup_facts:
+                        reconstructed.append(f"- {f}")
+                        
+            return "\n".join(reconstructed)
+            
+        except Exception as e:
+            print(f"[wiki] Semantic deduplication failed, falling back to exact match: {e}")
+            # Fallback to exact deduplication
+            seen: dict[str, str] = {}  # normalized_fact -> original fact text
+            result_lines = []
+            for line in lines:
+                stripped = line.strip().lstrip("- ").lower()
+                original_fact = line.strip().lstrip("- ")
+                if line.startswith("- ") and stripped in seen:
+                    kept_fact = seen[stripped]
+                    if original_fact in fact_sources and kept_fact in fact_sources:
+                        for src in fact_sources[original_fact]:
+                            if src not in fact_sources[kept_fact]:
+                                fact_sources[kept_fact].append(src)
+                    continue
+                if line.startswith("- "):
+                    seen[stripped] = original_fact
+                result_lines.append(line)
+            return "\n".join(result_lines)
 
     def get_provenance(self, title: str) -> str:
         """Return a human-readable provenance report for a wiki page.
@@ -547,6 +649,7 @@ Extract and respond as valid JSON with these exact keys:
                         sources=combined_sources,
                         related_entities=combined_related,
                         fact_sources=merged_fact_sources,
+                        has_georgia_presence=canon_page.has_georgia_presence or dup_page.has_georgia_presence,
                     )
                     self._save_page(updated)
 
