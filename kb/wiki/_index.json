@@ -2,23 +2,25 @@
   "pages": {
     "Duckyang": {
       "entity_type": "company",
-      "last_updated": "2026-06-07T20:43:11.796339",
+      "last_updated": "2026-06-15T18:14:08.706435",
       "sources": [
-        "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1",
-        "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14",
-        "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a",
         "sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff",
-        "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95",
         "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c",
-        "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
-        "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349",
-        "sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b",
-        "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06",
         "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b",
-        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
+        "sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b",
+        "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
+        "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a",
+        "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1",
+        "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349",
         "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a",
-        "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f"
-      ]
+        "sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126",
+        "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f",
+        "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95",
+        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
+        "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06",
+        "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14"
+      ],
+      "has_georgia_presence": false
     },
     "Georgia": {
       "entity_type": "location",
@@ -89,13 +91,6 @@
       "last_updated": "2026-06-07T20:42:12.834078",
       "sources": [
         "sha256:5b305b506627c4b71b0bbe640855de4b4a8fd8ee5c92f05e68bac70fe79078a0"
-      ]
-    },
-    "Duckyang USA": {
-      "entity_type": "company",
-      "last_updated": "2026-06-07T20:42:17.310866",
-      "sources": [
-        "sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126"
       ]
     },
     "PepsiCo": {
@@ -312,7 +307,8 @@
       "Raytheon Intelligence and Space"
     ],
     "Braselton Georgia": [
-      "Duckyang USA"
+      "Duckyang USA",
+      "Duckyang"
     ],
     "Xcel Energy": [
       "PepsiCo"
@@ -433,5 +429,5 @@
     "sha256:2bb28bb7b268802c716d40e3454c8334e76ec8a6dac03c5f949529a9abe444c5",
     "sha256:40896508cc9ee6c0ad31cf66f07174e8d559835b6115a717e173182570bd9e6b"
   ],
-  "last_updated": "2026-06-07T20:43:47.725270"
+  "last_updated": "2026-06-15T18:14:08.708334"
 }

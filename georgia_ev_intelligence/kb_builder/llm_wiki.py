@@ -122,7 +122,7 @@ class LLMWiki:
         
         # Remove common suffixes
         suffixes = [
-            r",?\s*(co\.?,?\s*ltd\.?|ltd\.?|llc\.?|inc\.?|corp\.?|corporation\.?|industrial co\.?|ind\.?|company\.?|group of america\.?|group\.?|usa\.?|north america\.?|co\.?)",
+            r",?\s*(co\.?,?\s*ltd\.?|ltd\.?|llc\.?|inc\.?|corp\.?|corporation\.?|industrial\b|industrial co\.?|ind\.?|company\.?|group of america\.?|group\.?|usa\.?|north america\.?|co\.?)$",
             r"@[^\s]+",  # email addresses
         ]
         for suffix in suffixes:
