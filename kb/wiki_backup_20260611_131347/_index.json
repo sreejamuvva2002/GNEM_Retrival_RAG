@@ -1,0 +1,437 @@
+{
+  "pages": {
+    "Duckyang": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:11.796339",
+      "sources": [
+        "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1",
+        "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14",
+        "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a",
+        "sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff",
+        "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95",
+        "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c",
+        "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
+        "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349",
+        "sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b",
+        "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06",
+        "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b",
+        "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
+        "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a",
+        "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f"
+      ]
+    },
+    "Georgia": {
+      "entity_type": "location",
+      "last_updated": "2026-06-07T19:22:45.013409",
+      "sources": [
+        "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843",
+        "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd",
+        "sha256:1bd2d56c33e0a149ed2c88225a62dca0f2be04713bf6f1b4df491de281384096"
+      ]
+    },
+    "Site Selection Magazine": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:41:53.051278",
+      "sources": [
+        "sha256:1523dba05de79d56ebc3d154e6eded97471351e45a7441b63ab37ee3198c8fac",
+        "sha256:c261e8b9eeaf07f17c897a08d0af248c68e04b186720b10a0f3ff3c3fb36933c",
+        "sha256:f784adbea847725d95ff0a9978b33d8d847211691cc91e79e34273e3bb80e7ed",
+        "sha256:767b48c7bec4b30d4c86081240e1cb79681213a7e3b535c52136d781411919a4",
+        "sha256:66b52b4f9f8e15d506282388b52921377cbfa686e9f6e5fb58339cbd43f1d13c",
+        "sha256:7712f1fc93c8984b09c476702e809c88c89ed4bdb90acad93bb3483a234a3225"
+      ]
+    },
+    "Volkswagen": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T19:24:35.723300",
+      "sources": [
+        "sha256:14304d52df6ec626bf6d21a5773eb7f3ffae8ea75c86b8319ecc5cf015021d0f"
+      ]
+    },
+    "AstraZeneca": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:40:43.300834",
+      "sources": [
+        "sha256:d2fea1d14ed83f4ebacbf5418ac8005121efc39cda85361d76ccad81918bc0c9"
+      ]
+    },
+    "State & Area Guides": {
+      "entity_type": "publication",
+      "last_updated": "2026-06-07T20:41:03.377015",
+      "sources": [
+        "sha256:36b3ad4f284f7eb3c39eb1e2d4a3891a63ab1c00cfca14781ce3d84a8929672e"
+      ]
+    },
+    "Conway Data Inc.": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:42:32.025184",
+      "sources": [
+        "sha256:f0ebfb96910bc844bfd626342d02373ab40905108fa21a9185fc1232849b0019",
+        "sha256:bdd53f5a3a9b108159cf5aff73fde3e568857534329e4a81654394d508117ce9"
+      ]
+    },
+    "Cluttons": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:41:57.989335",
+      "sources": [
+        "sha256:09a52b7483635ee1b335f8b337361073d592b95ce0af0204f26f9945b565452d"
+      ]
+    },
+    "Republic of Kazakhstan": {
+      "entity_type": "country",
+      "last_updated": "2026-06-07T20:42:03.217504",
+      "sources": [
+        "sha256:fe6a4b30a027ef94ab7881358de7427e140ad46e8823254b537b55e48c171408"
+      ]
+    },
+    "Raytheon Intelligence and Space": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:42:12.834078",
+      "sources": [
+        "sha256:5b305b506627c4b71b0bbe640855de4b4a8fd8ee5c92f05e68bac70fe79078a0"
+      ]
+    },
+    "Duckyang USA": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:42:17.310866",
+      "sources": [
+        "sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126"
+      ]
+    },
+    "PepsiCo": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:42:22.361278",
+      "sources": [
+        "sha256:b84d839ff9e0ae0dc232a8b7c07228e1e258fc6e35b16938a431b74d5564bae5"
+      ]
+    },
+    "intelligence360": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:42:41.492590",
+      "sources": [
+        "sha256:daf5c4e24eff3364c131d3f1cd4e285f97000de95d0b08083133ace414cb632c"
+      ]
+    },
+    "PT Solutions": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:03.878283",
+      "sources": [
+        "sha256:6a77f1734fb7c86417984b16994bf11f237278881a8a7f0ae247652b89485d0d"
+      ]
+    },
+    "Novant Health": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:16.109686",
+      "sources": [
+        "sha256:65120e25cb8c22ff35a8602e63c4369585c766832fe692b6f5241195f7e2cb47"
+      ]
+    },
+    "Metalmite Corporation": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:20.785413",
+      "sources": [
+        "sha256:ff64857820f2efedac45930c65d80928cb29135f58cea4ed8f087a87c5e7fd6f"
+      ]
+    },
+    "Avoca": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:30.674729",
+      "sources": [
+        "sha256:49d233091eee1ae6b024bd79b5f43dc670b2da64dbd551cccb9a83dd91758e8e"
+      ]
+    },
+    "Heartland Dental": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:36.421805",
+      "sources": [
+        "sha256:0891e1f0ebc53a1287bab6989ce0359677731f51698105fb821208ec963bdfaa"
+      ]
+    },
+    "Southern Birth Justice Network": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:42.576661",
+      "sources": [
+        "sha256:2bb28bb7b268802c716d40e3454c8334e76ec8a6dac03c5f949529a9abe444c5"
+      ]
+    },
+    "DaVita": {
+      "entity_type": "company",
+      "last_updated": "2026-06-07T20:43:47.724462",
+      "sources": [
+        "sha256:40896508cc9ee6c0ad31cf66f07174e8d559835b6115a717e173182570bd9e6b"
+      ]
+    }
+  },
+  "entities": {
+    "Seho BLDG": [
+      "Duckyang"
+    ],
+    "Deungchon-dong": [
+      "Duckyang"
+    ],
+    "Gangseo-gu": [
+      "Duckyang"
+    ],
+    "Seoul": [
+      "Duckyang"
+    ],
+    "Korea(07591)": [
+      "Duckyang"
+    ],
+    "Hartsfield-Jackson International": [
+      "Georgia"
+    ],
+    "Georgia Ports Authority": [
+      "Georgia"
+    ],
+    "Braselton, Georgia": [
+      "Duckyang"
+    ],
+    "Visteon International Holdings, Inc": [
+      "Duckyang"
+    ],
+    "Hyundai": [
+      "Duckyang"
+    ],
+    "Amazon": [
+      "Duckyang"
+    ],
+    "SK Innovation": [
+      "Duckyang"
+    ],
+    "Kia": [
+      "Duckyang"
+    ],
+    "MYANMAR - UNIVERSAL": [
+      "Duckyang"
+    ],
+    "BANGLADESH - INTERFAB": [
+      "Duckyang"
+    ],
+    "battery production": [
+      "Georgia"
+    ],
+    "electric vehicle supply chain": [
+      "Georgia"
+    ],
+    "eVTOL aircraft": [
+      "Georgia"
+    ],
+    "Bangladesh": [
+      "Duckyang"
+    ],
+    "Qingdao Handuck Apparel Inc.": [
+      "Duckyang"
+    ],
+    "Universal Apparel Co., Ltd.": [
+      "Duckyang"
+    ],
+    "Vietnam": [
+      "Duckyang"
+    ],
+    "Seho BLDG (Deungchon-dong)": [
+      "Duckyang"
+    ],
+    "El Corte Ingles": [
+      "Duckyang"
+    ],
+    "Tucci homeware": [
+      "Duckyang"
+    ],
+    "Governor Brian Kemp": [
+      "Georgia"
+    ],
+    "Georgia Department of Economic Development": [
+      "Georgia"
+    ],
+    "Duckyang": [
+      "Site Selection Magazine",
+      "State & Area Guides"
+    ],
+    "Conway Projects Database": [
+      "Site Selection Magazine"
+    ],
+    "Maine": [
+      "AstraZeneca"
+    ],
+    "DFW suburb of Irving": [
+      "AstraZeneca"
+    ],
+    "Investors": [
+      "Site Selection Magazine"
+    ],
+    "State regulatory environment": [
+      "Site Selection Magazine"
+    ],
+    "Cushman & Wakefield": [
+      "Site Selection Magazine"
+    ],
+    "Greater Phoenix Economic Council": [
+      "Site Selection Magazine"
+    ],
+    "IAMC": [
+      "Conway Data Inc."
+    ],
+    "Site Selection Magazine": [
+      "Conway Data Inc."
+    ],
+    "North Carolina": [
+      "Site Selection Magazine"
+    ],
+    "Texas": [
+      "Site Selection Magazine"
+    ],
+    "Dallas-Ft. Worth": [
+      "Site Selection Magazine"
+    ],
+    "North Dakota": [
+      "Site Selection Magazine"
+    ],
+    "Sharjah": [
+      "Cluttons"
+    ],
+    "Conway Events": [
+      "Cluttons"
+    ],
+    "International Expositions Bureau (BIE)": [
+      "Republic of Kazakhstan"
+    ],
+    "City of Astana": [
+      "Republic of Kazakhstan"
+    ],
+    "Lockheed Martin": [
+      "Raytheon Intelligence and Space"
+    ],
+    "Caterpillar": [
+      "Raytheon Intelligence and Space"
+    ],
+    "Samsung": [
+      "Raytheon Intelligence and Space"
+    ],
+    "Kimberly-Clark": [
+      "Raytheon Intelligence and Space"
+    ],
+    "Braselton Georgia": [
+      "Duckyang USA"
+    ],
+    "Xcel Energy": [
+      "PepsiCo"
+    ],
+    "Colorado Office of Economic Development and International Trade": [
+      "PepsiCo"
+    ],
+    "Metro Denver Economic Development Corporation": [
+      "PepsiCo"
+    ],
+    "Denver Economic Development Opportunity (DEDO)": [
+      "PepsiCo"
+    ],
+    "Land O\u2019 Lakes, Florida": [
+      "PT Solutions"
+    ],
+    "Braselton": [
+      "Duckyang"
+    ],
+    "Georgia": [
+      "Duckyang"
+    ],
+    "Cumming, Georgia": [
+      "Novant Health"
+    ],
+    "Rochester": [
+      "Metalmite Corporation"
+    ],
+    "Wesley Chapel, North Carolina": [
+      "Heartland Dental"
+    ],
+    "Miami, Florida": [
+      "Southern Birth Justice Network"
+    ],
+    "Albuquerque, New Mexico": [
+      "DaVita"
+    ]
+  },
+  "sources_processed": [
+    "sha256:f30ea0e8f6a5eee48e53251964c0d8216f0930b35c9725a35fec64f16db71c14",
+    "sha256:ea35eecd39e6094e64b63aee3443ca89d72fa7a22aac87d25e39fa9cb271b843",
+    "sha256:1bb4f6e14b2b89940d093a8aac3ea9c60206281403b9f67fb37efe60ea4c5d2b",
+    "sha256:a3293066f1097e100147b6f2da94b2b18b1c6aec8ac21b75ec5e11961eea3349",
+    "sha256:ad2558b33111b033dd9abdab256de000f59479f25738309b5a72ffb4e72dab2c",
+    "sha256:8b958d06400fc83dd80e9924eddfc0362d0281c377f1881babc1beb2a9b6220a",
+    "sha256:f4dcf12e562d83c2005d9ecc3edfe9d45fc05f94b6d0cbeaa07631b6fa15e742",
+    "sha256:2e685a58fe1515e30227381e6c2ce9315d83d9dc120709f04405e93ad4fdab95",
+    "sha256:07ebac5c3b57c39f811f41f7128b6e0f9f7f2ca094de905b772ea1badd3363cd",
+    "sha256:d09d45e08ed0982d007653be7fa0f78a1accd8f31d1ee779299629219a8c5cff",
+    "sha256:5f14422d2ced11bc63cc335ddb53f006c3b79542954f2c5850c65cfc118c2218",
+    "sha256:dd50041e014670ff92af303742210add61b3ca8c07866c5d7fe1fe2898c263c1",
+    "sha256:bdf624839e32f030ac9392c668235128f689b777829f92be3cc25e95cbf936d8",
+    "sha256:99d7602c1747956ff6b9cd7d04e289af17c65e44ac2abe8c357e8d253e1a671a",
+    "sha256:c485c727bdaeca4a13e9833168980a688b6f2e6f35763311a5011455f22ee4d1",
+    "sha256:cd853d22245bd4cd3b08c2e0bac657ed91d256817605ae779b4e0839e89b052f",
+    "sha256:c3b4a1e557444978a388700341b800ae646ab14475cd2aa7c17544c3e73a0a5f",
+    "sha256:1bd2d56c33e0a149ed2c88225a62dca0f2be04713bf6f1b4df491de281384096",
+    "sha256:2cf73d592fdfa911f1aa61069060e2b3e180d15ffb9b34f25c806a6872fff8bc",
+    "sha256:667d37eb8cfa1926f6a73f7b6a0f62d10f7a7a46fc6d2f0c1a4e1e8eaa2eb8db",
+    "sha256:a02c9f3dbf33bfd0493e8c866c67d6aa232fb590cc6391d13a29a80b82827070",
+    "sha256:66b52b4f9f8e15d506282388b52921377cbfa686e9f6e5fb58339cbd43f1d13c",
+    "sha256:de268c41179ff62aa88f820c6982c61f57e86b6e37042b57ca4a04697f479415",
+    "sha256:b98245a62cc609cfba94ca867914f7bdd6ec25b313e99c36767ef489e9df0aed",
+    "sha256:52635ccdc9a7623842f4f96bdd4b9f86341f7cfc43913023f331ceca69bee935",
+    "sha256:f0f74cb9ea6672d3d69a5211c72dd9883f5a59f7ff37a59c0ab1607aeac971d7",
+    "sha256:428012e5ad10630c33e96ec0632a5e0599b00816f47e655434b4a17601597572",
+    "sha256:5191167b0df9ca061ccb88390779b0b3521fa554cec4f649c88abd067bbabb12",
+    "sha256:d5f84a99c3c10a81a9e83aec900615cfaa74cf33541a295b8d8b49ed746457ff",
+    "sha256:03f2fb526f8d52da7971e565b0c1928ba1dc598ad454b6ebad250038faa2566c",
+    "sha256:753f38b726cdd0cf5dd6541d0e267ee018ec2e9ef559b9d9f00f5fec26e14c3b",
+    "sha256:b3881e0ef4c4733548f3e10d0da423fed0eab9c13c1ad06dc8e2fcaf0f0b6f7e",
+    "sha256:c3b7833408c8f9738d7c378f5a60efe6e197500731405c4799cbc9a14614d197",
+    "sha256:7b3570667287afd16c587d82df450b39e2ba8c77ed6cd6e3de81aa78cc33a04e",
+    "sha256:cb4f12fbe5e3de21f1f27d9e49823fbba6dbe990aea4013c9436bb84680aeb68",
+    "sha256:4cfad6a0782a45ff9878b0e5ee0af8434c054aca571a68e33cb23ac2f5466938",
+    "sha256:4c849044622ddd67582de099d8cf4441aeb9dd54ec5fb13db820166b238a28f0",
+    "sha256:f6039f3ebfa7c2316df04f458125e567eae4aee9cbe34d148526da0b4f580e46",
+    "sha256:14304d52df6ec626bf6d21a5773eb7f3ffae8ea75c86b8319ecc5cf015021d0f",
+    "sha256:abf99af9d72c1c882233961f4855f29294c360660620939036e3a74ef80e73a8",
+    "sha256:d2fea1d14ed83f4ebacbf5418ac8005121efc39cda85361d76ccad81918bc0c9",
+    "sha256:b2b077c77cfaadbdb82649158e65ba88edf22c1f99c74bdda1e782e373fe2f4b",
+    "sha256:b0e728c70701799f42929485408d81d856427549906aff0c9f9d0df69f546fd1",
+    "sha256:7712f1fc93c8984b09c476702e809c88c89ed4bdb90acad93bb3483a234a3225",
+    "sha256:5a1f39e146e0abe5ce85f6af03feb203dbe2bcecef8c310303240705f05d72c8",
+    "sha256:36b3ad4f284f7eb3c39eb1e2d4a3891a63ab1c00cfca14781ce3d84a8929672e",
+    "sha256:cad50025bb4af1215bfc5b89edbf64a2dc26894c78441dba1d410c69eea65caf",
+    "sha256:5a40521805a6417d31d3b8a2f0751bd787ec01200a02764e59c34f3a44aa46f6",
+    "sha256:767b48c7bec4b30d4c86081240e1cb79681213a7e3b535c52136d781411919a4",
+    "sha256:c9d045ff9baeae590ebcfe27e653502bac93e7ab64aa7f7dc6f53786f414ff10",
+    "sha256:2bf002c8a02035485144b711f888681c4d5f29d43030f6313695e9c24191e328",
+    "sha256:f784adbea847725d95ff0a9978b33d8d847211691cc91e79e34273e3bb80e7ed",
+    "sha256:c261e8b9eeaf07f17c897a08d0af248c68e04b186720b10a0f3ff3c3fb36933c",
+    "sha256:9d7a4a616c61f5d751516bf46166716bc993a50401723b89ecc11d24e3215cec",
+    "sha256:f0ebfb96910bc844bfd626342d02373ab40905108fa21a9185fc1232849b0019",
+    "sha256:1523dba05de79d56ebc3d154e6eded97471351e45a7441b63ab37ee3198c8fac",
+    "sha256:09a52b7483635ee1b335f8b337361073d592b95ce0af0204f26f9945b565452d",
+    "sha256:fe6a4b30a027ef94ab7881358de7427e140ad46e8823254b537b55e48c171408",
+    "sha256:5177902f5e1a1db59b7cd4f4025eae5e37bd0e9b7fec13cd70ab6dd98b42ee4c",
+    "sha256:5b305b506627c4b71b0bbe640855de4b4a8fd8ee5c92f05e68bac70fe79078a0",
+    "sha256:1c3025bb8ae5dbe44928ddf716c41bb8e1630887edfae2bbf45753c2fd72f126",
+    "sha256:b84d839ff9e0ae0dc232a8b7c07228e1e258fc6e35b16938a431b74d5564bae5",
+    "sha256:f5776978a5f9c85189069df92f59445f1090f91dcb83e3873884b2902b397f5b",
+    "sha256:bdd53f5a3a9b108159cf5aff73fde3e568857534329e4a81654394d508117ce9",
+    "sha256:cb420435d3116f89cea1abb9b2cba8ee4e61b8b1311803380ad8fe35a20805ed",
+    "sha256:daf5c4e24eff3364c131d3f1cd4e285f97000de95d0b08083133ace414cb632c",
+    "sha256:4eb38e4fd2da30e195d6683c2799049378486db8f2674b60f98cdd0167a84cd9",
+    "sha256:b1380159a46796e2c4df00ae11cc47176f6c671354f278d3e8768731dae8e51e",
+    "sha256:23f22e0a399a02ddf8d31448ec6426788d0f308e0ce0d74561e4ccc684de8da9",
+    "sha256:77928711f5306a51a70e39df267c1022dcc2a054dfc48f699d789ec6668afc9b",
+    "sha256:6a77f1734fb7c86417984b16994bf11f237278881a8a7f0ae247652b89485d0d",
+    "sha256:30f236c72c28e86ff18de2a1e45afabc1be92e186d3a649ddd8d0d6e318ed697",
+    "sha256:599d6cc29eaebabb599c6a7e704ad21efa22d5125adc969392d9b0a2280f8f06",
+    "sha256:65120e25cb8c22ff35a8602e63c4369585c766832fe692b6f5241195f7e2cb47",
+    "sha256:ff64857820f2efedac45930c65d80928cb29135f58cea4ed8f087a87c5e7fd6f",
+    "sha256:9d825c931aff5f923166fc3d2956923b36a2a4e39a3f95cd3a0ecadee9ab639c",
+    "sha256:49d233091eee1ae6b024bd79b5f43dc670b2da64dbd551cccb9a83dd91758e8e",
+    "sha256:0891e1f0ebc53a1287bab6989ce0359677731f51698105fb821208ec963bdfaa",
+    "sha256:2bb28bb7b268802c716d40e3454c8334e76ec8a6dac03c5f949529a9abe444c5",
+    "sha256:40896508cc9ee6c0ad31cf66f07174e8d559835b6115a717e173182570bd9e6b"
+  ],
+  "last_updated": "2026-06-07T20:43:47.725270"
+}
