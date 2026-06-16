@@ -1,5 +1,5 @@
 ---
-{"title": "Perpetual Next", "entity_type": "company", "last_updated": "2026-06-11T13:20:07.055241", "sources": ["sha256:34e8c548638c5516281b319a6ad1d64a5a0ae1a2e2182315063f8b3605a4f9ff", "sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"], "related_entities": ["Clarksons", "global shipping industry"], "fact_sources": {"specializes in converting organic waste into high-quality biomethanol": ["sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"], "develops multiple production facilities": ["sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"], "Perpetual Next formed a strategic partnership with Clarksons.": ["sha256:34e8c548638c5516281b319a6ad1d64a5a0ae1a2e2182315063f8b3605a4f9ff"], "The partnership aims to supply biomethanol for decarbonizing global shipping.": ["sha256:34e8c548638c5516281b319a6ad1d64a5a0ae1a2e2182315063f8b3605a4f9ff"]}}
+{"title": "Perpetual Next", "entity_type": "company", "last_updated": "2026-06-15T23:09:41.763167", "sources": ["sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"], "related_entities": ["Clarksons"], "fact_sources": {"Perpetual Next brings advanced production capabilities to the partnership.": ["sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"], "The company specializes in converting organic waste into high-quality biomethanol.": ["sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"], "Perpetual Next is developing multiple production facilities.": ["sha256:bbf9f91395f89119963a5a8f58c0d9483c95451be3fe705b9772c75dc071e707"]}, "has_georgia_presence": false}
 ---
 
 # Perpetual Next
@@ -8,7 +8,6 @@
 
 ## Key Facts
 
-- Perpetual Next formed a strategic partnership with Clarksons.
-- The partnership aims to supply biomethanol for decarbonizing global shipping.
-- specializes in converting organic waste into high-quality biomethanol
-- develops multiple production facilities
+- Perpetual Next brings advanced production capabilities to the partnership.
+- The company specializes in converting organic waste into high-quality biomethanol.
+- Perpetual Next is developing multiple production facilities.
