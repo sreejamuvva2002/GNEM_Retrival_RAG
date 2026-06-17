@@ -93,13 +93,34 @@ def cmd_export(args):
     output = wiki.export_as_markdown(args.output)
     print(f"✓ Exported wiki to {output}")
 
+def cmd_reset(args):
+    """Reset the wiki (delete all pages and index)."""
+    wiki_dir = Path(args.wiki_dir)
+    if not wiki_dir.exists():
+        print("Wiki directory does not exist, nothing to reset.")
+        return
+    if not args.yes:
+        confirm = input(f"Delete all files in {wiki_dir}? [y/N] ")
+        if confirm.lower() != "y":
+            print("Aborted.")
+            return
+    deleted = 0
+    for f in wiki_dir.glob("*.md"):
+        f.unlink()
+        deleted += 1
+    index_file = wiki_dir / "_index.json"
+    if index_file.exists():
+        index_file.unlink()
+        deleted += 1
+    print(f"\u2713 Wiki reset: deleted {deleted} files from {wiki_dir}")
+
 
 def cmd_stats(args):
     """Show wiki statistics."""
     wiki = LLMWiki(wiki_dir=args.wiki_dir)
     index = wiki.index
 
-    print(f"\n📊 Wiki Statistics:\n")
+    print(f"\n\U0001f4ca Wiki Statistics:\n")
     print(f"Total Pages: {len(index['pages'])}")
     print(f"Documents Processed: {len(index['sources_processed'])}")
     print(f"Unique Entities: {len(index['entities'])}")
@@ -141,6 +162,9 @@ Examples:
 
   # Show statistics
   python -m georgia_ev_intelligence.kb_builder.wiki_cli stats
+
+  # Reset wiki for clean rerun
+  python -m georgia_ev_intelligence.kb_builder.wiki_cli reset --yes
         """,
     )
 
@@ -212,6 +236,15 @@ Examples:
     # stats
     p_stats = subparsers.add_parser("stats", help="Show statistics")
     p_stats.set_defaults(func=cmd_stats)
+
+    # reset
+    p_reset = subparsers.add_parser("reset", help="Reset wiki (delete all pages and index)")
+    p_reset.add_argument(
+        "--yes", "-y",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
+    p_reset.set_defaults(func=cmd_reset)
 
     args = parser.parse_args()
 

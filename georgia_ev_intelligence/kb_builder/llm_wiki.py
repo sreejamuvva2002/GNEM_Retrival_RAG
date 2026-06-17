@@ -18,6 +18,63 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# ---------------------------------------------------------------------------
+# Ingestion quality filters
+# ---------------------------------------------------------------------------
+
+# Entities that bypass the Georgia-presence gate (lowercased)
+GEORGIA_CONTEXT_ALLOWLIST = {"georgia", "united states"}
+
+# Entity types that are never valid wiki subjects
+BLOCKED_ENTITY_TYPES = {
+    "publisher", "publication", "website", "directory",
+    "data_controller", "country", "media",
+}
+
+# Only these entity types may create/update pages
+ALLOWED_ENTITY_TYPES = {
+    "company", "product", "location", "organization",
+    "concept", "government_agency", "government organization",
+}
+
+# Hardcoded substantive keywords (augmented at runtime from KB vocabulary)
+BASE_SUBSTANTIVE_KEYWORDS = {
+    # Investment / financial
+    "invest", "investment", "million", "billion", "funding", "capital",
+    # Facilities / operations
+    "facility", "plant", "factory", "manufactur", "headquarter",
+    "warehouse", "campus", "site", "operation",
+    # Jobs / workforce
+    "employ", "employment", "hire", "hiring", "job", "worker",
+    "workforce", "headcount",
+    # Products / production
+    "production", "supply", "supplier", "assembly", "component",
+    # Projects / construction
+    "project", "construct", "construction", "build", "expand", "expansion",
+    "develop", "development",
+    # EV / energy domain
+    "battery", "ev ", "electric vehicle", "solar", "energy storage",
+    "charging", "powertrain", "lithium", "cathode", "anode",
+    # Georgia locations (core cities)
+    "georgia", "atlanta", "savannah", "braselton", "dalton",
+    "lagrange", "west point", "ellabell", "commerce", "cartersville",
+    "newnan", "peachtree", "norcross", "gainesville", "macon",
+}
+
+# Regex patterns that indicate a "junk" fact (website boilerplate, not real intel)
+JUNK_FACT_PATTERNS = [
+    r"password\s*reset",
+    r"log\s*in|sign\s*in|sign\s*up|create.*account",
+    r"cookie|privacy\s*policy|terms\s*(of|and)\s*(use|service)",
+    r"data\s*controller",
+    r"subscribe|newsletter|notification\s*preference",
+    r"copyright\s*\u00a9",
+    r"wordpress|cms|content\s*management",
+    r"navigation|menu|sidebar|footer|header",
+    r"click\s*here|read\s*more|learn\s*more",
+    r"unsubscribe|opt.out|email\s*preference",
+]
+
 
 @dataclass
 class WikiPage:
@@ -40,6 +97,7 @@ class LLMWiki:
         wiki_dir: str = "kb/wiki",
         ollama_base_url: Optional[str] = None,
         model: Optional[str] = None,
+        kb_vocabulary_path: Optional[str] = None,
     ):
         self.wiki_dir = Path(wiki_dir)
         self.wiki_dir.mkdir(parents=True, exist_ok=True)
@@ -53,8 +111,95 @@ class LLMWiki:
         self.index_file = self.wiki_dir / "_index.json"
         self.index = self._load_index()
 
+        # Build substantive keyword set from hardcoded + KB vocabulary
+        self.substantive_keywords = set(BASE_SUBSTANTIVE_KEYWORDS)
+        vocab_path = kb_vocabulary_path or "kb/kb_vocabulary.xlsx"
+        self._load_kb_vocabulary(vocab_path)
+
         print(f"[wiki] Using Ollama at {self.ollama_base_url}")
         print(f"[wiki] Model: {self.model}")
+        print(f"[wiki] Substantive keywords loaded: {len(self.substantive_keywords)}")
+
+    # ------------------------------------------------------------------
+    # KB Vocabulary loader
+    # ------------------------------------------------------------------
+
+    def _load_kb_vocabulary(self, vocab_path: str):
+        """Load terms from kb_vocabulary.xlsx and merge into substantive_keywords.
+
+        Extracts normalized_term values from vocabulary types that are useful
+        for the substantive-fact quality gate: ev_role, industry, facility_type,
+        product_service, location, supplier_type, company_name.
+        """
+        vocab_file = Path(vocab_path)
+        if not vocab_file.exists():
+            print(f"[wiki] KB vocabulary file not found at {vocab_path}, using hardcoded keywords only.")
+            return
+
+        try:
+            import openpyxl
+        except ImportError:
+            print("[wiki] openpyxl not installed — skipping KB vocabulary loading.")
+            return
+
+        try:
+            wb = openpyxl.load_workbook(vocab_file, read_only=True)
+            ws = wb["vocabulary"]
+
+            # Types whose terms should count as substantive signals
+            useful_types = {
+                "ev_role", "industry", "facility_type",
+                "product_service", "location", "supplier_type",
+                "company_name", "oem",
+            }
+
+            added = 0
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                vocab_type = row[2]  # vocabulary_type column
+                normalized = row[1]  # normalized_term column
+                if vocab_type in useful_types and normalized:
+                    # For location terms like "braselton, jackson county",
+                    # split into individual city/county tokens as well
+                    term = str(normalized).strip().lower()
+                    if not term:
+                        continue
+                    # Add the full term
+                    self.substantive_keywords.add(term)
+                    # For locations, also add the city name alone
+                    if vocab_type == "location" and "," in term:
+                        city = term.split(",")[0].strip()
+                        if len(city) >= 3:
+                            self.substantive_keywords.add(city)
+                    added += 1
+
+            wb.close()
+            print(f"[wiki] Loaded {added} terms from KB vocabulary ({vocab_path})")
+
+        except Exception as e:
+            print(f"[wiki] Error loading KB vocabulary: {e}")
+
+    # ------------------------------------------------------------------
+    # Fact quality helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _is_junk_fact(fact: str) -> bool:
+        """Return True if a fact matches known junk patterns (website boilerplate)."""
+        fact_lower = fact.lower()
+        return any(re.search(p, fact_lower) for p in JUNK_FACT_PATTERNS)
+
+    def _has_substantive_fact(self, facts: list[str]) -> bool:
+        """Return True if at least one fact contains a substantive keyword."""
+        for fact in facts:
+            fact_lower = fact.lower()
+            for kw in self.substantive_keywords:
+                if kw in fact_lower:
+                    return True
+        return False
+
+    # ------------------------------------------------------------------
+    # JSON extraction
+    # ------------------------------------------------------------------
 
     def _extract_json_from_response(self, text: str) -> dict:
         """Extract JSON from LLM response, handling text before/after."""
@@ -247,6 +392,13 @@ class LLMWiki:
         """
         Ingest a single document and update relevant wiki pages.
         Returns list of pages created/updated.
+
+        Applies a five-layer quality filter before allowing page creation:
+          1. EV-domain relevance (existing)
+          2. Georgia presence gate
+          3. Blocked / allowed entity types
+          4. Junk fact rejection
+          5. Substantive fact requirement (KB vocabulary)
         """
         if doc_id in self.index["sources_processed"]:
             return []
@@ -257,7 +409,7 @@ class LLMWiki:
         url = doc_content.get("url", "")
         linked_company = doc_content.get("linked_company_id", "")
 
-        # Use Ollama to analyze and extract entities
+        # Use Ollama to analyze and extract entities — hardened prompt
         prompt = f"""Analyze this document and extract structured facts about the PRIMARY subject company or entity. Respond ONLY with valid JSON, no other text.
 
 Document Title: {title}
@@ -270,17 +422,19 @@ Content:
 Rules:
 - "is_ev_related": true if the document relates to electric vehicles (EV), batteries, automotive supply chain, clean energy, or related manufacturing. False if it is unrelated (e.g., fast food, pizza, unrelated retail).
 - "main_entity" = the company or organization this document is PRIMARILY about (based on the content, not the hint).
-  - If the document is about a magazine, publisher, or directory (not a company), set main_entity to "Unknown".
+  - If the document is about a magazine, publisher, directory, website-account page, login/password page, cookie consent, or privacy policy — set main_entity to "Unknown".
   - Use the SHORT canonical name (e.g. "Duckyang", not "Duckyang Co.,Ltd.").
-- "facts" = EXHAUSTIVELY extract ALL concrete, specific facts about main_entity from the content (investments, locations, products, headcount, etc.). Do not summarize or limit the number of facts if there are many.
-  - Do NOT include generic website features, navigation links, or subscription offers as facts.
+- "entity_type" MUST be one of: company, product, location, organization, concept, government_agency. Do NOT use publisher, publication, website, country, or other types.
+- "facts" = EXHAUSTIVELY extract ALL concrete, specific facts about main_entity from the content (investments, locations, products, headcount, facilities, expansions, etc.). Do not summarize or limit the number of facts if there are many.
+  - facts must be concrete, verifiable statements about operations, investments, facilities, products, jobs, or geographic presence.
+  - Do NOT extract website UI text, subscription offers, navigation links, privacy policies, login instructions, or cookie consent as facts.
   - Include at least 2 specific facts or set main_entity to "Unknown".
 - "has_georgia_presence": true if the entity has operations, offices, facilities, or significant presence in the US state of Georgia. False otherwise.
 - Do NOT use email addresses, URLs, or job titles as entity names.
 - "related_entities" = other real company or place names mentioned (not emails, URLs, or website sections).
 
 Extract and respond as valid JSON with these exact keys:
-{{"is_ev_related": true, "main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/concept", "facts": ["fact1", "fact2", "fact3"], "has_georgia_presence": false, "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
+{{"is_ev_related": true, "main_entity": "short canonical company name or Unknown", "entity_type": "company/product/location/organization/concept/government_agency", "facts": ["fact1", "fact2", "fact3"], "has_georgia_presence": false, "related_entities": ["entity1", "entity2"], "category": "company/investment/news/product/location"}}"""
 
         try:
             response_text = self._call_ollama(prompt)
@@ -295,22 +449,70 @@ Extract and respond as valid JSON with these exact keys:
 
         updated_pages = []
 
-        # Guard: check if relevant to EV domain
+        # ---- LAYER 1: EV-domain relevance ----
         if not extraction.get("is_ev_related", True):
-            print(f"[wiki] Skipping non-EV related document: {title[:60]}")
+            print(f"[wiki] [filter:ev] Skipping non-EV document: {title[:60]}")
             self.index["sources_processed"].append(doc_id)
             self._save_index()
             return []
 
-        # Guard: skip if LLM couldn't identify a real entity or had no substance
+        # ---- Basic entity validation ----
         main_entity = extraction.get("main_entity", "Unknown")
         facts = extraction.get("facts", [])
-        meaningful_facts = [f for f in facts if len(f.strip()) > 15]
-        if not main_entity or main_entity in ("Unknown", "") or len(meaningful_facts) < 2:
-            print(f"[wiki] Skipping low-value extraction for: {title[:60]}")
+
+        if not main_entity or main_entity in ("Unknown", ""):
+            print(f"[wiki] [filter:entity] No valid entity in: {title[:60]}")
             self.index["sources_processed"].append(doc_id)
             self._save_index()
             return []
+
+        # ---- LAYER 2: Georgia presence gate ----
+        entity_lower = main_entity.lower()
+        has_georgia = extraction.get("has_georgia_presence", False)
+        if not has_georgia and entity_lower not in GEORGIA_CONTEXT_ALLOWLIST:
+            print(f"[wiki] [filter:georgia] Skipping non-Georgia entity: {main_entity}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
+
+        # ---- LAYER 3: Blocked / allowed entity types ----
+        raw_entity_type = extraction.get("entity_type", "unknown").lower().strip()
+        normalized_entity_type = raw_entity_type.replace(" ", "_")
+
+        if raw_entity_type in BLOCKED_ENTITY_TYPES or normalized_entity_type in BLOCKED_ENTITY_TYPES:
+            print(f"[wiki] [filter:type] Blocked entity type '{raw_entity_type}': {main_entity}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
+
+        if raw_entity_type not in ALLOWED_ENTITY_TYPES and normalized_entity_type not in ALLOWED_ENTITY_TYPES:
+            print(f"[wiki] [filter:type] Unrecognized entity type '{raw_entity_type}': {main_entity}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
+
+        # ---- LAYER 4: Junk fact rejection ----
+        clean_facts = [f for f in facts if not self._is_junk_fact(f)]
+        junk_count = len(facts) - len(clean_facts)
+        if junk_count > 0:
+            print(f"[wiki] [filter:junk] Stripped {junk_count} junk facts from: {main_entity}")
+
+        meaningful_facts = [f for f in clean_facts if len(f.strip()) > 15]
+        if len(meaningful_facts) < 2:
+            print(f"[wiki] [filter:quality] Too few meaningful facts ({len(meaningful_facts)}): {main_entity}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
+
+        # ---- LAYER 5: Substantive fact requirement ----
+        if not self._has_substantive_fact(meaningful_facts):
+            print(f"[wiki] [filter:substantive] No substantive facts for: {main_entity}")
+            self.index["sources_processed"].append(doc_id)
+            self._save_index()
+            return []
+
+        # --- All filters passed — update the extraction with clean facts ---
+        extraction["facts"] = clean_facts
 
         # Create/update main entity page — resolve to canonical name first
         canonical = self._find_canonical_entity(main_entity) or main_entity
