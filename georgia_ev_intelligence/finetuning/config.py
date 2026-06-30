@@ -31,8 +31,10 @@ def _env_optional_int(name: str, default: int) -> int:
 DATA_GEN_LLM_PROVIDER = _env_optional_str("DATA_GEN_LLM_PROVIDER", "ollama")
 
 # ---- Ollama Configuration (Local) ----
+# For data generation, use a large model: llama2:70b, mistral, neural-chat, etc.
+# Recommended: llama2:70b for best quality (requires ~45GB VRAM)
 OLLAMA_BASE_URL = _env_optional_str("OLLAMA_BASE_URL", "http://localhost:11434")
-DATA_GEN_OLLAMA_MODEL = _env_optional_str("DATA_GEN_OLLAMA_MODEL", "qwen2.5:14b")
+DATA_GEN_OLLAMA_MODEL = _env_optional_str("DATA_GEN_OLLAMA_MODEL", "llama2:70b")
 
 # ---- vLLM Configuration (Local) ----
 VLLM_BASE_URL = _env_optional_str("VLLM_BASE_URL", "http://localhost:8000")

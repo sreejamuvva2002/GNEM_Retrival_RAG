@@ -13,24 +13,39 @@ This guide walks you through running the complete fine-tuning pipeline to genera
 - OpenAI API key: `OPENAI_API_KEY=sk-...`
 - OR Google Gemini API key: `GOOGLE_API_KEY=...`
 
-## Option 1: Using Local Ollama (Free, No API Costs)
+## Option 1: Using Local Ollama with Large Model (Free, Best Quality)
 
-### Setup (2 minutes)
+**Recommended:** Use **Llama 2 70B** (or Mistral 7B if you have less VRAM)
 
-1. **Verify Ollama is running:**
+### Setup (5-30 minutes depending on internet)
+
+1. **Pull the large model:**
    ```bash
-   curl http://localhost:11434/api/tags
+   # Option A: Llama 2 70B (best quality, requires 45GB VRAM)
+   ollama pull llama2:70b
+   
+   # Option B: Mistral 7B (good quality, requires 8GB VRAM, faster)
+   ollama pull mistral
+   
+   # Option C: Orca 2 13B (good balance, requires 10GB VRAM)
+   ollama pull orca-mini:13b
    ```
 
-2. **Add to `.env`:**
+2. **Verify Ollama is running:**
+   ```bash
+   curl http://localhost:11434/api/tags
+   # Should show your pulled model
+   ```
+
+3. **Add to `.env`:**
    ```bash
    DATA_GEN_LLM_PROVIDER=ollama
    OLLAMA_BASE_URL=http://localhost:11434
-   DATA_GEN_OLLAMA_MODEL=qwen2.5:14b
+   DATA_GEN_OLLAMA_MODEL=llama2:70b    # or mistral / orca-mini:13b
    DATA_GEN_TEMPERATURE=0.7
    ```
 
-3. **Run the pipeline:**
+4. **Run the pipeline:**
    ```bash
    python -m georgia_ev_intelligence.finetuning.cli pipeline
    ```
@@ -40,11 +55,16 @@ This guide walks you through running the complete fine-tuning pipeline to genera
    - Validate each pair (LLM-as-judge)
    - Format into `train_dataset.jsonl` and `val_dataset.jsonl`
 
-   **Expected runtime:** 2-4 hours (depends on Qwen response time)
+   **Expected runtime:**
+   - Llama 2 70B: 3-6 hours (best quality)
+   - Mistral 7B: 1-2 hours (good quality, faster)
+   - Orca 2 13B: 2-3 hours (excellent quality)
+
+**For detailed setup help:** See [OLLAMA_SETUP_GUIDE.md](OLLAMA_SETUP_GUIDE.md)
 
 ---
 
-## Option 2: Using GPT-4o (Better Quality, Faster)
+## Option 2: Using GPT-4o (Fastest, Very High Quality)
 
 ### Setup (2 minutes)
 
@@ -73,7 +93,7 @@ This guide walks you through running the complete fine-tuning pipeline to genera
 
 ---
 
-## Option 3: Using vLLM with Local 120B Model (Best if You Have GPU)
+## Option 3: Using vLLM with Local Large Model (GPU Alternative)
 
 ### Setup (15 minutes)
 
