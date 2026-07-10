@@ -1,0 +1,352 @@
+{
+  "g001": {
+    "employment_threshold": 371
+  },
+  "g002": {
+    "employment_threshold": 239
+  },
+  "g003": {
+    "updated_location": "Commerce, Forsyth County"
+  },
+  "g004": {
+    "ev_supply_chain_role": "Plastic components for EV and ICE vehicles"
+  },
+  "g005": {
+    "employment_threshold": 803
+  },
+  "g006": {
+    "company": "dongwon autopart technology georgia llc"
+  },
+  "g007": {},
+  "g008": {
+    "ev_supply_chain_role": "Stamped metal components for OEMs"
+  },
+  "g009": {
+    "category": "OEM Footprint",
+    "ev_supply_chain_role": "EV thermal management and power electronics"
+  },
+  "g010": {
+    "ev_supply_chain_role": "Stamped and welded assemblies for OEMs"
+  },
+  "g011": {
+    "company": "tn americas holding inc."
+  },
+  "g012": {
+    "company": "enchem america inc."
+  },
+  "g013": {},
+  "g014": {
+    "company": "seoyon e-hwa"
+  },
+  "g015": {
+    "product_service": "Pre-molded tire treads"
+  },
+  "g016": {
+    "updated_location": "Rabun County"
+  },
+  "g017": {
+    "company": "ykk usa inc."
+  },
+  "g018": {},
+  "g019": {},
+  "g020": {
+    "company": "toyota industries group (tacg-tica)"
+  },
+  "g021": {
+    "updated_location": "Cataula, Harris County"
+  },
+  "g022": {
+    "ev_supply_chain_role": "Power Electronics"
+  },
+  "g023": {
+    "company": "gedia georgia llc"
+  },
+  "g024": {
+    "employment_threshold": 131
+  },
+  "g025": {
+    "category": "Tier 1"
+  },
+  "g026": {
+    "ev_supply_chain_role": "EV sensors, braking, and control systems"
+  },
+  "g027": {
+    "category": "Tier 1",
+    "ev_supply_chain_role": "Advanced electrical architecture for EVs"
+  },
+  "g028": {
+    "category": "OEM"
+  },
+  "g029": {},
+  "g030": {
+    "ev_supply_chain_role": "Charging Infrastructure"
+  },
+  "g031": {},
+  "g032": {},
+  "g033": {
+    "ev_supply_chain_role": "Stamped and welded assemblies for OEMs"
+  },
+  "g034": {
+    "industry_group": "Machinery Except Electrical",
+    "updated_location": "Carrollton, Carroll County"
+  },
+  "g035": {
+    "company": "fox factory"
+  },
+  "g036": {
+    "updated_location": "Ellabell, Bryan County"
+  },
+  "g037": {
+    "ev_supply_chain_role": "EV electrical distribution and interior systems"
+  },
+  "g038": {
+    "category": "Tier 1",
+    "ev_supply_chain_role": "EV wiring harnesses and power distribution"
+  },
+  "g039": {
+    "product_service": "Ventvisors, hood shields, floor mats, automotive accessories"
+  },
+  "g040": {
+    "company": "shiroki north america inc"
+  },
+  "g041": {
+    "category": "OEM",
+    "ev_supply_chain_role": "Stamped and welded assemblies for OEMs"
+  },
+  "g042": {
+    "employment_threshold": 148
+  },
+  "g043": {
+    "company": "robert bosch llc"
+  },
+  "g044": {
+    "category": "Tier 1/2"
+  },
+  "g045": {},
+  "g046": {
+    "ev_supply_chain_role": "Vehicle safety systems OEM (EV + ICE)"
+  },
+  "g047": {
+    "category": "Tier 1",
+    "ev_supply_chain_role": "Body and chassis components for EV and ICE OEMs"
+  },
+  "g048": {
+    "ev_supply_chain_role": "EV and ICE component manufacturing"
+  },
+  "g049": {},
+  "g050": {},
+  "g051": {},
+  "g052": {
+    "ev_supply_chain_role": "Battery Cell"
+  },
+  "g053": {
+    "updated_location": "Kennesaw, Cobb County"
+  },
+  "g054": {
+    "employment_threshold": 1271
+  },
+  "g055": {
+    "ev_supply_chain_role": "OEM parent group footprint (electric truck strategy)"
+  },
+  "g056": {
+    "company": "denkai america"
+  },
+  "g057": {
+    "industry_group": "Primary Metal Industries",
+    "updated_location": "LaGrange, Haralson County"
+  },
+  "g058": {},
+  "g059": {
+    "product_service": "Seats and seat foam pads"
+  },
+  "g060": {},
+  "g061": {
+    "ev_supply_chain_role": "EV thermal management and power electronics"
+  },
+  "g062": {
+    "ev_supply_chain_role": "Interior trim and textile components"
+  },
+  "g063": {
+    "company": "sewon america inc."
+  },
+  "g064": {
+    "company": "hollingsworth & vose co."
+  },
+  "g065": {
+    "company": "pak-lite inc."
+  },
+  "g066": {
+    "ev_supply_chain_role": "Interior and exterior plastic parts"
+  },
+  "g067": {},
+  "g068": {},
+  "g069": {
+    "industry_group": "Automotive parts manufacturing",
+    "updated_location": "Covington, Morgan County"
+  },
+  "g070": {},
+  "g071": {
+    "updated_location": "Commerce, Jackson County"
+  },
+  "g072": {
+    "company": "apache mills inc."
+  },
+  "g073": {
+    "company": "arising industries inc."
+  },
+  "g074": {
+    "updated_location": "Lincoln County"
+  },
+  "g075": {
+    "product_service": "Automotive parts contract manufacturing (assemblies / components)"
+  },
+  "g076": {
+    "company": "seoyon e-hwa interior systems"
+  },
+  "g077": {
+    "company": "club car llc"
+  },
+  "g078": {
+    "updated_location": "Pooler, Chatham County"
+  },
+  "g079": {
+    "ev_supply_chain_role": "OEM corporate footprint influencing EV strategy"
+  },
+  "g080": {},
+  "g081": {
+    "company": "vernay"
+  },
+  "g082": {
+    "category": "OEM Footprint",
+    "ev_supply_chain_role": "Stamped metal components for OEMs"
+  },
+  "g083": {
+    "company": "big tex trailer manufacturing inc."
+  },
+  "g084": {
+    "updated_location": "Suwanee, Forsyth County"
+  },
+  "g085": {
+    "industry_group": "Automotive wiring systems"
+  },
+  "g086": {
+    "industry_group": "Metal stamping and assemblies",
+    "updated_location": "Gray, Jones County"
+  },
+  "g087": {},
+  "g088": {
+    "updated_location": "Morrow, Clayton County"
+  },
+  "g089": {
+    "employment_threshold": 25
+  },
+  "g090": {
+    "company": "big tex trailer manufacturing inc."
+  },
+  "g091": {
+    "company": "hwashin"
+  },
+  "g092": {
+    "company": "jefferson southern corporation"
+  },
+  "g093": {},
+  "g094": {
+    "primary_oems": "Blue Bird"
+  },
+  "g095": {
+    "company": "vernay"
+  },
+  "g096": {
+    "category": "Tier 1",
+    "ev_supply_chain_role": "EV and ICE powertrain and HVAC components"
+  },
+  "g097": {
+    "company": "magna international"
+  },
+  "g098": {
+    "ev_supply_chain_role": "Power Electronics"
+  },
+  "g099": {
+    "category": "Tier 2/3",
+    "ev_supply_chain_role": "Advanced electrical architecture for EVs"
+  },
+  "g100": {},
+  "g101": {
+    "ev_supply_chain_role": "Vehicle Assembly"
+  },
+  "g102": {
+    "industry_group": "Paper and Allied Products",
+    "updated_location": "Covington, Morgan County"
+  },
+  "g103": {
+    "industry_group": "Automotive electronics and safety systems",
+    "updated_location": "Pendergrass, Jackson County"
+  },
+  "g104": {
+    "updated_location": "Dahlonega, Lumpkin County"
+  },
+  "g105": {
+    "company": "haering precision usa lp"
+  },
+  "g106": {
+    "ev_supply_chain_role": "Charging Infrastructure"
+  },
+  "g107": {},
+  "g108": {
+    "product_service": "Automotive fiber padding"
+  },
+  "g109": {
+    "primary_oems": "Mercedes-Benz USA LLC"
+  },
+  "g110": {
+    "updated_location": "Covington, Morgan County"
+  },
+  "g111": {
+    "ev_supply_chain_role": "HV and LV wiring harnesses for EVs and ICE vehicles"
+  },
+  "g112": {
+    "updated_location": "Dahlonega, Lumpkin County"
+  },
+  "g113": {},
+  "g114": {
+    "company": "realtruck"
+  },
+  "g115": {},
+  "g116": {
+    "updated_location": "Gainesville, Hall County"
+  },
+  "g117": {
+    "employment_threshold": 136
+  },
+  "g118": {
+    "updated_location": "Augusta, Richmond County"
+  },
+  "g119": {
+    "ev_supply_chain_role": "Advanced electrical architecture for EVs"
+  },
+  "g120": {
+    "category": "OEM Footprint"
+  },
+  "g121": {
+    "ev_supply_chain_role": "OEM corporate and engineering footprint (electrification)"
+  },
+  "g122": {
+    "company": "wabash national corp."
+  },
+  "g123": {
+    "company": "adient"
+  },
+  "g124": {
+    "ev_supply_chain_role": "EV body, powertrain, and thermal components"
+  },
+  "g125": {
+    "category": "OEM",
+    "ev_supply_chain_role": "Power Electronics"
+  },
+  "g126": {
+    "product_service": "Switches, resistors and related products"
+  },
+  "g127": {
+    "company": "goodyear tire & rubber co."
+  }
+}

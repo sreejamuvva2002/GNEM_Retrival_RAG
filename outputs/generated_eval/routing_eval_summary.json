@@ -1,0 +1,23 @@
+{
+  "n_scored": 5,
+  "n_correct": 3,
+  "n_errors": 0,
+  "accuracy": 0.6,
+  "per_route_accuracy": {
+    "geo_search": 0.0,
+    "keyword_search": 0.0,
+    "structured_sql": 1.0
+  },
+  "confusion_matrix": {
+    "structured_sql": {
+      "structured_sql": 3
+    },
+    "geo_search": {
+      "clarification_needed": 1
+    },
+    "keyword_search": {
+      "vector_search": 1
+    }
+  },
+  "generated_at": "2026-07-10T15:52:37Z"
+}

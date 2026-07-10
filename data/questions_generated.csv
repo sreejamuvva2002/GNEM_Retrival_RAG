@@ -1,0 +1,128 @@
+question_id,question,expected_route,template_id
+g001,Which companies have more than 371 employees?,structured_sql,sql_employment_threshold
+g002,Which companies have more than 239 employees?,structured_sql,sql_employment_threshold
+g003,"Which suppliers are located closest to ""Commerce, Forsyth County""?",geo_search,geo_closest
+g004,"Search for the exact term ""Plastic components for EV and ICE vehicles"" in supplier documents.",keyword_search,keyword_role
+g005,Which companies have more than 803 employees?,structured_sql,sql_employment_threshold
+g006,"What is the supply chain risk if ""dongwon autopart technology georgia llc"" experiences a disruption?",disruption_analysis,disruption_risk
+g007,What's my horoscope for today?,out_of_domain,out_of_domain_fixed
+g008,"Describe how companies with a ""Stamped metal components for OEMs"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g009,"Which ""OEM Footprint"" suppliers with a ""EV thermal management and power electronics"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g010,"Describe how companies with a ""Stamped and welded assemblies for OEMs"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g011,"What are the alternatives if ""tn americas holding inc."" shuts down?",disruption_analysis,disruption_alternatives
+g012,"What are the alternatives if ""enchem america inc."" shuts down?",disruption_analysis,disruption_alternatives
+g013,Who are you?,no_retrieval,no_retrieval_fixed
+g014,"What are the alternatives if ""seoyon e-hwa"" shuts down?",disruption_analysis,disruption_alternatives
+g015,"Find documents that mention the exact phrase ""Pre-molded tire treads"".",keyword_search,keyword_phrase
+g016,"Which suppliers are located closest to ""Rabun County""?",geo_search,geo_closest
+g017,"What are the alternatives if ""ykk usa inc."" shuts down?",disruption_analysis,disruption_alternatives
+g018,Good morning.,no_retrieval,no_retrieval_fixed
+g019,What about it?,clarification_needed,clarification_needed_fixed
+g020,"What EV supply chain role does ""toyota industries group (tacg-tica)"" have?",exact_lookup,exact_role
+g021,"Show companies within 25 miles of ""Cataula, Harris County"".",geo_search,geo_radius
+g022,"Search for the exact term ""Power Electronics"" in supplier documents.",keyword_search,keyword_role
+g023,"Where is ""gedia georgia llc"" located?",exact_lookup,exact_location
+g024,Which companies have more than 131 employees?,structured_sql,sql_employment_threshold
+g025,"How many companies are classified as ""Tier 1""?",structured_sql,sql_category_count
+g026,"Search for the exact term ""EV sensors, braking, and control systems"" in supplier documents.",keyword_search,keyword_role
+g027,"Which ""Tier 1"" suppliers with a ""Advanced electrical architecture for EVs"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g028,"How many companies are classified as ""OEM""?",structured_sql,sql_category_count
+g029,What are the general risks facing EV battery supply chains in Georgia?,vector_search,vector_risk
+g030,"Search for the exact term ""Charging Infrastructure"" in supplier documents.",keyword_search,keyword_role
+g031,Does it have that?,clarification_needed,clarification_needed_fixed
+g032,How many of those are there?,clarification_needed,clarification_needed_fixed
+g033,"Search for the exact term ""Stamped and welded assemblies for OEMs"" in supplier documents.",keyword_search,keyword_role
+g034,"Show ""Machinery Except Electrical"" companies near ""Carrollton, Carroll County"" along with supporting document evidence.",hybrid_search,hybrid_location_evidence
+g035,"How many employees does ""fox factory"" have?",exact_lookup,exact_employment
+g036,"Which suppliers are located closest to ""Ellabell, Bryan County""?",geo_search,geo_closest
+g037,"Search for the exact term ""EV electrical distribution and interior systems"" in supplier documents.",keyword_search,keyword_role
+g038,"Which ""Tier 1"" suppliers with a ""EV wiring harnesses and power distribution"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g039,"Find documents that mention the exact phrase ""Ventvisors, hood shields, floor mats, automotive accessories"".",keyword_search,keyword_phrase
+g040,"What are the alternatives if ""shiroki north america inc"" shuts down?",disruption_analysis,disruption_alternatives
+g041,"Which ""OEM"" suppliers with a ""Stamped and welded assemblies for OEMs"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g042,Which companies have more than 148 employees?,structured_sql,sql_employment_threshold
+g043,"What are the alternatives if ""robert bosch llc"" shuts down?",disruption_analysis,disruption_alternatives
+g044,"How many companies are classified as ""Tier 1/2""?",structured_sql,sql_category_count
+g045,What can you do?,no_retrieval,no_retrieval_fixed
+g046,"Describe how companies with a ""Vehicle safety systems OEM (EV + ICE)"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g047,"Which ""Tier 1"" suppliers with a ""Body and chassis components for EV and ICE OEMs"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g048,"Search for the exact term ""EV and ICE component manufacturing"" in supplier documents.",keyword_search,keyword_role
+g049,What's the weather like today?,out_of_domain,out_of_domain_fixed
+g050,What's the current stock price of Apple?,out_of_domain,out_of_domain_fixed
+g051,Is that close by?,clarification_needed,clarification_needed_fixed
+g052,"Describe how companies with a ""Battery Cell"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g053,"What EV supply chain companies are near ""Kennesaw, Cobb County""?",geo_search,geo_near
+g054,Which companies have more than 1271 employees?,structured_sql,sql_employment_threshold
+g055,"Search for the exact term ""OEM parent group footprint (electric truck strategy)"" in supplier documents.",keyword_search,keyword_role
+g056,"Where is ""denkai america"" located?",exact_lookup,exact_location
+g057,"Show ""Primary Metal Industries"" companies near ""LaGrange, Haralson County"" along with supporting document evidence.",hybrid_search,hybrid_location_evidence
+g058,What's its status?,clarification_needed,clarification_needed_fixed
+g059,"Find documents that mention the exact phrase ""Seats and seat foam pads"".",keyword_search,keyword_phrase
+g060,Who won the football game last night?,out_of_domain,out_of_domain_fixed
+g061,"Describe how companies with a ""EV thermal management and power electronics"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g062,"Describe how companies with a ""Interior trim and textile components"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g063,"What EV supply chain role does ""sewon america inc."" have?",exact_lookup,exact_role
+g064,"What is the supply chain risk if ""hollingsworth & vose co."" experiences a disruption?",disruption_analysis,disruption_risk
+g065,"What is the supply chain risk if ""pak-lite inc."" experiences a disruption?",disruption_analysis,disruption_risk
+g066,"Describe how companies with a ""Interior and exterior plastic parts"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g067,"Hello, how are you?",no_retrieval,no_retrieval_fixed
+g068,Good afternoon.,no_retrieval,no_retrieval_fixed
+g069,"Show ""Automotive parts manufacturing"" companies near ""Covington, Morgan County"" along with supporting document evidence.",hybrid_search,hybrid_location_evidence
+g070,Can you translate 'hello' into Spanish?,out_of_domain,out_of_domain_fixed
+g071,"What EV supply chain companies are near ""Commerce, Jackson County""?",geo_search,geo_near
+g072,"What EV supply chain role does ""apache mills inc."" have?",exact_lookup,exact_role
+g073,"How many employees does ""arising industries inc."" have?",exact_lookup,exact_employment
+g074,"What EV supply chain companies are near ""Lincoln County""?",geo_search,geo_near
+g075,"Find documents that mention the exact phrase ""Automotive parts contract manufacturing (assemblies / components)"".",keyword_search,keyword_phrase
+g076,"How many employees does ""seoyon e-hwa interior systems"" have?",exact_lookup,exact_employment
+g077,"What EV supply chain role does ""club car llc"" have?",exact_lookup,exact_role
+g078,"Which suppliers are located closest to ""Pooler, Chatham County""?",geo_search,geo_closest
+g079,"Describe how companies with a ""OEM corporate footprint influencing EV strategy"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g080,What is the capital of France?,out_of_domain,out_of_domain_fixed
+g081,"What is the supply chain risk if ""vernay"" experiences a disruption?",disruption_analysis,disruption_risk
+g082,"Which ""OEM Footprint"" suppliers with a ""Stamped metal components for OEMs"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g083,"What are the alternatives if ""big tex trailer manufacturing inc."" shuts down?",disruption_analysis,disruption_alternatives
+g084,"What EV supply chain companies are near ""Suwanee, Forsyth County""?",geo_search,geo_near
+g085,"List all companies in the ""Automotive wiring systems"" industry group.",structured_sql,sql_industry_list
+g086,"Show ""Metal stamping and assemblies"" companies near ""Gray, Jones County"" along with supporting document evidence.",hybrid_search,hybrid_location_evidence
+g087,Hi there!,no_retrieval,no_retrieval_fixed
+g088,"Which suppliers are located closest to ""Morrow, Clayton County""?",geo_search,geo_closest
+g089,Which companies have more than 25 employees?,structured_sql,sql_employment_threshold
+g090,"What is the supply chain risk if ""big tex trailer manufacturing inc."" experiences a disruption?",disruption_analysis,disruption_risk
+g091,"What are the alternatives if ""hwashin"" shuts down?",disruption_analysis,disruption_alternatives
+g092,"How many employees does ""jefferson southern corporation"" have?",exact_lookup,exact_employment
+g093,Give me a recipe for chocolate chip cookies.,out_of_domain,out_of_domain_fixed
+g094,"Show all suppliers with primary OEM ""Blue Bird"".",structured_sql,sql_oem_filter
+g095,"Where is ""vernay"" located?",exact_lookup,exact_location
+g096,"Which ""Tier 1"" suppliers with a ""EV and ICE powertrain and HVAC components"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g097,"What are the alternatives if ""magna international"" shuts down?",disruption_analysis,disruption_alternatives
+g098,"Describe how companies with a ""Power Electronics"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g099,"Which ""Tier 2/3"" suppliers with a ""Advanced electrical architecture for EVs"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g100,Can you tell me more about them?,clarification_needed,clarification_needed_fixed
+g101,"Describe how companies with a ""Vehicle Assembly"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g102,"Show ""Paper and Allied Products"" companies near ""Covington, Morgan County"" along with supporting document evidence.",hybrid_search,hybrid_location_evidence
+g103,"Show ""Automotive electronics and safety systems"" companies near ""Pendergrass, Jackson County"" along with supporting document evidence.",hybrid_search,hybrid_location_evidence
+g104,"Show companies within 25 miles of ""Dahlonega, Lumpkin County"".",geo_search,geo_radius
+g105,"What is the supply chain risk if ""haering precision usa lp"" experiences a disruption?",disruption_analysis,disruption_risk
+g106,"Describe how companies with a ""Charging Infrastructure"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g107,Thanks for your help.,no_retrieval,no_retrieval_fixed
+g108,"Find documents that mention the exact phrase ""Automotive fiber padding"".",keyword_search,keyword_phrase
+g109,"Show all suppliers with primary OEM ""Mercedes-Benz USA LLC"".",structured_sql,sql_oem_filter
+g110,"Which suppliers are located closest to ""Covington, Morgan County""?",geo_search,geo_closest
+g111,"Search for the exact term ""HV and LV wiring harnesses for EVs and ICE vehicles"" in supplier documents.",keyword_search,keyword_role
+g112,"Which suppliers are located closest to ""Dahlonega, Lumpkin County""?",geo_search,geo_closest
+g113,Tell me a joke.,out_of_domain,out_of_domain_fixed
+g114,"What EV supply chain role does ""realtruck"" have?",exact_lookup,exact_role
+g115,Thank you so much.,no_retrieval,no_retrieval_fixed
+g116,"Show companies within 25 miles of ""Gainesville, Hall County"".",geo_search,geo_radius
+g117,Which companies have more than 136 employees?,structured_sql,sql_employment_threshold
+g118,"Which suppliers are located closest to ""Augusta, Richmond County""?",geo_search,geo_closest
+g119,"Describe how companies with a ""Advanced electrical architecture for EVs"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g120,"How many companies are classified as ""OEM Footprint""?",structured_sql,sql_category_count
+g121,"Describe how companies with a ""OEM corporate and engineering footprint (electrification)"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g122,"Where is ""wabash national corp."" located?",exact_lookup,exact_location
+g123,"What products or services does ""adient"" provide?",exact_lookup,exact_products
+g124,"Describe how companies with a ""EV body, powertrain, and thermal components"" role fit into EV manufacturing.",vector_search,vector_role_topic
+g125,"Which ""OEM"" suppliers with a ""Power Electronics"" role have web evidence of recent expansion?",hybrid_search,hybrid_category_evidence
+g126,"Find documents that mention the exact phrase ""Switches, resistors and related products"".",keyword_search,keyword_phrase
+g127,"What products or services does ""goodyear tire & rubber co."" provide?",exact_lookup,exact_products

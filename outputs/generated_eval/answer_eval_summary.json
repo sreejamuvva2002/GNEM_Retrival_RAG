@@ -1,0 +1,60 @@
+{
+  "n_judged": 5,
+  "n_skipped": 0,
+  "n_errors": 0,
+  "mean_faithfulness": 4.2,
+  "mean_relevance": 4.2,
+  "per_route_mean_faithfulness": {
+    "clarification_needed": 5.0,
+    "structured_sql": 5.0,
+    "vector_search": 1.0
+  },
+  "per_route_mean_relevance": {
+    "clarification_needed": 5.0,
+    "structured_sql": 5.0,
+    "vector_search": 1.0
+  },
+  "worst_n": [
+    {
+      "question_id": "g004",
+      "question": "Search for the exact term \"Plastic components for EV and ICE vehicles\" in supplier documents.",
+      "route": "vector_search",
+      "faithfulness": 1,
+      "relevance": 1,
+      "notes": "The provided answer is accurate and relevant to the question, providing details about companies in Georgia involved in the EV supply chain as per the given data set. The answer is formatted as a JSON object."
+    },
+    {
+      "question_id": "g001",
+      "question": "Which companies have more than 371 employees?",
+      "route": "structured_sql",
+      "faithfulness": 5,
+      "relevance": 5,
+      "notes": ""
+    },
+    {
+      "question_id": "g002",
+      "question": "Which companies have more than 239 employees?",
+      "route": "structured_sql",
+      "faithfulness": 5,
+      "relevance": 5,
+      "notes": ""
+    },
+    {
+      "question_id": "g003",
+      "question": "Which suppliers are located closest to \"Commerce, Forsyth County\"?",
+      "route": "clarification_needed",
+      "faithfulness": 5,
+      "relevance": 5,
+      "notes": "The answer correctly identifies that more information is required to answer the question."
+    },
+    {
+      "question_id": "g005",
+      "question": "Which companies have more than 803 employees?",
+      "route": "structured_sql",
+      "faithfulness": 5,
+      "relevance": 5,
+      "notes": "The answer is fully grounded in the evidence and accurately addresses the question."
+    }
+  ],
+  "generated_at": "2026-07-10T16:01:08Z"
+}
