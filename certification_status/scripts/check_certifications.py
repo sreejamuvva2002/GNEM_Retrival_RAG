@@ -1,6 +1,13 @@
-"""Check certification status (ISO 9001 / IATF 16949 / ... configurable) for each company
-using web evidence judged by a LOCAL LLM, and write ONE PAGE PER COMPANY covering all
-certifications found.
+"""Check certification status for each company using web evidence judged by a LOCAL LLM,
+and write ONE PAGE PER COMPANY covering all certifications found.
+
+Flow per company (discover-then-verify, so we catch as many certifications as possible):
+  1. DISCOVERY: one search asking which certifications this company appears to hold at all
+     (ISO 14001, ISO 45001, ISO 50001, ISO 27001, AS9100, VDA 6.3, C-TPAT, MBE, ... —
+     open-ended, not limited to a fixed list). Skip with --no-discover.
+  2. VERIFY: each discovered certification, plus the always-checked core list
+     (--cert, default ISO 9001:2015 + IATF 16949:2016), gets its own evidence search
+     and a structured verdict. Capped at --max-certs per company.
 
 Per company+certification the model extracts:
     org_status          confirmed_active | likely_active | confirmed_inactive | not_found
@@ -56,6 +63,16 @@ DEFAULT_LOG = PKG_ROOT / "outputs" / "evidence_log.jsonl"
 DEFAULT_PAGES_DIR = PKG_ROOT / "outputs" / "companies"
 DEFAULT_CERTS = ["ISO 9001:2015", "IATF 16949:2016"]
 
+# Certifications commonly held by automotive/manufacturing companies — used as hints in
+# the discovery prompt so the model recognizes them, NOT as a hard limit: the model is
+# told to report ANY certification it finds evidence of, listed here or not.
+KNOWN_CERTS = [
+    "ISO 9001", "IATF 16949", "ISO 14001", "ISO 45001", "ISO 50001", "ISO/IEC 27001",
+    "ISO 13485", "ISO/IEC 17025", "AS9100", "VDA 6.3", "FSSC 22000", "ISO 22000",
+    "C-TPAT", "AEO", "MMOG/LE", "UL certification", "CE marking", "ITAR registration",
+    "MBE/WBE/DBE (minority/women/disadvantaged business)", "OSHA VPP",
+]
+
 OUT_FIELDS = [
     "company", "certification", "org_status", "facility_status", "final_label",
     "certification_body", "reference_no", "scope", "expiry_date",
@@ -96,6 +113,45 @@ Rules:
 - Copy reference numbers, scope, dates, and registrar names VERBATIM from the evidence. Never
   invent them; use empty strings when not visible.
 """
+
+
+DISCOVER_PROMPT = """You are a compliance analyst. You are given web search results about ONE \
+company. List EVERY certification, standard registration, or accreditation the evidence \
+suggests this company holds or has held — quality, environmental, safety, energy, security, \
+supply-chain, industry-specific, diversity, anything.
+
+Common examples (do NOT limit yourself to these): {known}
+
+Respond with ONLY a JSON object, no prose:
+{{"certifications": ["<name 1>", "<name 2>", ...]}}
+
+Rules:
+- Include a certification only if the results actually mention it in connection with THIS
+  company (ignore results about unrelated companies with similar names).
+- Use the standard name, with the revision year if visible (e.g. "ISO 14001:2015").
+- Empty list if nothing is found.
+"""
+
+
+def _cert_key(cert: str) -> str:
+    """Canonical key for dedup: 'ISO 9001:2015' == 'iso 9001' == 'ISO9001'."""
+    return re.sub(r"[^a-z0-9]+", "", cert.split(":")[0].lower())
+
+
+def discover_certs(backend, company: dict, model: str | None, fetch_pages: int) -> list[str]:
+    """One discovery search per company: which certifications is there any evidence for?"""
+    query = f'"{company["company"]}" certifications ISO certificate quality'
+    evidence_text, _ = gather_evidence(backend, query, fetch_pages)
+    raw = llm_client.chat(
+        [{"role": "system", "content": DISCOVER_PROMPT.format(known=", ".join(KNOWN_CERTS))},
+         {"role": "user", "content": f"Company: {company['company']}\n\nSearch results:\n{evidence_text[:12000]}"}],
+        model=model,
+    )
+    try:
+        found = llm_client.extract_json(raw).get("certifications", [])
+    except ValueError:
+        found = []
+    return [str(c).strip() for c in found if str(c).strip()]
 
 
 def derive_final_label(v: dict) -> str:
@@ -336,7 +392,11 @@ def main() -> None:
     ap.add_argument("--log", type=Path, default=DEFAULT_LOG)
     ap.add_argument("--pages-dir", type=Path, default=DEFAULT_PAGES_DIR)
     ap.add_argument("--cert", action="append",
-                    help=f"certification(s) to check (repeatable); default: {DEFAULT_CERTS}")
+                    help=f"core certification(s) always checked (repeatable); default: {DEFAULT_CERTS}")
+    ap.add_argument("--no-discover", action="store_true",
+                    help="skip per-company discovery; check only the core --cert list")
+    ap.add_argument("--max-certs", type=int, default=12,
+                    help="cap on certifications verified per company (default 12)")
     ap.add_argument("--backend", choices=["auto", "browser", "http"], default="auto")
     ap.add_argument("--model", default=None, help="override LLM_MODEL env var")
     ap.add_argument("--limit", type=int, default=0, help="only process first N companies (0 = all)")
@@ -375,12 +435,35 @@ def main() -> None:
         writer.writeheader()
     log_f = args.log.open("w" if args.fresh else "a", encoding="utf-8")
 
-    total = len(companies) * len(certs)
     n = 0
     try:
-        for comp in companies:
+        for ci, comp in enumerate(companies, 1):
+            # Build this company's certification list: core certs + anything discovered.
+            comp_certs = list(certs)
+            if not args.no_discover:
+                try:
+                    discovered = discover_certs(backend, comp, model, args.fetch_pages)
+                except Exception as e:
+                    discovered = []
+                    print(f"[{ci}/{len(companies)}] {comp['company']}: discovery failed ({e})")
+                seen_keys = {_cert_key(c) for c in comp_certs}
+                extras = []
+                for c in discovered:
+                    k = _cert_key(c)
+                    if k and k not in seen_keys:
+                        seen_keys.add(k)
+                        extras.append(c)
+                comp_certs.extend(extras)
+                if extras:
+                    print(f"[{ci}/{len(companies)}] {comp['company']}: discovered "
+                          f"{len(extras)} extra cert(s): {', '.join(extras)}")
+                log_f.write(json.dumps({"company": comp["company"], "discovery": discovered}) + "\n")
+                log_f.flush()
+                time.sleep(args.delay)
+            comp_certs = comp_certs[: args.max_certs]
+
             comp_rows = []
-            for cert in certs:
+            for cert in comp_certs:
                 n += 1
                 key = (comp["company"], cert)
                 if key in done:
@@ -416,8 +499,8 @@ def main() -> None:
                 log_f.write(json.dumps({"query": query, "evidence_text": evidence_text[:6000], **row}) + "\n")
                 log_f.flush()
                 comp_rows.append(row)
-                print(f"[{n}/{total}] {comp['company']} | {cert} -> {row['final_label']} "
-                      f"({row['confidence']})")
+                print(f"[company {ci}/{len(companies)} | check {n}] {comp['company']} | {cert} "
+                      f"-> {row['final_label']} ({row['confidence']})")
                 time.sleep(args.delay)
             if comp_rows:
                 page = write_company_page(args.pages_dir, comp, comp_rows)

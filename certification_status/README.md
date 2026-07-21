@@ -1,8 +1,17 @@
 # Certification Status Checker (local LLM + browser-harness)
 
-Checks the certification status (ISO 9001:2015, IATF 16949:2016, or any cert you choose)
-of every company in the GNEM company sheet and writes **one page per company** covering
-all certifications, using:
+Finds **as many certifications as possible** for every company in the GNEM company sheet
+and writes **one page per company** covering all of them. Per company it runs a
+**discover-then-verify** flow:
+
+1. **Discovery** — one search asks the LLM to list *every* certification the company shows
+   any evidence of (ISO 14001, ISO 45001, ISO 50001, ISO 27001, AS9100, VDA 6.3, C-TPAT,
+   MBE/WBE, ... open-ended, not limited to a fixed list).
+2. **Verify** — each discovered certification, plus the always-checked core list
+   (default ISO 9001:2015 + IATF 16949:2016), gets its own evidence search and a
+   structured verdict.
+
+Built on:
 
 - **[browser-use/browser-harness](https://github.com/browser-use/browser-harness)**
   (vendored in [`browser-harness/`](browser-harness/), MIT license) to drive your real
@@ -81,7 +90,9 @@ Re-running **resumes** where it left off; use `--fresh` to start over.
 
 | Flag | Meaning |
 |---|---|
-| `--cert "ISO 14001"` | check a different certification (repeatable) |
+| `--cert "ISO 14001"` | change the always-checked core certifications (repeatable) |
+| `--no-discover` | skip discovery; check only the core list |
+| `--max-certs 12` | cap on certifications verified per company (default 12) |
 | `--backend auto\|browser\|http` | browsing backend (default `auto`: browser, else HTTP) |
 | `--model qwen3:8b` | override the local model |
 | `--limit N` | only first N companies |
