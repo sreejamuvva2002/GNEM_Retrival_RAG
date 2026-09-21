@@ -95,6 +95,26 @@ Useful flags:
 
 ---
 
+## 3b. Budgeting the run before you spend anything
+
+```bash
+PYTHONPATH=src python scripts/estimate_cost.py
+PYTHONPATH=src python scripts/estimate_cost.py --price-in 0.30 --price-out 2.50   # your current prices
+```
+
+It builds the real prompts — same system prompts, same retrieved context, same
+question set — and reports calls, input tokens, output tokens and embedding
+tokens per stage, so you can see which layer is expensive before running it.
+Flags mirror the CLI (`--limit`, `--modes`, `--repeats`, `--judge-samples`,
+`--pairwise`, `--no-score`), plus `--answer-ratio` to tune the assumed answer
+length.
+
+Estimated at ~4 chars/token without calling a tokenizer, so it works with no
+API key; treat it as a budget (±15%), not an invoice. Mode 3's Google Search
+grounding is billed per grounded request on top of tokens and is not included.
+
+---
+
 ## 4. Your own questions and your own data
 
 Two inputs, both swappable without touching code:
