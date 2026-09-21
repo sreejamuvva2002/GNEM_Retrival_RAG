@@ -1,0 +1,15 @@
+[project]
+name = "gemini-qa-eval"
+version = "0.1.0"
+description = "Three-mode Gemini QA benchmark (LLM only / +internal data / +web) with a four-layer evaluation harness"
+requires-python = ">=3.10"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
