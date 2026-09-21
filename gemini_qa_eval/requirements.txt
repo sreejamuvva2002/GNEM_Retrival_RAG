@@ -1,0 +1,13 @@
+# Core
+google-genai>=1.0
+pandas>=2.0
+openpyxl>=3.1
+numpy>=1.26
+python-dotenv>=1.0
+
+# Evaluation / reporting
+scipy>=1.11          # Spearman, kappa helpers
+tabulate>=0.9        # markdown report tables
+
+# Dev
+pytest>=8.0
